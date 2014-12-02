@@ -1,0 +1,1 @@
+This directory contains a WmrAnimation class and functions for 3D animation of WMR simulations

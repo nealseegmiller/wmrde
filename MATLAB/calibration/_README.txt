@@ -1,0 +1,1 @@
+This directory contains functions for the calibration of model parameters using Integrated Prediction Error Minimization (IPEM).

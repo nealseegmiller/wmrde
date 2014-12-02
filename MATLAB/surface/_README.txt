@@ -1,0 +1,1 @@
+This directory contains a Surface class and derived classes for representing 2.5D terrain

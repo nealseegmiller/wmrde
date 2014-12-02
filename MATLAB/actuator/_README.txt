@@ -1,0 +1,1 @@
+This directory contains functions for actuator models. The required format for actuator models is specified in the WmrModel class.

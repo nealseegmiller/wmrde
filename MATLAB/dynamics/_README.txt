@@ -1,0 +1,1 @@
+This directory contains functions for dynamic WMR simulation. Has dependencies on functions in /kinematics

@@ -1,0 +1,1 @@
+This directory contains scripts that use MATLAB's symbolic toolbox for code generation

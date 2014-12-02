@@ -1,0 +1,1 @@
+This directory contains functions to parse data logs, initialize parameters, and compute residuals for several calibration experiments

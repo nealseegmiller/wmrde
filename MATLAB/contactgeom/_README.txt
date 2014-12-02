@@ -1,0 +1,1 @@
+This directory contains class definitions for wheel and track contact geometries. These are required. They can be computed using the /collision functions or alternative functions
