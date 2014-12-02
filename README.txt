@@ -12,3 +12,4 @@ MATLAB/	MATLAB code library
 src/		C++ code library
 textures/	terrain texture images used for animation
 CAD/		CAD models of WMRs used for animation
+resource/	resource files for C++ demos
