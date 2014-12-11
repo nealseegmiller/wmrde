@@ -194,8 +194,8 @@ if opts.plot
         pos = olog0.pos_sensor;
         h(end+1) = plot3(pos(:,1),pos(:,2),pos(:,3),'r','DisplayName','pred, before yaw init');
         pos = olog.pos_sensor;
-        h(end+1) = plot3(pos(:,1),pos(:,2),pos(:,3),'m','DisplayName','pred, after yaw init');
-        plot3(pos(end,1),pos(end,2),pos(end,3),'ms')
+        h(end+1) = plot3(pos(:,1),pos(:,2),pos(:,3),'g','DisplayName','pred, after yaw init');
+        plot3(pos(end,1),pos(end,2),pos(end,3),'gs')
         plot3(meas.pos(indf_yi,1),meas.pos(indf_yi,2),meas.pos(indf_yi,3),'bs')
     end
     xlabel('x')
@@ -225,7 +225,7 @@ if opts.plot
     
 end
 
-blah = 1;
+% blah = 1;
 
 end
 

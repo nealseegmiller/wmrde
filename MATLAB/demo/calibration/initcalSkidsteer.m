@@ -62,8 +62,8 @@ if do_dyn
     cinfo.isfixed(nsp+(1:4)) = false; %cmx cmy xs ys
     
 else
-%     cinfo.isfixed(1:nsp) = false;
-%     cinfo.isfixed(nsp+[3 4]) = false; %xs, ys
+    cinfo.isfixed(1:nsp) = false;
+    cinfo.isfixed(nsp+[3 4]) = false; %xs, ys
 %     cinfo.isfixed(8) = false; %DEBUGGING
 
 end
@@ -74,7 +74,7 @@ end
 dlen=6-1;
 ns=mdl.nf+dlen; %number of states)
 cinfo.inresidual=false(1,ns);
-[isorient,ispos] = stateIs(ns,mdl.nf);
+[isorient,ispos] = stateIs(ns);
 cinfo.inresidual(isorient) = [0 0 1]; %yaw
 cinfo.inresidual(ispos) = [1 1 0]; %x,y
 

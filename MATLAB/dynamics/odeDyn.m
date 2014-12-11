@@ -28,9 +28,11 @@ ns=length(y)-nv-na;
 
 isorient = stateIs(ns);
 
+u = ControllerIO();
+
 
 %split up y vector
-[state,qvel,interr]=odeDynSplitVec(y,nf,na);
+[state,qvel,u.interr]=odeDynSplitVec(y,nf,na);
 
 %convert state to homogeneous transforms
 [HT_parent, HT_world] = stateToHT(mdl,state);
@@ -38,18 +40,15 @@ isorient = stateIs(ns);
 %update contact geometry
 contacts = updateModelContactGeom(mdl, surfaces, HT_world, 0, contacts);
 
-
 %get control inputs
 if isempty(pathno)
-    u_ = feval(mdl.controller_fh,mdl,time,state);
+    u.cmd = feval(mdl.controller_fh,mdl,time,state);
 else
-    u_ = feval(mdl.controller_fh,mdl,time,state,pathno);
+    u.cmd = feval(mdl.controller_fh,mdl,time,state,pathno);
 end
-u = NaN(nv,1);
-u(mdl.actframeinds+5) = u_;
 
 %compute acceleration
-[qacc,err,fdout] = forwardDyn(mdl, state, qvel, u, interr, HT_parent, HT_world, contacts, dt);
+[qacc,u,fdout] = forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt);
 
 if ~isempty(dt)
     %Semi-implicit or symplectic Euler, conserves energy
@@ -66,14 +65,14 @@ end
 %convert qvel to statedot
 statedot = qvelToQdot(qvel, state(isorient), HT_world(1:3,1:3,1));
 
-ydot = [statedot; qacc; err];
+ydot = [statedot; qacc; u.err];
 
 %additional outputs for data logging
 out = OdeOutput();
 out.HT_parent = HT_parent;
 out.HT_world = HT_world;
 out.contacts = contacts;
-out.u = u_;
+out.u = u.cmd;
 out.vc = fdout.vc0;
 % out.vc = fdout.vc; %DEBUGGING
 

@@ -16,7 +16,7 @@ dlen = length(state)-mdl.nf; %5 if using Euler angles, 6 if using quaternions
 
 %TODO, wheel acceleration limits?
 
-speed = 1;
+speed = .5;
 turnrad = 1000;
     
 % if time < .5

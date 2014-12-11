@@ -1,8 +1,9 @@
-function  [qvel, vc] = forwardVelKin(mdl,state,u,HT_world,contacts)
+function  [qvel, vc] = forwardVelKin(mdl, state, u, vis_act, HT_world, contacts)
 %INPUTS
 %mdl:       WmrModel object
 %state:     ns x 1 vector
-%u:         nv x 1 vector, ~NaN for fixed, NaN for free. fixed can mean actuated or sensed
+%u:         na x 1 vector, actuated (or fixed) joint rates
+%vis_act:   nv x 1 logical, which elements of qvel are actuated. sum(vis_act) = na. If empty [] use WmrModel
 %HT_world:  4x4x nf matrix, HT_world(:,:,i) is transform from frame i to world coords. WmrModel and contact frames.
 %contacts:  1 x nw array of WheelContactGeom objects, or
 %           1 x nt array of TrackContactGeom objects
@@ -15,7 +16,10 @@ function  [qvel, vc] = forwardVelKin(mdl,state,u,HT_world,contacts)
 nv = mdl.nf+5; %number of elements in qvel
 [~,~,isjd] = stateIs(length(state)); %is joint displacement
 
-
+if isempty(vis_act)
+    vis_act = false(1,nv);
+    vis_act(mdl.actframeinds+5) = true;
+end
 
 %contacts
 incontact = [contacts.incontact];
@@ -62,32 +66,31 @@ if njc > 0
 end
 
 
-%actuated (or fixed) joint rates
-vis_fix = ~isnan(u); %is fixed rate in joint space velocity
-
 %if wheel is not actuated and not in contact, make actuated to avoid rank deficiency
+u_nv = NaN(nv,1); %padded
+u_nv(vis_act) = u;
+
 for wno = 1:mdl.nw
     vi = mdl.wheelframeinds(wno) + 5; %index in qvel
-    if ~vis_fix(vi) && ~incontact(wno)
-        vis_fix(vi) = true;
-        u(vi) = 0;
+    if ~vis_act(vi) && ~incontact(wno)
+        vis_act(vi) = true;
+        u_nv(vi) = 0;
     end
 end
 
-qvel_fix = u(vis_fix);
 
 %remove the cols of A corresponding to fixed rates to right hand side
 %solve only for free DoFs
 %Afree*qvel_free = b
-Afree = A(:,~vis_fix);
-b = v - A(:,vis_fix)*qvel_fix;
+Afree = A(:,~vis_act);
+b = v - A(:,vis_act)*u;
 
 
 qvel_free = Afree\b; %only the free elements
 
 qvel = zeros(nv,1);
-qvel(vis_fix) = qvel_fix;
-qvel(~vis_fix) = qvel_free;
+qvel(vis_act) = u;
+qvel(~vis_act) = qvel_free;
 
 
 if ~isempty(mdl.bsm_fh)

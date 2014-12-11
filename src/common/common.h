@@ -12,11 +12,11 @@
 #include <options.h>
 
 //for output only in Debug mode
-//#ifdef _DEBUG
-//#define DEBUG_CERR(x) std::cerr << x << std::endl;
-//#else
+#ifdef _DEBUG
+#define DEBUG_CERR(x) std::cerr << x << std::endl;
+#else
 #define DEBUG_CERR(x) //do {} while (0)
-//#endif
+#endif
 
 //defines based on options
 #if WMRSIM_DOUBLE_PRECISION

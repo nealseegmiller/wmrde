@@ -129,9 +129,6 @@ void rocky(WmrModel& mdl, Real state[], Real qvel[]) {
 	mdl.tc_j[0] = .1;
 
 	//FOR DYNAMIC MODEL
-
-	//set function pointers
-	mdl.controller = rockyController;
 	
 	mdl.wheelGroundContactModel = uniformWgc;
 
@@ -143,12 +140,9 @@ void rocky(WmrModel& mdl, Real state[], Real qvel[]) {
 	mdl.act_p[1] = 0; //Ki
 	mdl.act_p[2] = REALMAX; //max
 
-	mdl.holonomicJointConstraints = rockyConstraints;
-	mdl.set_njc(1);
-
 	//ODE contact model parameters
 	Real erp,cfm;
-	KpKdToErpCfm(Kp, Kp/20, .10, erp, cfm);
+	KpKdToErpCfm(Kp, Kp/20, .04, erp, cfm);
 	Real fds = 1.0/(Kp*1e-1);
 
 	setVec(nw,erp,mdl.erp_z);
@@ -158,7 +152,12 @@ void rocky(WmrModel& mdl, Real state[], Real qvel[]) {
 	mdl.erp_j[0] = .2;
 	mdl.cfm_j[0] = 1e-6;
 
-	
+	//FOR BOTH
+	//set function pointers
+	mdl.controller = rockyController;
+	mdl.holonomicJointConstraints = rockyConstraints;
+	mdl.set_njc(1);
+
 	//initialize the state vector
 	setEuler(DEGTORAD(0),DEGTORAD(0),DEGTORAD(0),euler);
 	setVec3(1.1, 0.0, (k10+k8+k6z-k1), pos);
@@ -321,6 +320,7 @@ void rockyConstraints( const WmrModel& mdl, const Real jd[], const Real jr[], //
 
 	Jc[D1_ji] = 1.0;
 	Jc[D2_ji] = 1.0;
+
 
 	if ( f != 0 ) { //if not null
 		//for dynamic sim

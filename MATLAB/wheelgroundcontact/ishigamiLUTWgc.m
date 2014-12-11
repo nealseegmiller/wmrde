@@ -1,4 +1,4 @@
-function [f,J] = ishigamiLutWgc(p,vc,Rw,dz)
+function [f,J] = ishigamiLUTWgc(p,vc,Rw,dz)
 %LUT- lookup table f = f(s,beta,dz)
 %only 3 calls to interp3
 
@@ -57,7 +57,7 @@ if nargin==1
     VarNames = {'S','B','DZ','FX','FY','FZ'};
     save('_autosave/LUT.mat','p',VarNames{:})
     
-    if 1
+    if 0
         %%
         %PLOT
         M={FX.Values, FY.Values, FZ.Values};
@@ -74,6 +74,7 @@ if nargin==1
     end
     
     if 0
+        %%
         %print to txt file
         FileNames = {'LUT_FX','LUT_FY','LUT_FZ'};
         
@@ -117,7 +118,6 @@ if nargout > 1
     Rw = [Rw, Rw, Rw, Rw+myeps, Rw];
     dz = [dz, dz, dz, dz, dz+myeps];
     
-
 end
 
    
@@ -164,7 +164,8 @@ if nargout > 1
     for j = [1 2 4 5] %loop over col
         i=i+1;
         %forward difference
-        I = i*nw+1:(i+1)*nw;
+        I = i*nw + (1:nw);
+        
         J(1,j,:) = (fx(I)-fx(1:nw))/myeps;
         J(2,j,:) = (fy(I)-fy(1:nw))/myeps;
         J(3,j,:) = (fz(I)-fz(1:nw))/myeps;

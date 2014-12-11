@@ -1,36 +1,43 @@
-This directory contains MATLAB code for the modeling and simulation of wheeled mobile robots (WMRs) and tracked vehicles
-Written by Neal Seegmiller in support of
-Dynamic Model Formulation and Calibration for Wheeled Mobile Robots, Ph.D. thesis, CMU-RI-TR-14-
+WMRDE, Wheeled Mobile Robot Dynamics Engine
+MATLAB code
 
+Copyright (c) 2014, Neal Seegmiller
 license info: see LICENSE.txt
-If you use this code in your research, please cite the above thesis or related publications by Neal Seegmiller.
 
-STYLE GUIDE
-Naming:
-scripts:		lower case, with underscores
-functions:		Mixed case, no underscores, start with lower case letter. myFunction()
-classes:		Mixed case, no underscores, start with upper case letter. MyClass
-variables:		lower case, with underscores. my_variable
+Please report bugs and serious omissions in documentation
 
-coords is an abbreviation for coordinates
-HT_framea_to_frameb, Homogeneous Transform from frame a to frame b coords
+GETTING STARTED
+To understand this code, start with the following demo scripts:
+test/test_simulate.m
+test/test_calibrate.m
 
-Vector/matrix orientation:
--Cartesian vectors (position, velocity, acceleration, etc.) are column vectors, so they can be operated on by rotation matrices.
--state and its derivatives are column vectors
--in time-indexed matrices, one row per time step
+Before running the demos:
+*enter the command:
+addpath(genpath('C:\Users\nseegmil.NREC-014635\Documents\Thesis\MATLAB'))
+but replace the string with the correct path for your machine
 
-Comment format for functions:
-% description
-% INPUT
-% input_a:		size type, description
-% (optional)
-% input_b
-% input_c
-% OUTPUT
-% output_a:	size type, description
-% Written by Neal Seegmiller, 
-% (license info)
+*change the strings in the following functions to the correct paths for your machine:
+CADdir.m
+resourcedir.m 
+datalogdir.m
+Directories are included in this wmrde repo with files for the demos.
 
+HOW TO MODEL A NEW VEHICLE
+Write a function to construct the vehicle model. Follow one of the examples in /demo/model
+e.g. rocky.m, zoe.m, talon.m, etc.
 
+Several function handles must be set in the WmrModel class.
+Write your own functions for the controller and (if applicable) joint constraints.
+Use one of the provided functions for the wheel-ground contact and actuator models, or write your own.
+
+You may contact me for help.
+
+OPTIONAL MODIFICATIONS
+*A method for geometric collision detection between the wheels/tracks and ground is provided in:
+/collision
+/surface
+You may use a different method, but it must set WheelContactGeom/TrackContactGeom objects for input to the forward kinematics/dynamics functions.
+
+*to switch between Euler angle/quaternion orientation representation, change SIZEORIENT() output
+Some code assumes Euler angles.
 

@@ -18,7 +18,7 @@ olen=3; %orientation vector length, assumes Euler angles!
 dlen=3+olen-1; %ns-nf
 ns = nf+dlen; %length of state vector
 nv = nf+5;
-[isorient,ispos,isjd] = stateIs(ns,nf);
+[isorient,ispos,isjd] = stateIs(ns);
 
 rear_wheel_fi = namesToInds(mdl,{'BL','BR'}); %rear wheel frame indices
 steer_fi = namesToInds(mdl,{'steerL','steerR'}); %steer frame indices
@@ -133,6 +133,11 @@ odomin.t = time;
 odomin.u = NaN(n,nv); %actuated elements of qvel
 odomin.u(:,steer_fi+5) = 0;
 odomin.u(:,rear_wheel_fi+5) = enc;
+
+vis_act = false(1,nv);
+vis_act([steer_fi rear_wheel_fi]+5) = true;
+odomin.vis_act = vis_act;
+odomin.u = odomin.u(:,vis_act);
 
 %measurements, attitude and steer angles
 ismeas = false(1,ns);

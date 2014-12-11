@@ -39,7 +39,7 @@ olen=3; %orientation length
 dlen=3+olen-1;
 ns = nf+dlen; %number of states
 nv = nf-1+6;
-isorient = stateIs(ns,nf);
+isorient = stateIs(ns);
 
 wsi = mdl.wheelframeinds+dlen; %indices of wheel rotations in state vector
 
@@ -78,29 +78,36 @@ for i = 1:(nsteps-1)
         contact_angles = -state(wsi)'; %contact_angles_rot0=0
     end
     
-    contacts = updateWheelContactGeomBlind(radii, HT_world(:,:,mdl.wheelframeinds), contact_angles);
+    contacts = updateWheelContactGeomBlind(HT_world(:,:,mdl.wheelframeinds), radii, contact_angles);
     %copy dz
     for wno = 1:nw
         contacts(wno).dz = dz(wno);
+        contacts(wno).incontact = true;
     end
         
     dt = odomin.t(i+1)-odomin.t(i);
-    u = odomin.u(i,:)';
 
     if do_dyn
         
+        u = ControllerIO();
+        u.cmd = odomin.u(i,:)';
+        u.interr = zeros(size(u.cmd));
+        u.vis_act = odomin.vis_act;
+        
         if isnan(qvel)
             %init qvel using kinematic model
-            qvel = forwardVelKin(mdl,state,u,HT_world,contacts);
+            qvel = forwardVelKin(mdl, state, u.cmd, u.vis_act, HT_world, contacts);
         end
         
-        [qacc,~,fdout] = forwardDyn(mdl, state, qvel, u, [], HT_parent, HT_world, contacts, dt);
+        [qacc,~,fdout] = forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt);
         qvel = qvel + qacc*dt; %symplectic Euler
         
         vc = fdout.vc0; %???
     else
+        u = odomin.u(i,:)';
+        vis_act = odomin.vis_act;
         
-        [qvel,vc] = forwardVelKin(mdl,state,u,HT_world,contacts); %compute velocity, DAE
+        [qvel,vc] = forwardVelKin(mdl, state, u, vis_act, HT_world, contacts); %compute velocity, DAE
     end
     %integrate velocity
     statedot = qvelToQdot(qvel, state(isorient), HT_world(1:3,1:3,1));

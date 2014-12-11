@@ -16,7 +16,7 @@ inline std::string ResourceDir() {
 	return std::string("C:/Users/nseegmil.NREC-014635/Documents/Thesis/src/resource/");
 }
 
-inline std::string VrmlDir() {
+inline std::string CADdir() {
 	return std::string("C:/Users/nseegmil.NREC-014635/Dropbox/CAD/");
 }
 

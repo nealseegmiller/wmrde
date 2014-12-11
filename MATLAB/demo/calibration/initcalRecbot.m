@@ -58,8 +58,8 @@ if do_dyn
     
 %     cinfo.isfixed([4 9 14]) = false; %pacejka_wgc Bx,By,Crr
 else
-%     cinfo.isfixed(1:nsp) = false;
-%     cinfo.isfixed(nsp+[1 2 5 6]) = false; %msteer bsteer xs ys
+    cinfo.isfixed(1:nsp) = false;
+    cinfo.isfixed(nsp+[1 2 5 6]) = false; %msteer bsteer xs ys
 end
 % cinfo.isfixed(cinfo.isstoch) = [false(1,3) true];
 
@@ -68,7 +68,7 @@ end
 dlen=6-1;
 ns=mdl.nf+dlen; %number of states)
 cinfo.inresidual=false(1,ns);
-[isorient,ispos] = stateIs(ns,mdl.nf);
+[isorient,ispos] = stateIs(ns);
 cinfo.inresidual(isorient) = [0 0 1]; %yaw
 cinfo.inresidual(ispos) = [1 1 0]; %x,y
 

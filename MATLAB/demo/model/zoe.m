@@ -53,6 +53,7 @@ for i = mdl.wheelframeinds
 end
 
 
+
 %FOR KINEMATIC MODEL
 mdl.min_npic = nw;
 
@@ -75,10 +76,8 @@ mdl.bsm_fh = [];
 %FOR DYNAMIC MODEL
 
 %set function handles
-mdl.controller_fh = @zoeController;
-% mdl.controller_fh = @zoeControllerSet;
 
-mdl.wgc_fh = @uniformWgc; %wheel slip model
+mdl.wgc_fh = @uniformWgc; %wheel-ground contact model
 [~,~,fh]=feval(mdl.wgc_fh);
 
 Kp=TotalMass*mdl.grav/(nw*-mdl.dz_target(1));
@@ -86,8 +85,8 @@ Kp=TotalMass*mdl.grav/(nw*-mdl.dz_target(1));
 mdl.wgc_p = wgcParams(fh,Kp); %wheel force model parameters
 
 %DEBUGGING
-if strcmp(func2str(fh),'ishigami_wgc') || ...
-   strcmp(func2str(fh),'ishigami_LUT_wgc')
+if strcmp(func2str(fh),'ishigamiWgc') || ...
+   strcmp(func2str(fh),'ishigamiLUTWgc')
     
     disp([mfilename ': modifying wheel-ground contact parameters'])
     mdl.wgc_p(2) = rad;
@@ -97,9 +96,7 @@ end
 mdl.act_fh = @PIact;
 mdl.act_p = [2e3 0 Inf]';
 
-if ~opts.fix_front_axle_roll
-    mdl.hjc_fh = @zoeConstraints; %additional constraints, roll averaging
-end
+
 
 %ODE contact model parameters
 [erp,cfm] = KpKdToErpCfm(Kp,Kp/20,.04);
@@ -112,6 +109,15 @@ mdl.fds_y = fds*ones(1,nw);
 if ~opts.fix_front_axle_roll
     mdl.erp_j = .2;
     mdl.cfm_j = 1e-6;
+end
+
+%FOR BOTH
+%set function handles
+mdl.controller_fh = @zoeController;
+% mdl.controller_fh = @zoeControllerSet;
+
+if ~opts.fix_front_axle_roll
+    mdl.hjc_fh = @zoeConstraints; %additional constraints, roll averaging
 end
 
 mdl.cov_p=zeros(4,1); %stochastic

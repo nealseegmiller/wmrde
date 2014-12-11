@@ -3,7 +3,8 @@
 //HT_world:		size nf, HT_world[i] is transform from frame i to world coords
 //contacts:		size nw
 //A:			3*npic x nv, Jacobian of contact point velocities with respect to joint space bias force
-void wheelJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], const WheelContactGeom contacts[], Real A[]) {
+//return nc:	3*npic, number of rows
+int wheelJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], const WheelContactGeom contacts[], Real A[]) {
 
 
 	//get from WmrModel
@@ -64,10 +65,12 @@ void wheelJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], 
 			row += 3;
 		}
 	}
+
+	return nc;
 }
 
 
-void trackJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], const TrackContactGeom contacts[], Real A[]) {
+int trackJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], const TrackContactGeom contacts[], Real A[]) {
 
 	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
 
@@ -117,7 +120,7 @@ void trackJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], 
 			Vec3 r; //translation vector
 
 			//sprocket angular rate
-			mulcVec3(HT_contact_to_world + COL0, rad, r); //temporary
+			mulcVec3(HT_contact_to_world + COL0, -rad, r); //temporary
 			copyVec3(r, A + S2I(row,TOQVELI(sprocket_fi),nc));
 
 			//traverse up the chain
@@ -160,6 +163,7 @@ void trackJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], 
 		
 	}
 
+	return nc;
 }
 
 
@@ -295,30 +299,30 @@ void forwardVelKin(const WmrModel& mdl, const Real state[], const Real u[], cons
 	int na = mdl.get_na();
 	const int* actframeinds = mdl.get_actframeinds();
 
-	bool vis_fix[MAXNV]; //is fixed rate in joint space vel
+	bool vis_act[MAXNV]; //is fixed rate in joint space vel
 	Real u_nv[MAXNV]; // size nv, padded
 
-	setVec(nv,false,vis_fix);
+	setVec(nv,false,vis_act);
 	
 	for (int ai=0; ai < na; ai++) { //actuator index
 		int vi = TOQVELI(actframeinds[ai]);
-		vis_fix[vi] = true;
+		vis_act[vi] = true;
 		u_nv[vi] = u[ai];
 	}
 
 	//DEBUGGING
-	/*
+	
 	//if wheel is not actuated and not in contact, make actuated to avoid rank deficiency
 	for (int wno=0; wno < nw; wno++) {
 		int fi = wheelframeinds[wno];
 		if (!frames[fi].isactuated && !incontact[wno]) {
 			int vi = TOQVELI(fi);
-			vis_fix[vi] = true;
+			vis_act[vi] = true;
 			u_nv[vi] = 0.0; //set wheel vel = zero
 			na++;
 		}
 	}
-	*/
+	
 
 	//remove cols of A corresponding to fixed rates to the right hand side
 	//Afree*qvel_free = b
@@ -333,7 +337,7 @@ void forwardVelKin(const WmrModel& mdl, const Real state[], const Real u[], cons
 	int nfree=0;
 	
 	for (int vi = 0; vi < nv; vi++) {
-		if ( vis_fix[vi] ) {
+		if ( vis_act[vi] ) {
 			addmMatCol(nc,vi,A, 0,-u_nv[vi],b); //remove to right hand side
 		} else {
 			copyMatCol(nc,vi,A, nfree,Afree); //copy column
@@ -346,7 +350,7 @@ void forwardVelKin(const WmrModel& mdl, const Real state[], const Real u[], cons
 	nfree = 0;
 
 	for (int vi=0; vi<nv; vi++) {
-		if ( vis_fix[vi] ) {
+		if ( vis_act[vi] ) {
 			qvel[vi] = u_nv[vi];
 		} else {
 			qvel[vi] = qvel_free[nfree];
@@ -378,7 +382,7 @@ void forwardVelKin(const WmrModel& mdl, const Real state[], const Real u[], cons
 
 //subfunction used by both odeKin and odeDyn
 //use mdl.min_npic for kinematic sim, 0 for dynamic sim
-void updateModelContactGeom(const WmrModel& mdl, const SurfaceVector& surfaces, const HomogeneousTransform HT_to_world[], const int min_npic, //inputs
+void updateModelContactGeom(const WmrModel& mdl, const SurfaceVector& surfaces, const HomogeneousTransform HT_world[], const int min_npic, //inputs
 	ContactGeom* contacts) { //outputs
 
 	//get from WmrModel
@@ -393,7 +397,7 @@ void updateModelContactGeom(const WmrModel& mdl, const SurfaceVector& surfaces, 
 
 		for (int wno = 0; wno < nw; wno++) {
 			int fi = wheelframeinds[wno];
-			updateWheelContactGeom(surfaces, HT_to_world[fi], frames[fi].rad, wcontacts[wno]);
+			updateWheelContactGeom(surfaces, HT_world[fi], frames[fi].rad, wcontacts[wno]);
 		}
 		whichPointsInContactWheel(min_npic, nw, wcontacts);
 
@@ -405,7 +409,7 @@ void updateModelContactGeom(const WmrModel& mdl, const SurfaceVector& surfaces, 
 			int fi = sprocketframeinds[tno]; //frame index
 
 			HomogeneousTransform HT_track_to_world;
-			composeHT(HT_to_world[frames[fi].parent_ind], frames[fi].HT_parent_jd0, HT_track_to_world);
+			composeHT(HT_world[frames[fi].parent_ind], frames[fi].HT_parent_jd0, HT_track_to_world);
 
 			updateTrackContactGeom(surfaces, HT_track_to_world, tcontacts[tno]);
 		}
@@ -414,7 +418,7 @@ void updateModelContactGeom(const WmrModel& mdl, const SurfaceVector& surfaces, 
 }
 
 void odeKin(const Real time, const Real y[], const WmrModel& mdl, const SurfaceVector& surfaces, ContactGeom* contacts, //inputs
-	Real ydot[], HomogeneousTransform HT_to_parent[] ) { //outputs
+	Real ydot[], HomogeneousTransform HT_parent[] ) { //outputs
 
 	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
 
@@ -426,18 +430,18 @@ void odeKin(const Real time, const Real y[], const WmrModel& mdl, const SurfaceV
 	mdl.controller(mdl, time, y, u, 0);
 
 	//convert state to Homogeneous Transforms
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF];
-	stateToHT(mdl,y,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_world[WmrModel::MAXNF];
+	stateToHT(mdl,y,HT_parent,HT_world);
 
 	//update contact geometry
-	updateModelContactGeom(mdl, surfaces, HT_to_world, mdl.min_npic, contacts);
+	updateModelContactGeom(mdl, surfaces, HT_world, mdl.min_npic, contacts);
 	
 	//compute joint space velocity
 	Real qvel[MAXNV];
-	forwardVelKin(mdl,y,u,HT_to_world,contacts,qvel,0);
+	forwardVelKin(mdl,y,u,HT_world,contacts,qvel,0);
 
 	//convert to time derivative of state
-	qvelToQdot(nf,qvel,y+SI_ORIENT,HT_to_world[0],ydot);
+	qvelToQdot(nf,qvel,y+SI_ORIENT,HT_world[0],ydot);
 
 }
 
@@ -478,8 +482,8 @@ void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, Cont
 		isfree[TOSTATEI(fi)] = !frames[fi].isfixed;
 
 	//allocate vars needed outside of fCost, fGradient
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF + WmrModel::MAXNW];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF + WmrModel::MAXNW];
+	HomogeneousTransform HT_parent[WmrModel::MAXNF + WmrModel::MAXNW];
+	HomogeneousTransform HT_world[WmrModel::MAXNF + WmrModel::MAXNW];
 	
 	//cast contacts
 	WheelContactGeom* wcontacts;
@@ -512,14 +516,14 @@ void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, Cont
 
 	//lambda closure, requires C++11
 	auto initTerrainContactCost = [&] ( const Real x_[] ) mutable -> Real {
-		//the following must be mutable: state, HT_to_parent, HT_to_world, ne, err, Jc
+		//the following must be mutable: state, HT_parent, HT_world, ne, err, Jc
 	
 		logicalIndexOut( ns, isfree, x_, state );
 
 		//convert state to Homogeneous Transforms
-		stateToHT(mdl,state, HT_to_parent,HT_to_world);		
+		stateToHT(mdl,state, HT_parent,HT_world);		
 
-		updateModelContactGeom(mdl, surfaces, HT_to_world, mdl.min_npic, contacts);
+		updateModelContactGeom(mdl, surfaces, HT_world, mdl.min_npic, contacts);
 
 		int npic = 0; //number of points in contact
 		if (nw > 0) {
@@ -559,7 +563,6 @@ void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, Cont
 	};
 	cost = initTerrainContactCost(x);
 
-
 	//lambda closure, requires C++11
 	auto initTerrainContactGradient = [&] ( Real grad_[] ) mutable {
 		//must evaluate cost function before this
@@ -582,9 +585,9 @@ void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, Cont
 		int nv = NUMQVEL(nf);
 
 		if (nw > 0)
-			wheelJacobians(mdl, HT_to_world, wcontacts, A);
+			wheelJacobians(mdl, HT_world, wcontacts, A);
 		else if (nt > 0)
-			trackJacobians(mdl, HT_to_world, tcontacts, A);
+			trackJacobians(mdl, HT_world, tcontacts, A);
 
 		//copy rows of A for z constraints to derrdot_dqvel
 		for (int i=0; i<npic; i++) { //point in contact number
@@ -604,7 +607,7 @@ void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, Cont
 		Real qdot[MAXNS];
 		for (int ri=0; ri<ne; ri++) { //row index
 			copyRowToVec(ne,nv,ri,derrdot_dqvel, qvel);
-			qvelToQdot(nf,qvel,state+SI_ORIENT,HT_to_world[0], qdot);
+			qvelToQdot(nf,qvel,state+SI_ORIENT,HT_world[0], qdot);
 			copyVecToRow(qdot, ne,ns,ri,derr_dstate);
 		}
 
@@ -630,7 +633,6 @@ void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, Cont
 		//std::cout << "derr_dx=\n"; printMatReal(ne,nfree,derr_dx,-1,-1); std::cout << std::endl;
 		//std::cout << "grad_=\n"; printMatReal(1,nfree,grad_,-1,-1); std::cout << std::endl;
 	};
-
 
 
 	for (iter=0; iter < max_iter; iter++) {

@@ -10,7 +10,7 @@ inline void Interp_xn ( const int dim, const Real lim[], const Real d[], const R
 
 	for (int i=0; i<dim; i++) {
 		//I[i] = (int) floor((x[i]-lim[i])/d[i]);
-		I[i] = xs_FloorToInt((x[i]-lim[i])/d[i]); //faster
+		I[i] = xs_FloorToInt((x[i]-lim[i])/d[i]); //faster?
 		xn[i] = (x[i] - (lim[i]+I[i]*d[i])) / d[i]; //rescale between 0 and 1
 	}
 }

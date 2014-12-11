@@ -176,7 +176,6 @@ void test_transform() {
 	std::cout << "euler=\n"; printEuler(euler,-1,-1);
 	std::cout << "angular velocity=\n"; printVec3(vel,-1,-1);
 	std::cout << "eulerrate=\n"; printEuler(eulerrate,-1,-1);
-	std::cout << "rol-yaw rate = " << eulerrate[0]-eulerrate[2] << std::endl << std::endl;
 	
 }
 
@@ -320,7 +319,7 @@ void test_spatial() {
 		t=clock();
 	
 		for (int i=0; i<n; i++) {
-			//multPluckerTMat6bPlucker(P,Is,Is2);
+			//multPluckerTMat6bPlucker(P,Is,Is2); //deprecated
 			multPluckerTInertiaPlucker(P,Is,Is2);
 		}
 
@@ -453,9 +452,9 @@ void test_matrix() {
 		//Eigen::Matrix<Real,SIZE,SIZE> B_;
 		//Eigen::Matrix<Real,SIZE,1> b_;
 
-		memcpy(A_.data(),A,sizeof(Real)*SIZE*SIZE);
-		memcpy(B_.data(),B0,sizeof(Real)*SIZE*SIZE);
-		memcpy(b_.data(),b,sizeof(Real)*SIZE);
+		memcpy(A_.data(), A, sizeof(Real)*SIZE*SIZE);
+		memcpy(B_.data(), B0, sizeof(Real)*SIZE*SIZE);
+		memcpy(b_.data(), b, sizeof(Real)*SIZE);
 
 		//std::cout << "Eigen:\n";
 		//std::cout << "A_=\n" << A_ << std::endl;
@@ -660,7 +659,7 @@ void test_updateTrackContactGeom() {
 	//track pose
 	HomogeneousTransform HT_track_to_world;
 	VecOrient orient = {0,0,0}; //assume WMRSIM_USE_QUATERNION 0
-	Vec3 pos = {3.0, 0, rad-.05};
+	Vec3 pos = {3.0, 0, rad-.01};
 
 	//adjust height of track
 	Real zsurf;
@@ -695,9 +694,9 @@ void test_stateToHT() {
 	int ns = NUMSTATE(nf);
 	
 	//convert state to homogeneous transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF];
-	stateToHT(mdl, state, HT_to_parent, HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF];
+	HomogeneousTransform HT_world[WmrModel::MAXNF];
+	stateToHT(mdl, state, HT_parent, HT_world);
 
 
 	//DEBUGGING, PRINT
@@ -706,15 +705,15 @@ void test_stateToHT() {
 	std::cout << std::endl;
 
 	for (int i=0; i<nf; i++) { 
-		std::cout << "HT_to_parent[" << i << "]=\n";
-		printHT(HT_to_parent[i],-1,-1);
+		std::cout << "HT_parent[" << i << "]=\n";
+		printHT(HT_parent[i],-1,-1);
 		std::cout << std::endl;
 	}
 	std::cout << std::endl;
 
 	for (int i=0; i<nf; i++) { 
-		std::cout << "HT_to_world[" << i << "]=\n";
-		printHT(HT_to_world[i],-1,-1);
+		std::cout << "HT_world[" << i << "]=\n";
+		printHT(HT_world[i],-1,-1);
 		std::cout << std::endl;
 	}
 
@@ -725,7 +724,7 @@ void test_stateToHT() {
 
 		t=clock();
 		for (int i=0; i<n; i++) {
-			stateToHT(mdl, state, HT_to_parent, HT_to_world);
+			stateToHT(mdl, state, HT_parent, HT_world);
 		}
 		t=clock()-t;
 		std::cout << "stateToHT()\n";
@@ -825,15 +824,15 @@ void test_wheelJacobians() {
 	//grid(surfs, ResourceDir() + std::string("gridsurfdata.txt") );
 
 	//convert state to homogeneous transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF + WmrModel::MAXNW];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF + WmrModel::MAXNW];
-	stateToHT(mdl,state,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF + WmrModel::MAXNW];
+	HomogeneousTransform HT_world[WmrModel::MAXNF + WmrModel::MAXNW];
+	stateToHT(mdl,state,HT_parent,HT_world);
 
 	//contact geometry
 	WheelContactGeom wcontacts[WmrModel::MAXNW];
 	ContactGeom* contacts = static_cast<ContactGeom*>(wcontacts);
 
-	updateModelContactGeom(mdl, surfs, HT_to_world, mdl.min_npic, contacts);
+	updateModelContactGeom(mdl, surfs, HT_world, mdl.min_npic, contacts);
 
 	//number of points in contact
 	int npic = 0;
@@ -845,7 +844,7 @@ void test_wheelJacobians() {
 	const int MAXNP = WmrModel::MAXNW; //max number of contact points
 	Real A[3*MAXNP * MAXNV];
 
-	wheelJacobians(mdl, HT_to_world, wcontacts, A);
+	wheelJacobians(mdl, HT_world, wcontacts, A);
 
 	//DEBUGGING, print
 	int ncc = 3*npic; //number of contact constraints
@@ -863,7 +862,7 @@ void test_wheelJacobians() {
 
 		t=clock();
 		for (int i=0; i<n; i++) {
-			wheelJacobians(mdl, HT_to_world, wcontacts, A);
+			wheelJacobians(mdl, HT_world, wcontacts, A);
 		}
 		t=clock()-t;
 		std::cout << "wheelJacobians()\n";
@@ -896,9 +895,9 @@ void test_trackJacobians() {
 	//grid(surfs, ResourceDir() + std::string("gridsurfdata.txt") );
 
 	//convert state to homogeneous transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF + WmrModel::MAXNW];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF + WmrModel::MAXNW];
-	stateToHT(mdl,state,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF + WmrModel::MAXNW];
+	HomogeneousTransform HT_world[WmrModel::MAXNF + WmrModel::MAXNW];
+	stateToHT(mdl,state,HT_parent,HT_world);
 
 	//contact geometry
 	TrackContactGeom tcontacts[WmrModel::MAXNW];
@@ -906,7 +905,7 @@ void test_trackJacobians() {
 
 	ContactGeom* contacts = static_cast<ContactGeom*>(tcontacts);
 
-	updateModelContactGeom(mdl, surfs, HT_to_world, mdl.min_npic, contacts);
+	updateModelContactGeom(mdl, surfs, HT_world, mdl.min_npic, contacts);
 
 	//number of points in contact
 	int npic = 0;
@@ -919,7 +918,7 @@ void test_trackJacobians() {
 	const int MAXNP = WmrModel::MAXNT * ContactGeom::MAXNP; //max number of contact points
 	Real A[3*MAXNP * MAXNV];
 
-	trackJacobians(mdl, HT_to_world, tcontacts, A);
+	trackJacobians(mdl, HT_world, tcontacts, A);
 
 	//DEBUGGING, print
 	int ncc = 3*npic; //number of contact constraints
@@ -937,7 +936,7 @@ void test_trackJacobians() {
 
 		t=clock();
 		for (int i=0; i<n; i++) {
-			trackJacobians(mdl, HT_to_world, tcontacts, A);
+			trackJacobians(mdl, HT_world, tcontacts, A);
 		}
 		t=clock()-t;
 		std::cout << "trackJacobians()\n";
@@ -988,12 +987,12 @@ void test_forwardVelKin() {
 	}
 
 	//convert state to homogeneous transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF + WmrModel::MAXNW];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF + WmrModel::MAXNW];
-	stateToHT(mdl,state,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF];
+	HomogeneousTransform HT_world[WmrModel::MAXNF];
+	stateToHT(mdl,state,HT_parent,HT_world);
 
 	//update contact geometry
-	updateModelContactGeom(mdl, surfs, HT_to_world, mdl.min_npic, contacts);
+	updateModelContactGeom(mdl, surfs, HT_world, mdl.min_npic, contacts);
 
 	//controller inputs
 	Real u[WmrModel::MAXNA];
@@ -1007,7 +1006,7 @@ void test_forwardVelKin() {
 	Vec3 vc[WmrModel::MAXNW];
 
 	//compute joint space velocity
-	forwardVelKin(mdl, state, u, HT_to_world, contacts, qvel, vc);
+	forwardVelKin(mdl, state, u, HT_world, contacts, qvel, vc);
 	
 	//PRINT
 	std::cout << "u =\n";
@@ -1033,7 +1032,7 @@ void test_forwardVelKin() {
 
 		t=clock();
 		for (int i=0; i<n; i++) {
-			forwardVelKin(mdl, state, u, HT_to_world, contacts, qvel, 0);
+			forwardVelKin(mdl, state, u, HT_world, contacts, qvel, 0);
 		}
 		t=clock()-t;
 		std::cout << "wheelJacobians()\n";
@@ -1127,31 +1126,31 @@ void test_subtreeInertias() {
 	const Frame* frames = mdl.get_frames();
 
 	//homogeneous transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF];
-	stateToHT(mdl,state,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF];
+	//HomogeneousTransform HT_world[WmrModel::MAXNF];
+	stateToHT(mdl,state,HT_parent,0);
 
 	//Plucker transforms
 	Mat6b Xup[WmrModel::MAXNF];
 	for (int fi=0; fi < nf; fi++)
-		invHTToPlucker(HT_to_parent[fi], Xup[fi]);
+		invHTToPlucker(HT_parent[fi], Xup[fi]);
 
 	//subtree inertias
 	Mat6b Is_subt[WmrModel::MAXNF];
 	subtreeInertias(mdl, Xup, Is_subt);
 
 	//PRINT
-	for (int fi=0; fi<nf; fi++) {
-		std::cout << "Is[" << fi << "]=\n";
-		printMat6b(frames[fi].get_Is(),-1,-1);
-		std::cout << std::endl;
-	}
+	//for (int fi=0; fi<nf; fi++) {
+	//	std::cout << "Is[" << fi << "]=\n";
+	//	printMat6b(frames[fi].get_Is(),-1,-1);
+	//	std::cout << std::endl;
+	//}
 
-	for (int fi=1; fi<nf; fi++) {
-		std::cout << "Xup[" << fi << "]=\n";
-		printMat6b(Xup[fi],-1,-1);
-		std::cout << std::endl;
-	}
+	//for (int fi=1; fi<nf; fi++) {
+	//	std::cout << "Xup[" << fi << "]=\n";
+	//	printMat6b(Xup[fi],-1,-1);
+	//	std::cout << std::endl;
+	//}
 
 	for (int fi=0; fi<nf; fi++) {
 		std::cout << "Is (subtree) [" << fi << "]=\n";
@@ -1193,14 +1192,14 @@ void test_jointSpaceInertia() {
 	const int nv = NUMQVEL(nf);
 
 	//homogeneous transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF];
-	stateToHT(mdl,state,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF];
+	HomogeneousTransform HT_world[WmrModel::MAXNF];
+	stateToHT(mdl,state,HT_parent,HT_world);
 
 	//Plucker transforms
 	Mat6b Xup[WmrModel::MAXNF];
 	for (int fi=0; fi < nf; fi++)
-		invHTToPlucker(HT_to_parent[fi], Xup[fi]);
+		invHTToPlucker(HT_parent[fi], Xup[fi]);
 
 	//subtree inertias
 	Mat6b Is_subt[WmrModel::MAXNF];
@@ -1250,14 +1249,14 @@ void test_jointSpaceBiasForce() {
 	const int nv = NUMQVEL(nf);
 
 	//homogeneous transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF];
-	stateToHT(mdl,state,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF];
+	HomogeneousTransform HT_world[WmrModel::MAXNF];
+	stateToHT(mdl,state,HT_parent,HT_world);
 
 	//Plucker transforms
 	Mat6b Xup[WmrModel::MAXNF];
 	for (int fi=0; fi < nf; fi++)
-		invHTToPlucker(HT_to_parent[fi], Xup[fi]);
+		invHTToPlucker(HT_parent[fi], Xup[fi]);
 
 	//joint bias force
 	//DEBUGGING
@@ -1268,6 +1267,7 @@ void test_jointSpaceBiasForce() {
 	jointSpaceBiasForce(mdl,Xup,qvel,C);
 
 	//PRINT
+	std::cout << "qvel=\n"; printMatReal(nv,1,qvel,-1,-1);
 	std::cout << "C=\n"; printMatReal(nv,1,C,-1,-1);
 
 	if (1) {
@@ -1335,30 +1335,28 @@ void test_forwardDyn() {
 	//initTerrainContact(mdl, surfs, contacts, state); //DEBUGGING
 
 	//convert state to Homogeneous Transforms
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF + WmrModel::MAXNW];
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF + WmrModel::MAXNW];
-	stateToHT(mdl,state,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_parent[WmrModel::MAXNF + WmrModel::MAXNW];
+	HomogeneousTransform HT_world[WmrModel::MAXNF + WmrModel::MAXNW];
+	stateToHT(mdl,state,HT_parent,HT_world);
 
 	//update contact geometry
-	updateModelContactGeom(mdl, surfs, HT_to_world, 0, contacts);
+	updateModelContactGeom(mdl, surfs, HT_world, 0, contacts);
 
 	//controller inputs
-	Real u[WmrModel::MAXNA];
+	ControllerIO u;
 	Real time = 0;
 	
-	mdl.controller(mdl, 0, state, u, 0);
+	mdl.controller(mdl, 0, state, u.cmd, 0);
 
 	//additional inputs
-	Real interr[WmrModel::MAXNA];
-	setVec(mdl.get_na(),0.0,interr);
+	setVec(mdl.get_na(),0.0,u.interr);
 
 	Real dt = .04; //time step
 
 	//outputs
 	Real qacc[MAXNV];
-	Real err[WmrModel::MAXNA];
 
-	forwardDyn(mdl, state, qvel, u, interr, HT_to_parent, HT_to_world, contacts, dt, qacc, err);
+	forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt, qacc);
 
 	//DEBUGGING, print
 	std::cout << "state=\n"; printMatReal(ns,1,state,-1,-1); std::cout << std::endl;
@@ -1373,7 +1371,7 @@ void test_forwardDyn() {
 
 		t=clock();
 		for (int i=0; i<n; i++) {
-			forwardDyn(mdl, state, qvel, u, interr, HT_to_parent, HT_to_world, contacts, dt, qacc, err);
+			forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt, qacc);
 		}
 		t=clock()-t;
 		std::cout << "forwardDyn()\n";
@@ -1386,13 +1384,16 @@ void test_forwardDyn() {
 void test_simulate() {
 
 	//options
-	bool do_anim = true;
-	bool do_dyn = true;
+	bool do_dyn = true; //do dynamic simulation, else kinematic
+	bool use_erp_cfm = false;
+	bool ideal_actuators = true;
+	bool do_anim = true; //do animation
 
 	const Real dt = .04;
 	const int nsteps = (int) floor(10.0/dt);
 	Real time = 0;
 
+	//for allocation
 	const int MAXNS = NUMSTATE(WmrModel::MAXNF);
 	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
 	const int MAXNY = MAXNS+MAXNV+WmrModel::MAXNA; //for dynamic sim
@@ -1402,17 +1403,21 @@ void test_simulate() {
 	Real state[MAXNS];
 	Real qvel[MAXNV]; //for dynamic sim
 
-
-	zoe(mdl,state,qvel);
-	//rocky(mdl,state,qvel);
+	//uncomment one of the following:
+	//zoe(mdl,state,qvel);
+	rocky(mdl,state,qvel);
 	//talon(mdl,state,qvel);
+
+	//also uncomment the corresponding scene function below!
 
 	//initialize wheel-ground contact model
 	mdl.wheelGroundContactModel(0, mdl.wgc_p, 0, 0, 0, //inputs
 		0, 0); //outputs
 
-	//mdl.wheelGroundContactModel=0; //use erp, cfm
-	mdl.actuatorModel=0; //ideal actuators
+	if (use_erp_cfm)
+		mdl.wheelGroundContactModel=0;
+	if (ideal_actuators)
+		mdl.actuatorModel=0;
 
 	//get from WmrModel
 	const int nf = mdl.get_nf();
@@ -1428,7 +1433,8 @@ void test_simulate() {
 	SurfaceVector surfs;
 
 	//flat(surfs);
-	//ramp(surfs);
+	//ramp(surfs); //must also uncomment flat
+
 	grid(surfs, ResourceDir() + std::string("gridsurfdata.txt") );
 
 	//init contact geometry
@@ -1466,15 +1472,17 @@ void test_simulate() {
 	copyVec(ny,y,y0); 
 
 	//allocate
-	HomogeneousTransform HT_to_parent[WmrModel::MAXNF];
+	HomogeneousTransform HT_parent[WmrModel::MAXNF];
 
 #if WMRSIM_ENABLE_ANIMATION
 	WmrAnimation anim;
 	if (do_anim) { //animate
 		anim.start();
 
-		zoeScene(mdl, anim);
-		//rockyScene(mdl, anim);
+		//uncomment the scene function that corresponds to the model function above
+
+		//zoeScene(mdl, anim);
+		rockyScene(mdl, anim);
 		//talonScene(mdl, tcontacts, anim);
 
 		for (int i=0; i<surfs.size(); i++)
@@ -1487,9 +1495,9 @@ void test_simulate() {
 	for (int i=0; i<nsteps; i++) {
 
 		if (do_dyn) {
-			odeDyn(time, y, mdl, surfs, contacts, dt, ydot, HT_to_parent);
+			odeDyn(time, y, mdl, surfs, contacts, dt, ydot, HT_parent);
 		} else {
-			odeKin(time, y, mdl, surfs, contacts, ydot, HT_to_parent);
+			odeKin(time, y, mdl, surfs, contacts, ydot, HT_parent);
 		}
 		addmVec(ny,ydot,dt,y);
 		time += dt;
@@ -1497,7 +1505,7 @@ void test_simulate() {
 
 #if WMRSIM_ENABLE_ANIMATION
 		if (do_anim) {
-			anim.updateNodesLines(nf, HT_to_parent, nw + nt, contacts);
+			anim.updateNodesLines(nf, HT_parent, nw + nt, contacts);
 
 			if (!anim.updateRender())
 				goto stop;
@@ -1523,7 +1531,6 @@ void test_simulate() {
 	stop: //goto
 #endif
 	
-	//TODO
 	if (0) {
 		//time it
 		int n= (int) 100;
@@ -1537,9 +1544,9 @@ void test_simulate() {
 
 			for (int i=0; i<nsteps; i++) {
 				if (do_dyn) {
-					odeDyn(time, y, mdl, surfs, contacts, dt, ydot, HT_to_parent);
+					odeDyn(time, y, mdl, surfs, contacts, dt, ydot, HT_parent);
 				} else {
-					odeKin(time, y, mdl, surfs, contacts, ydot, HT_to_parent);
+					odeKin(time, y, mdl, surfs, contacts, ydot, HT_parent);
 				}
 				addmVec(ny,ydot,dt,y);
 				time += dt;

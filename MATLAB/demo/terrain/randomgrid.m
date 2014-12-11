@@ -8,11 +8,11 @@ function surface = randomgrid()
 % CorrLength = 1;
 
 % %for Zoe
-lx = 20;
-ly = 10;
-ppm = 10;
-RmsHeight = .15;
-CorrLength = .8;
+% lx = 20;
+% ly = 10;
+% ppm = 10;
+% RmsHeight = .15;
+% CorrLength = .8;
 
 % lx = 20;
 % ly = 10;
@@ -21,11 +21,11 @@ CorrLength = .8;
 % CorrLength = 5;
 
 % %for Rocky7
-% lx = 10;
-% ly = 5;
-% ppm = 20;
-% RmsHeight = .05;
-% CorrLength = 0.2;
+lx = 10;
+ly = 5;
+ppm = 20;
+RmsHeight = .1;
+CorrLength = 0.8;
 
 cx = 4; %center
 cy = 0;

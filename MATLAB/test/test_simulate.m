@@ -5,7 +5,11 @@ close all
 clc
 
 %OPTIONS
-opts.dyn = 0; %dynamic sim (else kinematic)
+opts.dyn = 1; %dynamic sim (else kinematic)
+%for dynamic sim
+opts.use_erp_cfm = 0; %use error reduction parameters & constraint force mixing like Open Dynamics Engine
+opts.ideal_actuators = 1;
+
 opts.initincontact = 1;
 opts.log = 1;
 opts.animate = 1;
@@ -15,9 +19,10 @@ opts.profile = 0;
 dt = .04;
 nsteps = 10/dt + 1;
 
+%uncomment one of the following:
 % model_fh = @zoe;
-% model_fh = @rocky;
-model_fh = @talon;
+model_fh = @rocky;
+% model_fh = @talon;
 
 %make WmrModel object
 if opts.animate
@@ -26,9 +31,15 @@ else
     [mdl, state, qvel] = feval(model_fh);
 end
 
+feval(mdl.wgc_fh,mdl.wgc_p); %DEBUGGING, initialize wheel-ground contact model
+
 mdl.bsm_fh = []; %DEBUGGING
-% mdl.wgc_fh = []; %DEBUGGING, use erp, cfm
-mdl.act_fh = []; %DEBUGGING, ideal actuators
+if opts.use_erp_cfm
+    mdl.wgc_fh = [];
+end
+if opts.ideal_actuators
+    mdl.act_fh = [];
+end
 
 nf = mdl.nf;
 nw = mdl.nw;
@@ -36,8 +47,9 @@ na = mdl.na;
 
 %make terrain
 surfs = {};
+
 % surfs{end+1} = flat();
-% surfs{end+1} = ramp();
+% surfs{end+1} = ramp(); %must also uncomment flat
 
 setseed(123);
 surfs{end+1} = randomgrid();

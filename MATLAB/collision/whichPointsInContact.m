@@ -5,6 +5,9 @@ function contacts = whichPointsInContact(contacts,min_npic)
 %           1xnt array of TrackContactGeom objects
 %min_npic:  scalar, minimum number of points in contact
 
+%options
+do_allpic = 0; %all points in contact
+
 %shortcut (for dynamic sim)
 if min_npic == 0
     for wtno = 1:length(contacts)
@@ -41,7 +44,9 @@ if npic == np
     return
 end 
 
-% min_npic = sum(~isinf(dz)); %DEBUGGING! all points in contact
+if do_allpic
+    min_npic = sum(~isinf(dz)); %DEBUGGING! all points in contact
+end
 
 ind0 = max(npic,min_npic); %at least min_npic wheels must be in contact
 [~,isort] = sort(dz);

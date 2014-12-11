@@ -96,10 +96,6 @@ void zoe(WmrModel& mdl, Real state[], Real qvel[]) {
 		mdl.tc_j[0] = .1;
 
 	//FOR DYNAMIC SIM
-
-	//set function pointers
-	mdl.controller = zoeController;
-
 	mdl.wheelGroundContactModel = uniformWgc;
 
 	Real Kp = TotalMass*mdl.grav/(nw*-mdl.dz_target[0]);
@@ -109,11 +105,6 @@ void zoe(WmrModel& mdl, Real state[], Real qvel[]) {
 	mdl.act_p[0] = 2e3; //Kp
 	mdl.act_p[1] = 0.0; //Ki
 	mdl.act_p[2] = REALMAX; //max
-
-	if (!FIX_FRONT_AXLE_ROLL) {
-		mdl.holonomicJointConstraints = zoeConstraints;
-		mdl.set_njc(1);
-	}
 
 	//ODE contact model parameters
 	Real erp,cfm;
@@ -127,6 +118,15 @@ void zoe(WmrModel& mdl, Real state[], Real qvel[]) {
 	if (!FIX_FRONT_AXLE_ROLL) {
 		mdl.erp_j[0] = .2;
 		mdl.cfm_j[0] = 1e-6;
+	}
+
+	//FOR BOTH
+	//set function pointers
+	mdl.controller = zoeController;
+
+	if (!FIX_FRONT_AXLE_ROLL) {
+		mdl.holonomicJointConstraints = zoeConstraints;
+		mdl.set_njc(1);
 	}
 
 	//initialize the state vector
@@ -188,7 +188,7 @@ void zoeController(const WmrModel& mdl, const Real time, const Real state[], //i
 
 	Real speed,turnrad; //commanded speed, turn radius
 
-	speed = 1.0;
+	speed = .5;
 	turnrad = 1000;
 
 	

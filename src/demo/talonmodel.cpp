@@ -74,10 +74,6 @@ void talon(WmrModel& mdl, Real state[], Real qvel[]) {
 	setVec(nt,.1,mdl.tc_z);
 
 	//FOR DYNAMIC SIM
-
-	//set function pointers
-	mdl.controller = talonController;
-
 	mdl.wheelGroundContactModel = uniformWgc;
 
 	int npflat = 3;
@@ -100,6 +96,8 @@ void talon(WmrModel& mdl, Real state[], Real qvel[]) {
 	setVec(nt,fds,mdl.fds_x);
 	setVec(nt,fds,mdl.fds_y);
 
+	//FOR BOTH
+	mdl.controller = talonController;
 
 	//initialize the state vector
 	setEuler(DEGTORAD(0),DEGTORAD(0),DEGTORAD(0),euler);

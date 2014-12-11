@@ -21,19 +21,19 @@ void zoeScene(const WmrModel& mdl, WmrAnimation& anim) {
 	std::string filename;
 
 	i = mdl.nameToInd("Body");
-	filename = VrmlDir() + std::string("Zoe/ZoeBody.wrl");
+	filename = CADdir() + std::string("Zoe/ZoeBody.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	i = mdl.nameToInd("SteerFront");
-	filename = VrmlDir() + std::string("Zoe/ZoeFrontAxle.wrl");
+	filename = CADdir() + std::string("Zoe/ZoeFrontAxle.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	i = mdl.nameToInd("SteerRear");
-	filename = VrmlDir() + std::string("Zoe/ZoeRearAxle.wrl");
+	filename = CADdir() + std::string("Zoe/ZoeRearAxle.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	for (int wno = 0; wno < nw; wno++) {
-		filename = VrmlDir() + std::string("Zoe/ZoeWheel.wrl");
+		filename = CADdir() + std::string("Zoe/ZoeWheel.wrl");
 		anim.addEntityVrml(anim.get_node(wheelframeinds[wno]), filename, -1, draw_faces, draw_edges);
 	}
 

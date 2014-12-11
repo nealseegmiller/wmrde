@@ -68,10 +68,6 @@ mdl.bsm_p = [];
 
 
 %FOR DYNAMIC MODEL
-
-%set function handles
-mdl.controller_fh = @skidsteerController;
-
 mdl.wgc_fh = @uniformWgc; %wheel slip model
 [~,~,fh]=feval(mdl.wgc_fh);
 
@@ -83,8 +79,6 @@ mdl.wgc_p = wgcParams(fh,Kp); %wheel-ground contact model parameters
 mdl.act_fh = @PIact;
 mdl.act_p = [2e3 0 Inf]';
 
-mdl.cov_p = zeros(4,1);
-
 %ODE contact model parameters
 [erp,cfm] = KpKdToErpCfm(Kp,Kp/20,.04);
 fds = 1/(.1*Kp);
@@ -95,6 +89,10 @@ mdl.fds_x = fds*ones(1,nt);
 mdl.fds_y = fds*ones(1,nt);
 mdl.erp_j = .2;
 mdl.cfm_j = 1e-6;
+
+%FOR BOTH
+mdl.controller_fh = @skidsteerController;
+mdl.cov_p = zeros(4,1);
 
 
 %initialize state

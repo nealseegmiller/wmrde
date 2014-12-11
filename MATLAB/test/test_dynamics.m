@@ -11,10 +11,10 @@ clc
 [mdl, state] = zoe();
 % [mdl, state] = rocky();
 
-[HT_to_parent,HT_to_world] = stateToHT(mdl,state);
+HT_parent = stateToHT(mdl,state);
 
 % Is = mdl.Is
-Xup = invHTsToPluckers(HT_to_parent);
+Xup = invHTsToPluckers(HT_parent);
 Is_subt = subtreeInertias(mdl,Xup)
 
 if 1
@@ -42,9 +42,9 @@ clc
 [mdl, state] = zoe();
 % [mdl, state] = rocky();
 
-[HT_to_parent,HT_to_world] = stateToHT(mdl,state);
+[HT_parent,HT_world] = stateToHT(mdl,state);
 
-Xup = invHTsToPluckers(HT_to_parent);
+Xup = invHTsToPluckers(HT_parent);
 Is_subt = subtreeInertias(mdl,Xup);
 
 H = jointSpaceInertia(mdl,Xup,Is_subt)
@@ -74,9 +74,9 @@ clc
 [mdl, state, qvel] = zoe();
 % [mdl, state, qvel] = rocky();
 
-[HT_to_parent,HT_to_world] = stateToHT(mdl,state);
+[HT_parent,HT_world] = stateToHT(mdl,state);
 
-Xup = invHTsToPluckers(HT_to_parent);
+Xup = invHTsToPluckers(HT_parent);
 
 qvel = (1:length(qvel))' %DEBUGGING
 
@@ -137,18 +137,22 @@ end
 contacts = updateModelContactGeom(mdl, surfs, HT_world, 0, contacts);
 
 %get control inputs
-u_ = feval(mdl.controller_fh,mdl,0,state);
-u = NaN(nv,1);
-u(mdl.actframeinds+5) = u_;
+u = ControllerIO();
+
+u.cmd = feval(mdl.controller_fh,mdl,0,state);
+
+u.vis_act = false(1,nv); 
+u.vis_act(mdl.actframeinds+5) = true;
+
 %***end copied section
 
-interr = zeros(mdl.na,1);
+u.interr = zeros(mdl.na,1);
 dt = .04;
 
 state
 qvel
 % u_
-qacc = forwardDyn(mdl, state, qvel, u, interr, HT_parent, HT_world, contacts, dt)
+qacc = forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt)
 
 
 if 1
@@ -158,7 +162,7 @@ if 1
     
     tic
     for i=1:(n*irf)
-        qacc = forwardDyn(mdl, state, qvel, u, interr, HT_parent, HT_world, contacts, dt);
+        qacc = forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt);
     end
     t=toc;
 

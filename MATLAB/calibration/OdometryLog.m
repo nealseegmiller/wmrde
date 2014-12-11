@@ -89,7 +89,7 @@ classdef OdometryLog < handle %handle class to avoid unnecessary copying in func
             n = size(obj.state,1);
             ns = size(obj.state,2);
             nf = size(obj.qvel,2)-5;
-            [isorient,ispos] = stateIs(ns,nf);
+            [isorient,ispos] = stateIs(ns);
             tsensor = obj.HT_sensor_to_body(1:3,4);
             
             out = zeros(n,3);

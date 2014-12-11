@@ -72,7 +72,9 @@ void eigenSolveFixed( const int nrows, const int ncols, Real* A, Real* b, Real* 
 	}
 #endif
 	
-	DEBUG_CERR("resorting to eigenSolveDynamic, nrows = " << nrows << ", ncols = " << ncols)
+#if PRINT_MATRIX_SIZE_IF_DYNAMIC
+	std::cout << "resorting to eigenSolveDynamic, nrows = " << nrows << ", ncols = " << ncols << std::endl;
+#endif
 
 	eigenSolveDynamic(nrows, ncols, A, b, x); //fail safe
 }
@@ -116,7 +118,9 @@ void eigenSubsetFixed( const int nrows, const int ncols, Real* A, const Real tol
 	}
 #endif
 
-	DEBUG_CERR("resorting to eigenSubsetDynamic, nrows = " << nrows << ", ncols = " << ncols)
+#if PRINT_MATRIX_SIZE_IF_DYNAMIC
+	std::cout << "resorting to eigenSubsetDynamic, nrows = " << nrows << ", ncols = " << ncols << std::endl;
+#endif
 
 	eigenSubsetDynamic( nrows, ncols, A, tol, is_ind ); //fail safe
 
@@ -159,7 +163,9 @@ void eigenCholFixed( const int n, Real* A, Real* L) {
 	}
 #endif
 
-	DEBUG_CERR("resorting to eigenCholDynamic, n = " << n)
+#if PRINT_MATRIX_SIZE_IF_DYNAMIC
+	std::cout << "resorting to eigenCholDynamic, n = " << n << stc::endl;
+#endif
 
 	eigenCholDynamic(n,A,L); //fail safe
 

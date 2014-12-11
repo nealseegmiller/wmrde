@@ -234,7 +234,10 @@ inline void multMatVec6b(const Mat6b M, const Vec6b v, Vec6b w) {
 }
 
 
-//DON'T USE THESE FUNCTIONS DIRECTLY
+/*
+//multiply matrix by Plucker transform
+//These functions are deprecated, use multPluckerTInertiaPlucker()
+
 //R=P'*M
 
 //[R0 R2] = [P0' P1'] [M0 M2]
@@ -278,10 +281,6 @@ inline void multMat6bPlucker(const Mat6b M, const Mat6b P, Mat6b R) {
 	multMatMat3(M+BLOCK3,P+BLOCK3,R+BLOCK3); 
 }
 
-
-
-//USE THIS FUNCTION DIRECTLY
-//transform matrix using Plucker transform
 //R = P*M*P'
 inline void multPluckerTMat6bPlucker( const Mat6b P, const Mat6b M, Mat6b R) {
 	Mat6b Tmp;
@@ -289,7 +288,7 @@ inline void multPluckerTMat6bPlucker( const Mat6b P, const Mat6b M, Mat6b R) {
 	multMat6bPlucker(M,P,Tmp);
 	multPluckerTMat6b(P,Tmp,R);
 }
-
+*/
 
 //copy to/from array without extra elements for alignment
 inline void copyVec6bToArray(const Vec6b Source, Real* Dest) {

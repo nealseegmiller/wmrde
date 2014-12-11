@@ -16,9 +16,6 @@ if nargin < 6
 end
 
 %get from WmrModel object
-nf = mdl.nf;
-nv = nf+5;
-
 isorient = stateIs(length(y));
 
 state=y;
@@ -31,17 +28,16 @@ contacts = updateModelContactGeom(mdl, surfaces, HT_world, mdl.min_npic, contact
 
 %get control inputs
 if isempty(pathno)
-    u_ = feval(mdl.controller_fh,mdl,time,state);
+    u = feval(mdl.controller_fh,mdl,time,state);
 else
-    u_ = feval(mdl.controller_fh,mdl,time,state,pathno);
+    u = feval(mdl.controller_fh,mdl,time,state,pathno);
 end
-u = NaN(nv,1);
-u(mdl.actframeinds+5) = u_;
+vis_act = [];
 
 tstart = tic;
 
 %compute velocity, DAE
-[qvel,vc] = forwardVelKin(mdl,state,u,HT_world,contacts);
+[qvel,vc] = forwardVelKin(mdl,state,u,vis_act,HT_world,contacts);
     
 motiontime = toc(tstart);
 
@@ -54,7 +50,7 @@ out = OdeOutput();
 out.HT_parent = HT_parent;
 out.HT_world = HT_world;
 out.contacts = contacts;
-out.u = u_;
+out.u = u;
 out.vc = vc;
 out.motiontime = motiontime;
 

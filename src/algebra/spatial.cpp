@@ -40,7 +40,8 @@ void fromSpatialInertia(const Mat6b Is, Real m, Vec3 c, Mat3 I) {
 //transform the coordinates of spatial inertia
 //R = P*I*P'
 //Plucker transforms & spatial inertia have special structure
-//use MATLAB symbolic toolbox to speed up computation
+//code generated using MATLAB symbolic toolbox
+//sym_transform_spatial_inertia.m
 void multPluckerTInertiaPlucker(const Mat6b P, const Mat6b I, Mat6b R) {
 
 	Real I1_11 = I[0];

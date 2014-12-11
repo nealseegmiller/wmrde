@@ -1,12 +1,16 @@
-function surfaces = terrain()
+function surfs = terrain()
 %output a cell array of surface objects
 
-surfaces = {};
+surfs = {};
 
-% surfaces{end+1} = flat();
-% surfaces{end+1} = plane();
-% surfaces{end+1} = ramp();
-surfaces{end+1} = randomgrid();
-% surfaces{end+1} = fractalgrid();
-% surfaces{end+1} = ditch();
-% surfaces = [surfaces, rocks(surfaces)];
+% surfs{end+1} = flat();
+% surfs{end+1} = plane();
+% surfs{end+1} = ramp();
+
+surfs{end+1} = randomgrid();
+printGridSurf(surfs{end},[resourcedir() 'gridsurfdata.txt'])
+
+
+% surfs{end+1} = fractalgrid();
+% surfs{end+1} = ditch();
+% surfs = [surfs, rocks(surfs)];

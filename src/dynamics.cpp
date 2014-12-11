@@ -161,60 +161,27 @@ void jointSpaceBiasForce(const WmrModel& mdl, const Mat6b Xup[], const Real qvel
 }
 
 
-void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], const Real u_cmd[], const Real u_interr[], 
-	const HomogeneousTransform HT_parent[], const HomogeneousTransform HT_world[], const ContactGeom* contacts, const Real dt, //inputs
-	Real qacc[], Real u_err[]) { //outputs
-	//TODO, additional outputs class
-
-	//requires large stack size (10 Mb)
-	//http://msdn.microsoft.com/en-US/library/8cxs58a6(v=vs.120).aspx
-	//Configuration Properties -> Linker -> System -> Stack Reserve Size
-	//TODO, allocate large matrices on heap?
-
+//compute joint space inertia and bias force
+void HandC(const WmrModel& mdl, const HomogeneousTransform HT_parent[], const Real qvel[], //input
+	Real H[], Real HL[], Real C[]) { //output
 
 	//OPTIONS
-
-	const bool use_constraints = mdl.use_constraints;
-
-	//approximations for faster speed
-	//reuse H, joint space inertia matrix
-	//TODO, make these inputs?
-	const bool do_reuse_H = false;
+	const bool do_reuse_H = false; //reuse joint space inertia
 	const bool do_approx_C = false; //treat WMR as single rigid body when computing joint space bias force
 
-	static bool H_init = false; //flag, H is initialized
-
-	//for optimization
-	const Real qr_tol = 1e-3;
-	const int max_iter = 20;
-	const Real cost_tol = 1;
-	const Real dcost_tol = cost_tol/10;
-
-
 	//for allocation
-	const int MAXNJ = WmrModel::MAXNF-1; //max number of joints (one per frame except body frame)
 	const int MAXNV = NUMQVEL(WmrModel::MAXNF); //max size of qvel
-	const int MAXNP = WmrModel::MAXNT * ContactGeom::MAXNP; //max number of contact points
-	const int MAXNC = 3*MAXNP + WmrModel::MAXNA + WmrModel::MAXNJC; //max num constraints
 
-	//for indexing
-	const int nf = mdl.get_nf(); //number of frames in WmrModel object
-	const int nj = nf - 1; //number of joints
-	const int nw = mdl.get_nw(); //number of wheels
-	const int nt = mdl.get_nt(); //number of tracks
-	const int nv = NUMQVEL(nf); //size of qvel
-	const int na = mdl.get_na(); //number of actuated joints
+	//get from WmrModel
+	const int nf = mdl.get_nf();
+	const int nv = NUMQVEL(nf);
 
-	const Frame* frames = mdl.get_frames();
-
-	const int* wheelframeinds = mdl.get_wheelframeinds();
-	const int* sprocketframeinds = mdl.get_sprocketframeinds();
-	const int* actframeinds = mdl.get_actframeinds();
-
-
-	//init in case of ideal actuators
-	if (mdl.actuatorModel == 0) 
-		setVec(na, 0.0, u_err);
+	//static vars
+	//TODO, eliminate static vars, store in WmrModel instead
+	static Mat6b Is_subt[WmrModel::MAXNF];
+	static Real H_prev[MAXNV*MAXNV]; 
+	static Real HL_prev[MAXNV*MAXNV]; //lower triangular
+	static bool H_init = false; //flag, H is initialized
 
 	//convert HomogeneousTransforms to Plucker transforms
 	//Xup[i] transforms spatial *motion* vector from frame parent(i) to i coords
@@ -223,29 +190,32 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 	for (int fi=0; fi<nf; fi++) 
 		invHTToPlucker(HT_parent[fi],Xup[fi]);
 
-	//joint space inertia
-	static Real H[MAXNV*MAXNV]; 
+	//joint space inertia, H
+	
 	//Is_subt[i] is the 6x6 spatial inertia of the subtree rooted at frame i, in frame i coords.
 	
-	static Mat6b Is_subt[WmrModel::MAXNF]; //also used to approximate C
-
 	if (!do_reuse_H || !H_init) {
 		subtreeInertias(mdl, Xup, Is_subt); //expensive!
 		jointSpaceInertia(mdl,Xup,Is_subt,H);
+
+		copyMat(nv,nv,H,H_prev);
+	} else {
+		copyMat(nv,nv,H_prev,H);
 	}
 
 	//Cholesky decomposition of H
-	static Real HL[MAXNV*MAXNV]; //lower triangular
 	if (!do_reuse_H || !H_init) {
-		chol(nv,H,HL);		
+		chol(nv,H,HL);
+		copyMat(nv,nv,HL,HL_prev);
+	} else {
+		copyMat(nv,nv,HL_prev,HL);
 	}
 	H_init = true;
 
-	//joint space bias force
-	Real C[MAXNV];	
+	//joint space bias force, C
 
 	if (!do_approx_C) {
-		jointSpaceBiasForce(mdl,Xup,qvel0,C);
+		jointSpaceBiasForce(mdl,Xup,qvel,C);
 
 	} else {
 		//approximate, all inertia at body frame
@@ -259,162 +229,261 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 
 		Vec6b tmp;
 
-		multMatVec6b(Is_subt[0],qvel0,tmp);
-		crossVec6bForce(qvel0,tmp,C);
+		multMatVec6b(Is_subt[0],qvel,tmp);
+		crossVec6bForce(qvel,tmp,C);
 		multMatVec6b(Is_subt[0],a_grav,tmp);
 		addVec6b(C,tmp,C);
 	}
+}
 
-	//applied force
-	Real tau[MAXNV];
-	setVec(nv,0.0,tau);
+//u not const because u.err is output
+void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], ControllerIO& u, 
+	const HomogeneousTransform HT_parent[], const HomogeneousTransform HT_world[], const ContactGeom* contacts, const Real dt, //inputs
+	Real qacc[]) { //outputs
+	//TODO, additional outputs class
 
-	//count constraints
+	//for allocation
+	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
 
-	int nc, ncc, nac, njc; //number of constraints, of type contact, actuator, joint
-	int contact_i0, act_i0, joint_i0; //index of first constraint of type contact, actuator, joint
+	//compute joint space inertia and bias force
+	Real H[MAXNV*MAXNV];
+	Real HL[MAXNV*MAXNV];
+	Real C[MAXNV];
 
+	HandC(mdl, HT_parent, qvel0, H, HL, C);
+
+	if (mdl.use_constraints) {
+		ConstraintJacobian A;
+
+		constraintJacobians(mdl, state0, qvel0, HT_world, contacts, A );
+
+		if (mdl.wheelGroundContactModel == 0) {
+			forwardDynErpCfm(mdl, state0, qvel0, u.cmd, contacts, dt, HL, C, A, //input
+				qacc); //output
+		} else {
+			forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, HL, C, A, //input
+				qacc); //output
+		}
+	} else {
+		//TODO, forwardDynUnc()
+	}
+	
+	return;
+
+}
+
+void constraintJacobians(const WmrModel& mdl, const Real state0[], const Real qvel0[], const HomogeneousTransform HT_world[], const ContactGeom* contacts, //input
+	ConstraintJacobian& A ) { //output
+
+	const int MAXNJ = WmrModel::MAXNF-1;
+
+	//PRE-PROCESS
+
+	//get from WmrModel
+	const int nf = mdl.get_nf();
+	const int nj = nf-1;
+	const int nv = NUMQVEL(nf);
+
+	const int nw = mdl.get_nw();
+	const int nt = mdl.get_nt();
+	const int na = mdl.get_na();
+
+	const int* actframeinds = mdl.get_actframeinds();
+
+	//END PRE-PROCESS
 
 	//contact constraints
-	contact_i0 = 0;
+	int ncc = 0;
+	if (nw > 0) {
+		const WheelContactGeom* wcontacts;
+		wcontacts = static_cast<const WheelContactGeom*>(contacts);
+		ncc = wheelJacobians(mdl, HT_world, wcontacts, A.contact);
+	} else if (nt > 0) {
+		const TrackContactGeom* tcontacts;
+		tcontacts = static_cast<const TrackContactGeom*>(contacts);
+		ncc = trackJacobians(mdl, HT_world, tcontacts, A.contact);
+	}
+	
+
+	//actuator constraints
+	const int nac = na;
+	if (nac > 0) {
+		setMat(nac,nv,0.0,A.act);
+		for (int ai=0; ai < nac; ai++) {
+			int vi=TOQVELI(actframeinds[ai]);
+			A.act[S2I(ai,vi,nac)] = 1.0;
+		}
+	}
+	
+	//(holonomic) joint constraints
+	const int njc = mdl.get_njc();
+	if (njc > 0) {
+
+		Real c[WmrModel::MAXNJC]; //dummy
+		Real Jc[WmrModel::MAXNJC*MAXNJ]; //njc x nj
+
+		mdl.holonomicJointConstraints(mdl, state0+SI_JD, qvel0+VI_JR, //inputs
+			c, Jc, 0, 0, 0); //outputs
+
+		//set Ajoint
+		setMatBlock(njc,0,0,njc,VI_JR,0.0, A.joint);
+		copyMatBlock(njc,0,0,njc,nj,Jc, njc,0,VI_JR,A.joint);
+	}
+
+	//copy to A.all
+	const int nc = ncc + nac + njc;
+	const int contact_i0 = 0;
+	const int act_i0 = ncc;
+	const int joint_i0 = ncc + nac;
+
+	if (ncc > 0)
+		copyMatBlock(ncc,0,0,ncc,nv,A.contact, nc,contact_i0,0,A.all);
+	if (nac > 0)
+		copyMatBlock(nac,0,0,nac,nv,A.act, nc,act_i0,0,A.all);
+	if (njc > 0)
+		copyMatBlock(njc,0,0,njc,nv,A.joint, nc,joint_i0,0,A.all);
+}
+
+int parseWheelContacts(const WheelContactGeom* wcontacts, const int nw, bool incontact[], Real dz0[]) {
+	int np = 0;
+	np = nw;
+	for (int wno=0; wno < nw; wno++) {
+		incontact[wno] = wcontacts[wno].incontact;
+		dz0[wno] = wcontacts[wno].dz;
+	}
+	return np;
+}
+
+int parseTrackContacts(const TrackContactGeom* tcontacts, const int nt,	bool incontact[], Real dz0[], int whichtrack[]) {
+	int np = 0;
+	for (int tno=0; tno < nt; tno++) {
+		int np_ = tcontacts[tno].get_np(); //number of points for this track only
+		copyVec(np_, tcontacts[tno].incontact, incontact+np);
+		setVec(np_, tno, whichtrack+np);
+		copyVec(np_, tcontacts[tno].dz, dz0+np);
+		np += np_;
+	}
+	return np;
+}
+
+
+void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0[], const Real u_cmd[], const ContactGeom* contacts, const Real dt, 
+	const Real HL[], const Real C[], const ConstraintJacobian& A, //input
+	Real qacc[]) { //output
+	//use erp, cfm like Open Dynamics Engine
+
+	//for allocation
+	const int MAXNJ = WmrModel::MAXNF-1;
+	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
+	const int MAXNP = ConstraintJacobian::MAXNP;
+	const int MAXNC = ConstraintJacobian::MAXNC;
+
+	// PRE-PROCESS
+	const int nf = mdl.get_nf();
+	const int nv = NUMQVEL(nf);
+	const int nw = mdl.get_nw();
+	const int nt = mdl.get_nt();
+	const int na = mdl.get_na();
+
+	const int* actframeinds = mdl.get_actframeinds();
+
+	//contacts
+	int np; //total number of points
 	bool incontact[MAXNP];
-	int np = 0; //total number of points
-	Real Acontact[3*MAXNP * MAXNV]; //Jacobian for contact constraints
-	Real vc0_incontact[3*MAXNP]; //contact point velocities for points in contact, concatenated into single vector
+	Real dz0[MAXNP]; //contact height errors
+	int whichtrack[MAXNP];
 	
 	const WheelContactGeom* wcontacts;
 	const TrackContactGeom* tcontacts;
 
-	//to simplify indexing
-	int whichtrack[MAXNP];
-	Real dz0[MAXNP]; //contact height errors
-
 	if (nw > 0) {
 		wcontacts = static_cast<const WheelContactGeom*>(contacts);
-		np = nw;
-		for (int wno=0; wno < nw; wno++) {
-			incontact[wno] = wcontacts[wno].incontact;
-			dz0[wno] = wcontacts[wno].dz;
-		}
-		wheelJacobians(mdl, HT_world, wcontacts, Acontact);
+		np = parseWheelContacts(wcontacts, nw, incontact, dz0);
 	} else if (nt > 0) {
 		tcontacts = static_cast<const TrackContactGeom*>(contacts);
-		for (int tno=0; tno < nt; tno++) {
-			int np_ = tcontacts[tno].get_np(); //number of points for this track only
-			copyVec(np_, tcontacts[tno].incontact, incontact+np);
-			setVec(np_, tno, whichtrack+np);
-			copyVec(np_, tcontacts[tno].dz, dz0+np);
-			np += np_;
-		}
-		trackJacobians(mdl, HT_world, tcontacts, Acontact);
+		np = parseTrackContacts(tcontacts, nt, incontact, dz0, whichtrack);
 	}
+
 	assert(np <= MAXNP); //DEBUGGING
 
 	int incontactinds[MAXNP];
 	int npic; //number of points in contact
 	npic = logicalFind(np, incontact, incontactinds);
 
-	multMatVec(3*npic,nv,Acontact,qvel0,1.0,vc0_incontact);
+	//count constraints
+	const int ncc = 3*npic;
+	const int nac = na;
+	const int njc = mdl.get_njc();
+	const int nc = ncc + nac + njc;
 
-	if (use_constraints) {
-		ncc=3*npic;
-	} else { 
-		ncc = 0;
-		//TODO, compute contact forces, add to tau
+	//for constraint indexing
+	const int contact_i0 = 0;
+	const int act_i0 = ncc;
+	const int joint_i0 = ncc + nac;
+
+	// END PRE-PROCESS
+
+
+	Real b[MAXNC];
+	Real cfm_diag[MAXNC];
+		
+	if (ncc > 0) {
+
+		Real vc0_incontact[3*MAXNP]; //contact point velocities for points in contact, concatenated into single vector
+		multMatVec(3*npic,nv,A.contact,qvel0,1.0,vc0_incontact);
+
+		for (int i=0; i<npic; i++) {
+			int pno = incontactinds[i]; //point number in list of all
+			int wtno; //wheel or track number
+			if (nw > 0)
+				wtno = pno;
+			else if (nt > 0)
+				wtno = whichtrack[pno];
+
+			b[contact_i0+(i*3)+0] = - vc0_incontact[(i*3)+0];
+			b[contact_i0+(i*3)+1] = - vc0_incontact[(i*3)+1];
+			b[contact_i0+(i*3)+2] = -(mdl.erp_z[wtno] * dz0[pno])/dt - vc0_incontact[(i*3)+2];
+
+			cfm_diag[contact_i0+(i*3)+0] = mdl.fds_x[wtno];
+			cfm_diag[contact_i0+(i*3)+1] = mdl.fds_y[wtno];
+			cfm_diag[contact_i0+(i*3)+2] = mdl.cfm_z[wtno];
+
+		}
+	}
+		
+	if (nac > 0) {
+
+		for (int i=0; i<nac; i++) {
+			int vi = TOQVELI(actframeinds[i]);
+
+			b[act_i0+i] = u_cmd[i] - qvel0[vi];
+			cfm_diag[act_i0+i] = 0;
+		}
 	}
 
-	//actuator constraints
-	act_i0 = ncc;
-	Real u0[WmrModel::MAXNA]; //na x 1, from qvel0
-	for (int ai=0; ai < na; ai++)
-		u0[ai] = qvel0[TOQVELI(actframeinds[ai])];
-
-	if (use_constraints) {	
-		nac = na; 
-	} else { 
-		nac=0;
-		//add actuator forces directly, unstable!
-		Real modelf_act[WmrModel::MAXNA]; //actuator forces
-		mdl.actuatorModel(mdl.act_p, u_cmd, u0, u_interr, modelf_act, u_err, 0);
-		for (int ai=0; ai < na; ai++)
-			tau[TOQVELI(actframeinds[ai])] = modelf_act[ai];
-	}
-	
-	//(holonomic) joint constraints
-	joint_i0 = ncc + nac;
-	Real c[WmrModel::MAXNJC];
-	Real Jc[WmrModel::MAXNJC*MAXNJ]; //njc x nj
-
-	njc = mdl.get_njc();
 	if (njc > 0) {
-		Real modelf_joint[WmrModel::MAXNJC];
+
+		Real c[WmrModel::MAXNJC];
+		Real Jc[WmrModel::MAXNJC*MAXNJ]; //dummy
 
 		mdl.holonomicJointConstraints(mdl, state0+SI_JD, qvel0+VI_JR, //inputs
-			c, Jc, modelf_joint, 0, 0); //outputs
+			c, Jc, 0, 0, 0); //outputs
 
-		if (!use_constraints) {
-			
-			njc = 0;
-			//TODO, add to tau
+		Real cd0[WmrModel::MAXNJC]; //d/dt c based on qvel0
+		multMatVec(njc,nv,A.joint,qvel0,1.0,cd0);
+
+		for (int i=0; i<njc; i++) {
+			b[joint_i0+i] = -mdl.erp_j[i]*c[i]/dt - cd0[i];
+			cfm_diag[joint_i0+i] = mdl.cfm_j[i];
 		}
 	}
+	mulcVec(nc,1/dt,b);
 	
-	nc = ncc + nac + njc;
+	//TODO, duplication
 
-	if (nc==0) {
-		//TODO
-		return;
-	}
-
-
-	Real A[MAXNC*MAXNV]; //nc x nv, Jacobian for all constraints
-	Real xall[MAXNC]; //size nc
-	Real x[MAXNC]; //size ninpt
-
-
-	//contact constraints
-	
-	if (ncc > 0) {
-		copyMatBlock(ncc,0,0,ncc,nv,Acontact, nc,contact_i0,0,A);
-
-		//init to contact pt velocity at previous time step
-		copyVec(ncc,vc0_incontact,xall+contact_i0);
-
-		//init vz to zero, or never reaches steady state
-		for (int i=0; i<npic; i++) 
-			xall[contact_i0+(3*i)+2] = 0;
-	}
-
-	Real Aact[WmrModel::MAXNA*MAXNV];
-	if (nac > 0) {
-		setMat(nac,nv,0.0,Aact);
-		for (int ai=0; ai<nac; ai++) {
-			int vi=TOQVELI(actframeinds[ai]);
-			Aact[S2I(ai,vi,nac)] = 1.0;
-		}
-
-		copyMatBlock(nac,0,0,nac,nv,Aact, nc,act_i0,0,A); //TODO, eliminate this?
-		copyVec(nac,u0, xall+act_i0); //init to joint velocity at previous time step
-	}
-
-	
-	Real Ajoint[WmrModel::MAXNJC*MAXNV]; //njc x nv
-	Real cd0[WmrModel::MAXNJC]; //d/dt c based on qvel0
-
-	if (njc > 0) {
-		//set Ajoint
-		setMatBlock(njc,0,0,njc,VI_JR,0.0, Ajoint);
-		copyMatBlock(njc,0,0,njc,nj,Jc, njc,0,VI_JR,Ajoint);
-
-		copyMatBlock(njc,0,0,njc,nv,Ajoint, nc,joint_i0,0,A); //copy to A
-
-		multMatVec(njc,nv,Ajoint,qvel0,1.0,cd0);
-
-		copyVec(njc,cd0,xall+joint_i0);
-	}
-
-
-	//PRECOMPUTE
+	//applied force
+	Real tau[MAXNV];
+	setVec(nv,0.0,tau);
 
 	Real tau_minus_C[MAXNV]; //tau - C
 	//TODO, make this a single operation?
@@ -424,103 +493,156 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 	Real invH_tau_minus_C[MAXNV]; //inv(H)*(tau-C)
 	cholSolve(nv, HL, tau_minus_C, invH_tau_minus_C);
 
+	//end duplication
 
-	auto useErpCfm = [&] ( void ) mutable {
-
-		//why must redefine constants?
-		const int MAXNV = NUMQVEL(WmrModel::MAXNF);
-		const int MAXNP = WmrModel::MAXNT * ContactGeom::MAXNP;
-		const int MAXNC = 3*MAXNP + WmrModel::MAXNA + WmrModel::MAXNJC;
-
-		//use erp, cfm like Open Dynamics Engine
-		Real b[MAXNC];
-		Real cfm_diag[MAXNC];
+	//Hl*lambda = fl
 		
-		if (ncc > 0) {
+	Real fl[MAXNC];
+	//fl = b - A*inv(H)*(tau-C)
 
-			for (int i=0; i<npic; i++) {
-				int pno = incontactinds[i]; //point number in list of all
-				int wtno; //wheel or track number
-				if (nw > 0)
-					wtno = pno;
-				else if (nt > 0)
-					wtno = whichtrack[pno];
+	multMatVec(nc, nv, A.all, invH_tau_minus_C, -1.0, fl);
+	addmVec(nc, b, 1.0, fl);
 
-				b[contact_i0+(i*3)+0] = - vc0_incontact[(i*3)+0];
-				b[contact_i0+(i*3)+1] = - vc0_incontact[(i*3)+1];
-				b[contact_i0+(i*3)+2] = -(mdl.erp_z[wtno] * dz0[pno])/dt - vc0_incontact[(i*3)+2];
+	//Hl = A*inv(H)*A^T + CFM
+	Real Hl[MAXNC*MAXNC];
+	Real AT[MAXNV*MAXNC]; //A^T
+	copyTMat(nc,nv,A.all,AT); //TODO, eliminate this?
+	Real invH_AT[MAXNV*MAXNC]; //inv(H)*A^T
+	cholSolveMat(nv,HL,nc,AT,invH_AT);
+	multMatMat(nc,nv,A.all,nc,invH_AT,1.0,Hl);
 
-				cfm_diag[contact_i0+(i*3)+0] = mdl.fds_x[wtno];
-				cfm_diag[contact_i0+(i*3)+1] = mdl.fds_y[wtno];
-				cfm_diag[contact_i0+(i*3)+2] = mdl.cfm_z[wtno];
+	//add cfm
+	for (int i=0; i<nc; i++)
+		Hl[S2I(i,i,nc)] += cfm_diag[i]/dt;
 
-			}
-		}
-		
-		if (nac > 0) {
-			for (int i=0; i<nac; i++) {
-				b[act_i0+i] = u_cmd[i] - u0[i];
-				cfm_diag[act_i0+i] = 0;
-			}
-		}
-		if (njc > 0) {
-			for (int i=0; i<njc; i++) {
-				b[joint_i0+i] = -mdl.erp_j[i]*c[i]/dt - cd0[i];
-				cfm_diag[joint_i0+i] = mdl.cfm_j[i];
-			}
-		}
-		mulcVec(nc,1/dt,b);
-		
-		//Hl*lambda = fl
-		//TODO, eliminate duplication?
-		
-		Real fl[MAXNC];
-		//fl = b - A*inv(H)*(tau-C)
+	//DEBUGGING
+	//std::cout << "Hl=\n"; printMatReal(nc,nc,Hl,-1,-1);
+	//std::cout << "fl=\n"; printMatReal(nc,1,fl,-1,-1);
 
-		multMatVec(nc, nv, A, invH_tau_minus_C, -1.0, fl);
-		addmVec(nc, b, 1.0, fl);
-
-		//Hl = A*inv(H)*A^T + CFM
-		Real Hl[MAXNC*MAXNC];
-		Real AT[MAXNV*MAXNC]; //A^T
-		copyTMat(nc,nv,A,AT); //TODO, eliminate this?
-		Real invH_AT[MAXNV*MAXNC]; //inv(H)*A^T
-		cholSolveMat(nv,HL,nc,AT,invH_AT);
-		multMatMat(nc,nv,A,nc,invH_AT,1.0,Hl);
-
-		//add cfm
-		for (int i=0; i<nc; i++)
-			Hl[S2I(i,i,nc)] += cfm_diag[i]/dt;
-
-		//DEBUGGING
-		//std::cout << "Hl=\n"; printMatReal(nc,nc,Hl,-1,-1);
-		//std::cout << "fl=\n"; printMatReal(nc,1,fl,-1,-1);
-
-		//Cholesky decomposition of Hl
-		Real HlL[MAXNC*MAXNC]; //lower triangular
-		chol(nc,Hl,HlL);
+	//Cholesky decomposition of Hl
+	Real HlL[MAXNC*MAXNC]; //lower triangular
+	chol(nc,Hl,HlL);
 
 
-		Real lambda[MAXNC]; //constraint forces
-		cholSolve(nc, HlL, fl, lambda);
+	Real lambda[MAXNC]; //constraint forces
+	cholSolve(nc, HlL, fl, lambda);
 
-		//compute acceleration
-		//qacc = inv(H)*(tau-C + A^T*lambda)
-		//qacc = inv(H)*(tau-C) + (inv(H)*A^T)*lambda
-		multMatVec(nv,nc,invH_AT,lambda,1.0,qacc);
-		addmVec(nv,invH_tau_minus_C,1.0,qacc);
+	//compute acceleration
+	//qacc = inv(H)*(tau-C + A^T*lambda)
+	//qacc = inv(H)*(tau-C) + (inv(H)*A^T)*lambda
+	multMatVec(nv,nc,invH_AT,lambda,1.0,qacc);
+	addmVec(nv,invH_tau_minus_C,1.0,qacc);
 
-		return;
-	};
+	return;
+}
 
-	if (mdl.wheelGroundContactModel == 0) {
-		useErpCfm();
-		return;
+
+void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real qvel0[], ControllerIO& u, const ContactGeom* contacts, const Real dt, 
+	const Real HL[], const Real C[], const ConstraintJacobian& A, //input
+	Real qacc[]) { //output
+
+	//OPTIONS
+	const Real qr_tol = 1e-3;
+	const int max_iter = 20;
+	const Real cost_tol = 1;
+	const Real dcost_tol = cost_tol/10;
+
+
+	//for allocation
+	const int MAXNJ = WmrModel::MAXNF-1;
+	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
+	const int MAXNP = ConstraintJacobian::MAXNP;
+	const int MAXNC = ConstraintJacobian::MAXNC;
+
+	// PRE-PROCESS
+	const int nf = mdl.get_nf();
+	const int nj = nf - 1;
+	const int nv = NUMQVEL(nf);
+	const int nw = mdl.get_nw();
+	const int nt = mdl.get_nt();
+	const int na = mdl.get_na();
+
+	const int* wheelframeinds = mdl.get_wheelframeinds();
+	const int* sprocketframeinds = mdl.get_sprocketframeinds();
+	const int* actframeinds = mdl.get_actframeinds();
+	const Frame* frames = mdl.get_frames();
+
+	//contacts
+	int np; //total number of points
+	bool incontact[MAXNP];
+	Real dz0[MAXNP]; //contact height errors
+	int whichtrack[MAXNP];
+
+	const WheelContactGeom* wcontacts;
+	const TrackContactGeom* tcontacts;
+
+	if (nw > 0) {
+		wcontacts = static_cast<const WheelContactGeom*>(contacts);
+		np = parseWheelContacts(wcontacts, nw, incontact, dz0);
+	} else if (nt > 0) {
+		tcontacts = static_cast<const TrackContactGeom*>(contacts);
+		np = parseTrackContacts(tcontacts, nt, incontact, dz0, whichtrack);
 	}
 
+	assert(np <= MAXNP); //DEBUGGING
+
+	int incontactinds[MAXNP];
+	int npic; //number of points in contact
+	npic = logicalFind(np, incontact, incontactinds);
+
+	//count constraints
+	const int ncc = 3*npic;
+	const int nac = na;
+	const int njc = mdl.get_njc();
+	const int nc = ncc + nac + njc;
+
+	//for constraint indexing
+	const int contact_i0 = 0;
+	const int act_i0 = ncc;
+	const int joint_i0 = ncc + nac;
+
+	// END PRE-PROCESS
+
+	//initialize inputs
+	Real xall[MAXNC]; //size nc
+	Real x[MAXNC]; //size ninpt
+
+
+	//contact constraints
+	Real vc0_incontact[3*MAXNP]; //contact point velocities for points in contact, concatenated into single vector
+	if (ncc > 0) {
+
+		multMatVec(3*npic,nv,A.contact,qvel0,1.0,vc0_incontact);
+
+		//init to contact pt velocity at previous time step
+		copyVec(ncc,vc0_incontact,xall+contact_i0);
+
+		//init vz to zero, or never reaches steady state
+		for (int i=0; i<npic; i++) 
+			xall[contact_i0+(3*i)+2] = 0;
+	}
+
+	Real u_act0[WmrModel::MAXNA]; //na x 1, from qvel0
+	if (nac > 0) {
+
+		for (int ai = 0; ai < na; ai++) {
+			int vi = TOQVELI(actframeinds[ai]);
+			u_act0[ai] = qvel0[vi];
+		}
+
+		copyVec(nac,u_act0, xall+act_i0); //init to joint velocity at previous time step
+	}
 
 	
-	
+	Real cd0[WmrModel::MAXNJC]; //d/dt c based on qvel0
+	if (njc > 0) {
+
+		multMatVec(njc,nv,A.joint,qvel0,1.0,cd0);
+
+		copyVec(njc,cd0,xall+joint_i0);
+	}
+
+	//TODO, move to subfunction?
 	//get maximal linearly independent subset of constraints (rows of A)
 	//set includes all actuator constraints, some wheel and joint constraints
 	
@@ -532,9 +654,7 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 
 
 	setVec(nc, true, cis.ind); //initialize
-
 	
-
 	int nind; //number of constraints in independent subset
 	int ncc_ind;
 	int njc_ind;
@@ -557,7 +677,7 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 		int col = 0;
 		for (int vi=0; vi < nv; vi++) {
 			if (!vis_act[vi]) {
-				logicalIndexIn(nc,cis_nact,A+S2I(0,vi,nc),A_+S2I(0,col,nc-nac));
+				logicalIndexIn(nc,cis_nact,A.all+S2I(0,vi,nc),A_+S2I(0,col,nc-nac));
 				col++;
 			}
 		}
@@ -594,7 +714,7 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 	int row=0; //row in Aind
 	for (int ci=0; ci<nc; ci++) {
 		if (cis.ind[ci]) {
-			copyMatRow(nc,nv,ci,A, nind,row,Aind);
+			copyMatRow(nc,nv,ci,A.all, nind,row,Aind);
 			row++;
 		}
 	}
@@ -618,6 +738,21 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 
 
 	//PRECOMPUTE VARS FOR COST FUNCTION
+
+	//TODO, duplication
+	//applied force
+	Real tau[MAXNV];
+	setVec(nv,0.0,tau);
+
+	Real tau_minus_C[MAXNV]; //tau - C
+	//TODO, make this a single operation?
+	copyVec(nv,tau,tau_minus_C);
+	addmVec(nv,C,-1.0,tau_minus_C);
+
+	Real invH_tau_minus_C[MAXNV]; //inv(H)*(tau-C)
+	cholSolve(nv, HL, tau_minus_C, invH_tau_minus_C);
+
+	//end duplication
 
 	//Hl*lambda = fl
 
@@ -663,8 +798,8 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 		//why must redefine constants?
 		const int MAXNJ = WmrModel::MAXNF-1;
 		const int MAXNV = NUMQVEL(WmrModel::MAXNF);
-		const int MAXNP = WmrModel::MAXNT * ContactGeom::MAXNP;
-		const int MAXNC = 3*MAXNP + WmrModel::MAXNA + WmrModel::MAXNJC;
+		const int MAXNP = ConstraintJacobian::MAXNP;
+		const int MAXNC = ConstraintJacobian::MAXNC;
 		const int MAXNIND = MAXNV;
 
 
@@ -682,8 +817,8 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 			if (mdl.actuatorModel != 0)	
 				copyVec(nac, xb+act_i0, b+act_i0);
 			else 
-				copyVec(nac, u_cmd, b+act_i0); //ideal actuators
-			addmVec(nac, u0, -1.0, b+act_i0);
+				copyVec(nac, u.cmd, b+act_i0); //ideal actuators
+			addmVec(nac, u_act0, -1.0, b+act_i0);
 		}
 		if (njc > 0) {
 			copyVec(njc, xb+joint_i0, b+joint_i0);
@@ -717,9 +852,6 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 		copyVec(nv,qvel0,qvel);
 		addmVec(nv,qacc,dt,qvel);
 
-
-
-
 		//force-balance error
 		
 		if (ncc > 0) {
@@ -732,7 +864,7 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 			Vec3 fc[MAXNP]; //contact force (output)
 
 			Real tmp[3*MAXNP]; //temporary
-			multMatVec(ncc,nv,Acontact,qvel,1.0,tmp);
+			multMatVec(ncc,nv,A.contact,qvel,1.0,tmp);
 			copyArrayToVec3(tmp,npic,vc);
 			
 			if (nw > 0) {
@@ -764,19 +896,21 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 			copyVec3ToArray(npic, fc, mf+contact_i0);
 		}
 		if (nac > 0 && mdl.actuatorModel != 0) {
-			Real u[WmrModel::MAXNA];
+			Real u_act[WmrModel::MAXNA];
 			for (int ai=0; ai < na; ai++)
-				u[ai] = qvel[TOQVELI(actframeinds[ai])];
+				u_act[ai] = qvel[TOQVELI(actframeinds[ai])];
 
-			mdl.actuatorModel( mdl.act_p, u_cmd, u, u_interr, mf+act_i0, u_err, dmf.act_du);
+			mdl.actuatorModel( mdl.act_p, u.cmd, u_act, u.interr, mf+act_i0, u.err, dmf.act_du);
 		}
 		if (njc > 0) {
 			Real jd[MAXNJ]; //joint displacement at next time step
 			copyVec(nj, state0+SI_JD, jd);
 			addmVec(nj, qvel+VI_JR, dt, jd); //symplectic Euler
 
+			//dummy
 			Real c[WmrModel::MAXNJC];
-			//assume Jc is unchanged
+			Real Jc[WmrModel::MAXNJC * MAXNJ];
+
 			mdl.holonomicJointConstraints(mdl, jd, qvel+VI_JR, c, Jc, mf+joint_i0, dmf.joint_djd, dmf.joint_djr);
 
 		}
@@ -785,7 +919,7 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 		Real tau_mf[MAXNV];
 
 		multMatTVec(nind,nv,Aind,lambda,1.0,tau_lambda);
-		multMatTVec(nc,nv,A,mf,1.0,tau_mf);
+		multMatTVec(nc,nv,A.all,mf,1.0,tau_mf);
 
 		for (int vi=0; vi < nv; vi++) 
 			err[vi] = tau_lambda[vi] - tau_mf[vi];
@@ -808,13 +942,11 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 	cost = forwardDynCost(x);
 
 
-	
 	//precomputed vars
 	Real dwgcin_dx[MAXNP][5*MAXNIND]; //nwic x 5 x ninpt, Jacobian of [vx vy vz Rw dz] wrt x
 	Real du_dx[WmrModel::MAXNA*MAXNIND]; //na x ninpt
 	Real djd_dx[MAXNJ*MAXNIND]; //nj x ninpt
 	Real djr_dx[MAXNJ*MAXNIND]; //nj x ninpt
-
 	Real dtaulambda_dx[MAXNV*MAXNIND]; //nv x ninpt
 
 	//additional outputs of gradient function
@@ -828,88 +960,94 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 	if (cost > cost_tol) { //only do this if necessary
 
 		//PRECOMPUTE VARS FOR GRADIENT CALCULATION
-		
-		Real dlambda_dx[MAXNIND*MAXNIND]; //nind x ninpt
+		auto forwardDynPrecompute = [&] ( void ) mutable {
+			//the following must be mutable: dwgcin_dx, du_dx, djd_dx, djr_dx, dtaulambda_dx
 
-		Real inv_Hl[MAXNIND*MAXNIND]; //TODO, avoid computing this?
-		Real I_nind[MAXNIND*MAXNIND]; //identity matrix
-		setMat(nind,nind,0.0,I_nind);
-		for (int i=0; i<nind; i++) 
-			I_nind[S2I(i,i,nind)]=1.0;
+			const int MAXNV = NUMQVEL(WmrModel::MAXNF);
+			const int MAXNIND = MAXNV;
+
+			Real dlambda_dx[MAXNIND*MAXNIND]; //nind x ninpt
+
+			Real inv_Hl[MAXNIND*MAXNIND]; //TODO, avoid computing this?
+			Real I_nind[MAXNIND*MAXNIND]; //identity matrix
+			setMat(nind,nind,0.0,I_nind);
+			for (int i=0; i<nind; i++) 
+				I_nind[S2I(i,i,nind)]=1.0;
 			
-		cholSolveMat(nind,HlL,nind,I_nind,inv_Hl);
+			cholSolveMat(nind,HlL,nind,I_nind,inv_Hl);
 
-		//dlambda_dx, a subset of columns of inv_Hl
-		{
-			int indno=0; //column index in Hl
-			int inptno=0; //column index in dlambda_dx;
-			for (int i=0; i<nc; i++) { //loop over constraints
-				if (cis.ind[i]) {
-					if (cis.inpt[i]) {
-						copyMatCol(nind,indno,inv_Hl, inptno,dlambda_dx);
-						inptno++;
+			//dlambda_dx, a subset of columns of inv_Hl
+			{
+				int indno=0; //column index in Hl
+				int inptno=0; //column index in dlambda_dx;
+				for (int i=0; i<nc; i++) { //loop over constraints
+					if (cis.ind[i]) {
+						if (cis.inpt[i]) {
+							copyMatCol(nind,indno,inv_Hl, inptno,dlambda_dx);
+							inptno++;
+						}
+						indno++;
 					}
-					indno++;
 				}
 			}
-		}
 
 
-		mulcMat(nind,ninpt,1/dt,dlambda_dx);
+			mulcMat(nind,ninpt,1/dt,dlambda_dx);
 
-		//dqvel/dx = inv(H)*Aind^T * dlambda/dx (*dt)
-		Real dqvel_dx[MAXNV*MAXNIND]; //nv x ninpt
-		multMatMat(nv,nind,invH_AindT,ninpt,dlambda_dx,dt,dqvel_dx);
+			//dqvel/dx = inv(H)*Aind^T * dlambda/dx (*dt)
+			Real dqvel_dx[MAXNV*MAXNIND]; //nv x ninpt
+			multMatMat(nv,nind,invH_AindT,ninpt,dlambda_dx,dt,dqvel_dx);
 		
 
-		//std::cout << "dlambda_dx=\n"; printMatReal(nv,ninpt,dlambda_dx,-1,-1);
-		//std::cout << "dqvel_dx=\n"; printMatReal(nv,ninpt,dqvel_dx,-1,-1);
+			//std::cout << "dlambda_dx=\n"; printMatReal(nv,ninpt,dlambda_dx,-1,-1);
+			//std::cout << "dqvel_dx=\n"; printMatReal(nv,ninpt,dqvel_dx,-1,-1);
 		
 
-		if (ncc > 0) {
-			Real Acontact_[3*MAXNV]; // submatrix for a single point
-			Real dvc_dx[3*MAXNIND]; // 3 x ninpt, temporary
+			if (ncc > 0) {
+				Real Acontact_[3*MAXNV]; // submatrix for a single point
+				Real dvc_dx[3*MAXNIND]; // 3 x ninpt, temporary
 
-			for (int i=0; i<npic; i++) {
-				int fi; //frame index
-				if (nw > 0) {
-					int wno = incontactinds[i];
-					fi = wheelframeinds[wno];
-				} else if (nt > 0) {
-					int tno = whichtrack[incontactinds[i]];
-					fi = sprocketframeinds[tno];
+				for (int i=0; i<npic; i++) {
+					int fi; //frame index
+					if (nw > 0) {
+						int wno = incontactinds[i];
+						fi = wheelframeinds[wno];
+					} else if (nt > 0) {
+						int tno = whichtrack[incontactinds[i]];
+						fi = sprocketframeinds[tno];
+					}
+
+					//d [vx vy vz] /dx
+					//TODO, eliminate copy?
+					copyMatBlock(ncc,contact_i0+3*i,0,3,nv,A.contact, 3,0,0,Acontact_);
+					multMatMat(3,nv,Acontact_,ninpt,dqvel_dx,1.0,dvc_dx);
+					copyMatBlock(3,0,0,3,ninpt,dvc_dx, 5,0,0,dwgcin_dx[i]);
+					//d Rw /dx
+					copyMatRow(nv,ninpt,TOQVELI(fi),dqvel_dx, 5,3,dwgcin_dx[i]);
+					mulcMatRow(5,ninpt,3,frames[fi].rad,dwgcin_dx[i]);
+					//d dz /dx = dvz/dx*dt
+					copyMatRow(5,ninpt,2,dwgcin_dx[i], 5,4,dwgcin_dx[i]);
+					mulcMatRow(5,ninpt,4,dt,dwgcin_dx[i]);
+
 				}
 
-				//d [vx vy vz] /dx
-				//TODO, eliminate copy?
-				copyMatBlock(ncc,contact_i0+3*i,0,3,nv,Acontact, 3,0,0,Acontact_);
-				multMatMat(3,nv,Acontact_,ninpt,dqvel_dx,1.0,dvc_dx);
-				copyMatBlock(3,0,0,3,ninpt,dvc_dx, 5,0,0,dwgcin_dx[i]);
-				//d Rw /dx
-				copyMatRow(nv,ninpt,TOQVELI(fi),dqvel_dx, 5,3,dwgcin_dx[i]);
-				mulcMatRow(5,ninpt,3,frames[fi].rad,dwgcin_dx[i]);
-				//d dz /dx = dvz/dx*dt
-				copyMatRow(5,ninpt,2,dwgcin_dx[i], 5,4,dwgcin_dx[i]);
-				mulcMatRow(5,ninpt,4,dt,dwgcin_dx[i]);
-
 			}
-
-		}
-		if (nac > 0 && mdl.actuatorModel != 0) {
-			//du/dx
-			for (int ai=0; ai<nac; ai++) {
-				int vi=TOQVELI(actframeinds[ai]);
-				copyMatRow(nv,ninpt,vi,dqvel_dx, nac,ai,du_dx);
+			if (nac > 0 && mdl.actuatorModel != 0) {
+				//du/dx
+				for (int ai=0; ai<nac; ai++) {
+					int vi=TOQVELI(actframeinds[ai]);
+					copyMatRow(nv,ninpt,vi,dqvel_dx, nac,ai,du_dx);
+				}
 			}
-		}
-		if (njc > 0) {
-			// djr/dx and djd/dx (= djr/dx*dt)
-			copyMatBlock(nv,VI_JR,0,nj,ninpt,dqvel_dx, nj,0,0,djr_dx);
-			copyMat(nj,ninpt,djr_dx,djd_dx);
-			mulcMat(nj,ninpt,dt,djd_dx);
-		}
-		multMatTMat(nind,nv,Aind,ninpt,dlambda_dx,1.0,dtaulambda_dx);
-		
+			if (njc > 0) {
+				// djr/dx and djd/dx (= djr/dx*dt)
+				copyMatBlock(nv,VI_JR,0,nj,ninpt,dqvel_dx, nj,0,0,djr_dx);
+				copyMat(nj,ninpt,djr_dx,djd_dx);
+				mulcMat(nj,ninpt,dt,djd_dx);
+			}
+			multMatTMat(nind,nv,Aind,ninpt,dlambda_dx,1.0,dtaulambda_dx);
+		};
+		forwardDynPrecompute();
 
 		//optimize
 		Real cost_prev = REALMAX;
@@ -927,8 +1065,8 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 
 			//why must redefine constants?
 			const int MAXNV = TOQVELI(WmrModel::MAXNF);
-			const int MAXNP = WmrModel::MAXNT * ContactGeom::MAXNP;
-			const int MAXNC = 3*MAXNP + WmrModel::MAXNA + WmrModel::MAXNJC;
+			const int MAXNP = ConstraintJacobian::MAXNP;
+			const int MAXNC = ConstraintJacobian::MAXNC;
 			const int MAXNIND = MAXNV;
 
 			Real dmf_dx[MAXNC*MAXNIND]; //nc x ninpt
@@ -957,7 +1095,7 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 			}
 
 			Real dtaumf_dx[MAXNV*MAXNIND]; //nv x ninpt
-			multMatTMat(nc,nv,A,ninpt,dmf_dx,1.0,dtaumf_dx);
+			multMatTMat(nc,nv,A.all,ninpt,dmf_dx,1.0,dtaumf_dx); //A*dtaumf/dx
 
 			for (int i=0; i<nv*ninpt; i++) 
 				derr_dx[i] = dtaulambda_dx[i] - dtaumf_dx[i];
@@ -1025,11 +1163,11 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], co
 	}	
 	
 	return;
-
 }
 
+
 void odeDyn(const Real time, const Real y[], const WmrModel& mdl, const SurfaceVector& surfaces, ContactGeom* contacts, const Real dt, //inputs
-	Real ydot[], HomogeneousTransform HT_to_parent[] ) { //outputs
+	Real ydot[], HomogeneousTransform HT_parent[] ) { //outputs
 
 	const int MAXNS = NUMSTATE(WmrModel::MAXNF);
 	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
@@ -1042,31 +1180,30 @@ void odeDyn(const Real time, const Real y[], const WmrModel& mdl, const SurfaceV
 	const int nv = NUMQVEL(nf);
 	const Frame* frames = mdl.get_frames();
 	
+	ControllerIO u;
+
 	//parse y
 	Real state[MAXNS];
 	Real qvel[MAXNV];
-	Real interr[WmrModel::MAXNA];
 
 	copyVec(ns,y,state);
 	copyVec(nv,y+ns,qvel);
-	copyVec(na,y+ns+nv,interr);
+	copyVec(na,y+ns+nv,u.interr);
 
 	//get control inputs
-	Real u[WmrModel::MAXNA];
-	mdl.controller(mdl, time, y, u, 0);
+	mdl.controller(mdl, time, y, u.cmd, 0);
 
 	//convert state to Homogeneous Transforms
-	HomogeneousTransform HT_to_world[WmrModel::MAXNF];
-	stateToHT(mdl,y,HT_to_parent,HT_to_world);
+	HomogeneousTransform HT_world[WmrModel::MAXNF];
+	stateToHT(mdl,y,HT_parent,HT_world);
 
 	//update contact geometry
-	updateModelContactGeom(mdl, surfaces, HT_to_world, 0, contacts);
+	updateModelContactGeom(mdl, surfaces, HT_world, 0, contacts);
 
 	//compute joint space acceleration
 	Real qacc[MAXNV];
-	Real err[WmrModel::MAXNA];
 
-	forwardDyn(mdl, state, qvel, u, interr, HT_to_parent, HT_to_world, contacts, dt, qacc, err);
+	forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt, qacc);
 
 	if (dt==dt) { //not NaN
 		//Semi-implicit or symplectic Euler, conserves energy
@@ -1082,11 +1219,11 @@ void odeDyn(const Real time, const Real y[], const WmrModel& mdl, const SurfaceV
 
 	//convert qvel to time derivative of state
 	Real statedot[MAXNS];
-	qvelToQdot(nf,qvel,state+SI_ORIENT,HT_to_world[0],statedot);
+	qvelToQdot(nf,qvel,state+SI_ORIENT,HT_world[0],statedot);
 
 	//copy to ydot
 	copyVec(ns,statedot,ydot);
 	copyVec(nv,qacc,ydot+ns);
-	copyVec(na,err,ydot+ns+nv);
+	copyVec(na,u.err,ydot+ns+nv);
 
 }

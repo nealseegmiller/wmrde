@@ -75,7 +75,7 @@ public:
 	void addChainElement( const int lineno, const int chainno, const Ogre::Vector3 pt, const float thickness, Ogre::ColourValue* C);
 
 	//updates nodes and lines
-	void updateNodesLines( const int nf, const HomogeneousTransform HT_to_parent[], const int num_contacts, const ContactGeom* contacts );
+	void updateNodesLines( const int nf, const HomogeneousTransform HT_parent[], const int num_contacts, const ContactGeom* contacts );
 
 protected:
     virtual void createScene(void);

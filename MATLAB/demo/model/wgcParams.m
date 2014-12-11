@@ -18,16 +18,16 @@ switch func2str(fh)
     case 'odeWgc'
         s = 1e-3; %N to kN
        
-%         mu = 1.0;
-        mu = Inf;
+        mu = 1.0;
+%         mu = Inf;
         
         C = -.1*Kp;
         
         p = [Kp*s Kd*s mu mu C*s C*s Crr*s]';
         
     case 'pacejkaWgc'
-%         mu = 1.0;
-        mu = 0.6;
+        mu = 1.0;
+%         mu = 0.6;
         
         %from Brach & Brach, {B,C,D,E,K}
         clon = [1/15 1.5 1 .3 100];

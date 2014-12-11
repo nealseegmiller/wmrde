@@ -9,8 +9,8 @@ void setWgcParams( const Real Kp, Real params[] ) {
 	//odeWgc
 	Real s = 1e-3; //N to kN
 
-	//Real mu = 1.0;
-	Real mu = REALNAN; //*not* REALMAX
+	Real mu = 1.0;
+	//Real mu = REALNAN; //*not* REALMAX
 	
 	params[0]=Kp*s;
 	params[1]=Kd*s; //Kd
@@ -43,7 +43,7 @@ void setWgcParams( const Real Kp, Real params[] ) {
 	params[13] = Crr;
 
 #elif WGC_MODEL_TYPE == ISHIGAMI_LUT_WGC
-	//ishigamiLutWgc
+	//ishigamiLUTWgc
 
 	params[0] = Kd;
 #endif
@@ -272,7 +272,7 @@ void pacejkaWgc( const Real params[], const Vec3 vc, const Real Rw, const Real d
 	//std::cout << "J=\n"; printMatReal(3,5,J,-1,-1);
 }
 
-void ishigamiLutWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
+void ishigamiLUTWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
 		Vec3 fw, Real J[]) { //outputs
 
 	const int buffer = 51*51*51;
@@ -289,7 +289,8 @@ void ishigamiLutWgc( const Real params[], const Vec3 vc, const Real Rw, const Re
 	Real* F[3] = {FX,FY,FZ}; //pointers
 
 	if (!init) {
-		//load lookup table data from files
+		//load lookup table data from .txt files
+		//these files can be generated using MATLAB, ishigamiLUTWgc.m
 
 		std::string FileNames[3] = {"LUT_FX.txt", "LUT_FY.txt", "LUT_FZ.txt"};
 		
@@ -434,6 +435,7 @@ void pacejkaDerivatives(const Real Ba, const Real Bs, const Real Ca, const Real 
 			Real* dfx_ds, Real* dfy_ds, Real* dfx_dalpha, Real* dfy_dalpha) { //outputs
 
 	//code generated using MATLAB symbolic toolbox
+	//sym_pacejka_wgc.m
 
 	Real t2 = 1.0/M_PI;
 	Real t3 = Ba*Ka*alpha*t2*2.0;

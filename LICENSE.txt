@@ -1,4 +1,4 @@
-Released under the BSD license. If you use this code in your research, please cite relevant publications by Neal Seegmiller.
+Released under the BSD license. If you use this code in your research, please cite my publications
 
 Copyright (c) 2014, Neal Seegmiller
 All rights reserved.

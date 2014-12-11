@@ -10,9 +10,11 @@
 #include <Eigen/Dense>
 #include <algebra/matrix.h>
 
+//print matrix size if dynamic (vs. fixed)
+#define PRINT_MATRIX_SIZE_IF_DYNAMIC 0
 
-//to used fixed size matrices
-//for solve(), subset()
+//Eigen is faster for fixed size matrices
+//to used fixed size matrices for solve(), subset()
 
 //zoe
 //#define FIXED_NROWS_0 12+0 /*+0 if fix front axle roll, else +1*/
@@ -25,9 +27,6 @@
 //#define FIXED_NROWS_1
 //#define FIXED_NCOLS_1
 
-//#define FIXED_NROWS_2
-//#define FIXED_NCOLS_2
-
 //for chol()
 
 //zoe
@@ -39,9 +38,6 @@
 //rocky
 //#define FIXED_N_0 18
 //#define FIXED_N_1 10 /*ideal actuators*/
-
-//TODO
-
 
 typedef Eigen::Matrix<Real,Eigen::Dynamic,Eigen::Dynamic> MatrixXr;
 

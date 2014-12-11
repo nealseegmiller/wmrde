@@ -176,6 +176,7 @@ if opts.plot
     
 end
 
+blah = 1;
 
 end
 

@@ -75,6 +75,7 @@ for i = mdl.wheelframeinds
     setFrameMass(mdl,i,Mw,[0 0 0]',inertiaCylinder(Mw,rad,Ww,2));
 end
 
+
 %FOR KINEMATIC MODEL
 
 %all wheels must be in contact
@@ -88,17 +89,14 @@ mdl.tc_j = .1;
 
 %FOR DYNAMIC MODEL
 
-%set function handles
-mdl.controller_fh = @rockyController;
-
 mdl.wgc_fh = @uniformWgc; %wheel-ground contact model
 [~,~,fh]=feval(mdl.wgc_fh);
 Kp = TotalMass*mdl.grav/(nw*-mdl.dz_target(1));
 mdl.wgc_p = wgcParams(fh,Kp); %wheel force model parameters
 
 %DEBUGGING
-if strcmp(func2str(fh),'ishigami_wgc') || ...
-   strcmp(func2str(fh),'ishigami_LUT_wgc')
+if strcmp(func2str(fh),'ishigamiWgc') || ...
+   strcmp(func2str(fh),'ishigamiLUTWgc')
     
     disp([mfilename ': modifying wheel-ground contact parameters'])
     mdl.wgc_p(2) = rad;
@@ -107,8 +105,6 @@ end
 
 mdl.act_fh = @PIact;
 mdl.act_p = [5 0 Inf]';
-
-mdl.hjc_fh = @rockyConstraints; %additional constraints, differential averaging
 
 %ODE contact model parameters
 [erp,cfm] = KpKdToErpCfm(Kp,Kp/20,.04);
@@ -121,6 +117,10 @@ mdl.fds_y = fds*ones(1,nw);
 mdl.erp_j = .2;
 mdl.cfm_j = 1e-6;
 
+%FOR BOTH
+%set function handles
+mdl.controller_fh = @rockyController;
+mdl.hjc_fh = @rockyConstraints;
 
 %initialize state
 orientation = [0 0 0]'*pi/180; %Euler angles

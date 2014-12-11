@@ -22,38 +22,38 @@ void rockyScene(const WmrModel& mdl, WmrAnimation& anim) {
 
 
 	i = mdl.nameToInd("Body");
-	filename =  VrmlDir() + std::string("Rocky7/Rocky7Body.wrl");
+	filename =  CADdir() + std::string("Rocky7/Rocky7Body.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	//rockers
 	i = mdl.nameToInd("D1");
-	filename = VrmlDir() + std::string("Rocky7/Rocky7Rocker.wrl");
+	filename = CADdir() + std::string("Rocky7/Rocky7Rocker.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	i = mdl.nameToInd("D2");
-	filename = VrmlDir() + std::string("Rocky7/Rocky7Rocker.wrl");
+	filename = CADdir() + std::string("Rocky7/Rocky7Rocker.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, 1, draw_faces, draw_edges);
 
 	//bogies
 	i = mdl.nameToInd("B1");
-	filename = VrmlDir() + std::string("Rocky7/Rocky7Bogie.wrl");
+	filename = CADdir() + std::string("Rocky7/Rocky7Bogie.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	i = mdl.nameToInd("B2");
-	filename = VrmlDir() + std::string("Rocky7/Rocky7Bogie.wrl");
+	filename = CADdir() + std::string("Rocky7/Rocky7Bogie.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, 1, draw_faces, draw_edges);
 
 	//steering brackets
 	i = mdl.nameToInd("S1");
-	filename = VrmlDir() + std::string("Rocky7/Rocky7Bracket.wrl");
+	filename = CADdir() + std::string("Rocky7/Rocky7Bracket.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	i = mdl.nameToInd("S2");
-	filename = VrmlDir() + std::string("Rocky7/Rocky7Bracket.wrl");
+	filename = CADdir() + std::string("Rocky7/Rocky7Bracket.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, 1, draw_faces, draw_edges);
 
 	//wheels
-	filename = VrmlDir() + std::string("Rocky7/Rocky7Wheel.wrl");
+	filename = CADdir() + std::string("Rocky7/Rocky7Wheel.wrl");
 	//left wheels: A1, A3, A5
 	for (int wno=0; wno<nw; wno=wno+2) {
 		i = wheelframeinds[wno];

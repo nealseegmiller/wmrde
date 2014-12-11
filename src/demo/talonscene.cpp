@@ -21,11 +21,11 @@ void talonScene(const WmrModel& mdl, const TrackContactGeom contacts[], WmrAnima
 	std::string filename;
 
 	i = mdl.nameToInd("Body");
-	filename = VrmlDir() + std::string("Talon/TalonBody.wrl");
+	filename = CADdir() + std::string("Talon/TalonBody.wrl");
 	anim.addEntityVrml(anim.get_node(i), filename, -1, draw_faces, draw_edges);
 
 	for (int tno = 0; tno < nt; tno++) {
-		filename = VrmlDir() + std::string("Talon/TalonSprocket.wrl");
+		filename = CADdir() + std::string("Talon/TalonSprocket.wrl");
 		anim.addEntityVrml(anim.get_node(sprocketframeinds[tno]), filename, -1, draw_faces, draw_edges);
 	}
 
@@ -46,7 +46,7 @@ void talonScene(const WmrModel& mdl, const TrackContactGeom contacts[], WmrAnima
 
 		anim.updateNodeTransform(node_idx,frames[fi].HT_parent_jd0);
 
-		filename = VrmlDir() + std::string("Talon/TalonTrack.wrl");
+		filename = CADdir() + std::string("Talon/TalonTrack.wrl");
 		anim.addEntityVrml(anim.get_node(node_idx), filename, -1, draw_faces, draw_edges);
 
 		int np = contacts[tno].get_np();

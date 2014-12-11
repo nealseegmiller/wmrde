@@ -49,6 +49,7 @@ for i = mdl.wheelframeinds
     setFrameMass(mdl,i,Mw,[0 0 0]',inertiaCylinder(Mw,rad,Ww,2));
 end
 
+
 %FOR KINEMATIC MODEL
 mdl.min_npic = 3;
 mdl.update_Is();
@@ -61,9 +62,6 @@ mdl.bsm_p = zeros(6,1);
 
 %FOR DYNAMIC MODEL
 
-%set function handles
-mdl.controller_fh = @skidsteerController;
-
 mdl.wgc_fh = @uniformWgc; %wheel slip model
 [~,~,fh]=feval(mdl.wgc_fh);
 
@@ -74,9 +72,9 @@ mdl.wgc_p = wgcParams(fh,Kp); %wheel-ground contact model parameters
 mdl.act_fh = @PIact;
 mdl.act_p = [2e3 0 Inf]';
 
+%FOR BOTH
+mdl.controller_fh = @skidsteerController;
 mdl.cov_p = zeros(4,1);
-
-
 
 %initialize state
 orientation = [0 0 0]'*pi/180; %Euler angles
@@ -101,6 +99,7 @@ state(ispos) = position;
 
 [~,qvel]=feval(mdl.controller_fh,mdl,0,state); %nonzero initial velocity
 
+%ANIMATION
 cdir = [CADdir() 'LandTamer\'];
 
 if nargout > 3

@@ -11,7 +11,8 @@ clc
 % [mdl, state] = rocky();
 [mdl, state] = zoe();
 
-[HT_to_parent,HT_to_world] = stateToHT(mdl,state)
+state
+[HT_parent,HT_world] = stateToHT(mdl,state)
 
 if 1
     % time it
@@ -19,7 +20,7 @@ if 1
     n = 1e6;
     tic
     for i=1:(n*irf)
-        [HT_to_parent,HT_to_world] = stateToHT(mdl,state);
+        [HT_parent,HT_world] = stateToHT(mdl,state);
     end
     t=toc;
 
@@ -42,10 +43,9 @@ ns=nf-1+olen+3;
 nv=nf-1+3+3;
 
 euler = [10 20 30]'*pi/180;
-quat = eulerToQuat(euler);
 
 orient = euler
-% orient = quat
+% orient = eulerToQuat(euler)
 
 R_body_to_world = eulerToRot(euler)
 

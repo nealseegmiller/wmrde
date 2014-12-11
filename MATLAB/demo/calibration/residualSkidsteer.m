@@ -18,7 +18,7 @@ olen=3; %orientation vector length, assumes Euler angles!
 dlen=3+olen-1; %ns-nf
 ns = nf+dlen; %length of state vector
 nv = nf+5;
-[isorient,ispos,isjd] = stateIs(ns,nf);
+[isorient,ispos,isjd] = stateIs(ns);
 
 ispose = ~isjd; %is body frame pose
 
@@ -90,8 +90,11 @@ odomin.t = time;
 
 %FOR SYSTEMATIC
 %controller inputs
-odomin.u = NaN(n,nv); %actuated elements of qvel
-odomin.u(:,mdl.wheelframeinds+5) = inpt.enc; %rad/s?
+odomin.u = inpt.enc;
+
+vis_act = false(1,nv);
+vis_act(mdl.wheelframeinds+5) = true;
+odomin.vis_act = vis_act;
 
 %measurements
 odomin.z = NaN(n,ns); %measured elements of state

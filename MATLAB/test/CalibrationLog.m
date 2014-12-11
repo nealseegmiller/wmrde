@@ -265,7 +265,7 @@ classdef CalibrationLog < handle %handle class to avoid unnecessary copying in f
         function [out1,out2,out3] = get_stateIs(obj)
             ns = get_ns(obj);
             nf = size(obj.odomlog(1).qvel,2)-6+1;
-            [out1,out2,out3] = stateIs(ns,nf);
+            [out1,out2,out3] = stateIs(ns);
         end
         
         function out = toStruct(obj)

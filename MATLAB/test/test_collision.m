@@ -102,7 +102,7 @@ surfs = {};
 % surfs{end+1} = flat();
 % surfs{end+1} = ramp();
 
-setseed(321);
+setseed(123);
 surfs{end+1} = randomgrid();
 printGridSurf(surfs{end},[resourcedir() 'gridsurfdata.txt'])
 
@@ -280,14 +280,14 @@ printGridSurf(surfs{end},[resourcedir() 'gridsurfdata.txt'])
 
 %track pose
 orient = [0 0 0]'*pi/180;
-pos = [3 0 frame.rad - .05]';
+pos = [3 0 frame.rad - .01]';
 pos(3) = pos(3) + surfacesHeight(surfs,pos)
 HT_track_to_world = poseToHT(orient,pos);
 
 contact = updateTrackContactGeom(surfs, HT_track_to_world, contact);
 
-contact.dz
-contact.dvc_dvt
+disp('dz = ')
+disp(contact.dz)
 
 if 1
     %%

@@ -11,7 +11,7 @@
 //avoid conflict with Open Dynamics Engine dContactGeom
 class ContactGeom {
 public:
-	static const int MAXNP = 11; //max number of contact points
+	static const int MAXNP = 3; //max number of contact points
 
 	virtual int get_np() const = 0; //get number of contact points
 };

@@ -7,7 +7,7 @@ clc
 %OPTIONS
 opts.loadmatdata = 1; %to save time, load meas, inpt from .mat file instead of reading .txt & preprocessing
 opts.save_cinfo = 0; %save CalibrationInfo
-opts.inittosaved = 1;
+opts.inittosaved = 0;
 
 opts.dyn = 0; %dynamic sim (else kinematic)
 
@@ -27,7 +27,7 @@ opts.plot_params = 1;
 
 %%
 
-if 0
+if 1
     %LandTamer
     opts.model_fh = @landtamer;
     opts.initcal_fh = @initcalSkidsteer;
@@ -239,7 +239,7 @@ end
 
 if opts.plot
 
-    qNames = stateNames(mdl,ns);
+    qNames = stateNames(mdl);
 
     
     if opts.plot_scatter

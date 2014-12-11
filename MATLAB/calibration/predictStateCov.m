@@ -15,7 +15,7 @@ nv = size(Q,1);
 olen = length(orient);
 
 nf = ns-olen-3+1; %number of frames in WmrModel
-[isorient,ispos,isjd] = stateIs(ns,nf);
+[isorient,ispos,isjd] = stateIs(ns);
 
 [~,T_vel_to_orate,dTdo] = velToOrientrate(orient);
 [~,T_orate_to_vel] = orientrateToVel(orient);

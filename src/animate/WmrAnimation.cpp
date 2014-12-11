@@ -90,9 +90,8 @@ void WmrAnimation::addEntityVrml(Ogre::SceneNode* node_to_attach_to, const std::
 
 					vrml.getTriangleVertex(part_no,tno,vno,pos[0],pos[1],pos[2]); 
 
-					if (flip_dim > 0) {
+					if (flip_dim > 0)
 						pos[flip_dim] = -pos[flip_dim];
-					}
 
 					manual->position(pos[0],pos[1],pos[2]);
 					manual->normal(normal[0],normal[1],normal[2]);
@@ -168,14 +167,18 @@ void WmrAnimation::addEntityVrml(Ogre::SceneNode* node_to_attach_to, const std::
 			manual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST);
 			int ne = (int) evert_idx_1.size();
 			for (int edge_no=0; edge_no < ne; edge_no++) { //loop over edges
-				float x,y,z;
+				float pos[3];
 				
-				vrml.getVertex(part_no, evert_idx_1[edge_no], x,y,z);
-				manual->position(x,y,z);
+				vrml.getVertex(part_no, evert_idx_1[edge_no], pos[0], pos[1], pos[2]);
+				if (flip_dim > 0)
+					pos[flip_dim] = -pos[flip_dim];
+				manual->position(pos[0],pos[1],pos[2]);
 				manual->colour(C);
 
-				vrml.getVertex(part_no, evert_idx_2[edge_no], x,y,z);
-				manual->position(x,y,z);
+				vrml.getVertex(part_no, evert_idx_2[edge_no], pos[0], pos[1], pos[2]);
+				if (flip_dim > 0)
+					pos[flip_dim] = -pos[flip_dim];
+				manual->position(pos[0],pos[1],pos[2]);
 				manual->colour(C);
 			}
 			manual->end();
@@ -512,11 +515,11 @@ void WmrAnimation::addChainElement( const int lineno, const int chainno, const O
 	lines[lineno]->addChainElement( chainno, elem);
 }
 
-void WmrAnimation::updateNodesLines( const int nf, const HomogeneousTransform HT_to_parent[], const int num_contacts, const ContactGeom* contacts ) {
+void WmrAnimation::updateNodesLines( const int nf, const HomogeneousTransform HT_parent[], const int num_contacts, const ContactGeom* contacts ) {
 	//note assumptions made!
 
 	for (int fi=0; fi < nf; fi++) //loop over nodes
-		updateNodeTransform(fi,HT_to_parent[fi]);
+		updateNodeTransform(fi,HT_parent[fi]);
 
 	//lines
 	//body frame

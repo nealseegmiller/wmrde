@@ -110,12 +110,12 @@ end
 contacts = updateModelContactGeom(mdl, surfs, HT_world, mdl.min_npic, contacts);
 
 %get control inputs
-[u_,qvel_cmd] = feval(mdl.controller_fh,mdl,0,state)
-u = NaN(nv,1); 
-u(mdl.actframeinds + 5) = u_;
+[u,qvel_cmd] = feval(mdl.controller_fh,mdl,0,state)
+vis_act = [];
+
 %***end copied section
 
-[qvel,vc] = forwardVelKin(mdl,state,u,HT_world,contacts)
+[qvel,vc] = forwardVelKin(mdl,state,u,vis_act,HT_world,contacts)
 
 
 if 1
@@ -125,7 +125,7 @@ if 1
     
     tic
     for i=1:(n*irf)
-        qvel = forwardVelKin(mdl,state,u,HT_world,contacts);
+        qvel = forwardVelKin(mdl,state,u,vis_act,HT_world,contacts);
     end
     t=toc;
 

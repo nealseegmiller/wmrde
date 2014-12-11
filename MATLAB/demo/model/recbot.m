@@ -52,18 +52,20 @@ addWheelFrame(mdl,'BR','body',1,poseToHT([0 0 0],[0, -B(2)/2, 0]),rad(2)); %rear
 
 %SET MASS PROPERTIES
 %assume body is box shape
-setFrameMass(mdl,1,Mb,[Lb/2 0 Hb/2]',Ibox(Mb,Lb,Wb,Hb));
+setFrameMass(mdl,1,Mb,[Lb/2 0 Hb/2]',inertiaBox(Mb,Lb,Wb,Hb));
 
 %assume wheels are cylinders
 wfi = mdl.wheelframeinds; %fl fr bl br
 for i = wfi(1:2)
-    setFrameMass(mdl,i,Mw,[0 0 0]',Icylinder(Mw,rad(1),Ww(1),2));
+    setFrameMass(mdl,i,Mw,[0 0 0]',inertiaCylinder(Mw,rad(1),Ww(1),2));
 end
 for i = wfi(3:4)
-    setFrameMass(mdl,i,Mw,[0 0 0]',Icylinder(Mw,rad(2),Ww(2),2));
+    setFrameMass(mdl,i,Mw,[0 0 0]',inertiaCylinder(Mw,rad(2),Ww(2),2));
 end
 
 %FOR KINEMATIC MODEL
+mdl.min_npic = nw;
+
 mdl.dz_target = -.02*ones(1,nw);
 mdl.tc_z = .1*ones(1,nw);
 if do_suspension
@@ -80,15 +82,7 @@ mdl.bsm_fh = @universalBsm;
 mdl.bsm_p = zeros(6,1);
 
 %FOR DYNAMIC MODEL
-%set function handles
-mdl.controller_fh = @ackermanController;
-
-if do_suspension
-    mdl.hjc_fh = @recbotConstraints;
-end
-
-%wheel-ground contact model
-mdl.wgc_fh = @uniformWgc; 
+mdl.wgc_fh = @uniformWgc; %wheel-ground contact model
 
 Kp = TotalMass*mdl.grav./(nw*-mdl.dz_target);
 
@@ -98,6 +92,13 @@ mdl.wgc_p = wgcParams(fh,Kp);
 mdl.act_fh = @PI_act;
 mdl.act_p = [250 0 Inf]';
 
+%FOR BOTH
+%set function handles
+mdl.controller_fh = @ackermanController;
+
+if do_suspension
+    mdl.hjc_fh = @recbotConstraints;
+end
 mdl.cov_p = zeros(4,1);
 
 
@@ -107,7 +108,7 @@ orientation = [0 0 0]'*pi/180;
 
 dlen=-1+length(orientation)+3; %ns-nf
 ns = mdl.nf+dlen; %number of states
-[isorient,ispos] = stateIs(ns,mdl.nf);
+[isorient,ispos] = stateIs(ns);
 
 state = zeros(ns,1);
 state(isorient) = orientation;
@@ -117,10 +118,6 @@ state(ispos) = [-5 0 max(rad)]';
 % qvel = zeros(mdl.nf+5,1);
 
 [~,qvel]=feval(mdl.controller_fh,mdl,0,state); %nonzero initial velocity
-
-%feasible sets of wheels in contact, for velocity kinematic sim
-mdl.incontactsets=true(1,nw);
-
 
 
 
