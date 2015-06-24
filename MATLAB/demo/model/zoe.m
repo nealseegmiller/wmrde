@@ -149,6 +149,7 @@ state(ispos) = [0 0 rad+D-.01]';
 
 %ANIMATION
 cdir = [CADdir() 'Zoe/'];
+% cdir = [CADdir() 'Zoe\']; %for windows
 
 if nargout > 3
     anim = WmrAnimation();
@@ -272,7 +273,7 @@ if nargout > 3
     
     anim.ax_center = [0, 0, Hb/2]';
     d = 1.0*L;
-    anim.ax_limits = [-d d -d d -d/2 d/2];
+    anim.ax_limits = [-d d -d d -d/2 d];
     
 end
 

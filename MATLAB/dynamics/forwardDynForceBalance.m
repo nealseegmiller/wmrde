@@ -99,10 +99,10 @@ if cost > cost_tol
 
         Hess = 2*(derr_dx'*derr_dx);
         
-        [Hess_R, Hess_p] = chol(Hess);
+        [Hess_U, Hess_p] = chol(Hess); %Hess_U is upper triangular
         if Hess_p == 0
             %Hess is positive definite, solve using Cholesky decomposition (faster)
-            p = -Hess_R\(Hess_R'\grad');
+            p = -Hess_U\(Hess_U'\grad');
 %             p = -Hess\grad'; %DEBUGGING
         else %else use pseudo-inverse, TODO CHECK THIS
             p = -pinv(Hess)*grad';
@@ -126,7 +126,7 @@ if cost > cost_tol
         end
     end
 end
-    
+
 
 %outputs
 out.iter = iter;
@@ -156,6 +156,7 @@ end
         %derivatives with respect to inputs x
         
         %init output
+        %TODO, eliminate or simplify this variable
         dwgcin_dqacc = [];
         
         if ncc > 0
@@ -165,9 +166,9 @@ end
                 wtno = whichwt(pno); %wheel/track number
                 picno = picno+1; %point in contact number
                 rows = (1:3) + (picno-1)*3;
-                dwgcin_dqacc(1:3,:,picno) = Acontact(rows,:)*dt;
-                dwgcin_dqacc(4,wsframeinds(wtno)+5,picno) = radii(wtno)*dt;
-                dwgcin_dqacc(5,:,picno) = dwgcin_dqacc(3,:,picno)*dt;
+                dwgcin_dqacc(1:3,:,picno) = Acontact(rows,:)*dt; %vx vy vz
+                dwgcin_dqacc(4,wsframeinds(wtno)+5,picno) = radii(wtno)*dt; %R*omega
+                dwgcin_dqacc(5,:,picno) = dwgcin_dqacc(3,:,picno)*dt; %dz
             end
         end
         

@@ -12,7 +12,7 @@ opts.ideal_actuators = 1;
 
 opts.initincontact = 1;
 opts.log = 1;
-opts.animate = 0;
+opts.animate = 1;
 opts.plot = 0;
 opts.profile = 0;
 
@@ -20,8 +20,8 @@ dt = .04;
 nsteps = 10/dt + 1;
 
 %uncomment one of the following:
-% model_fh = @zoe;
-model_fh = @rocky;
+model_fh = @zoe;
+% model_fh = @rocky;
 % model_fh = @talon;
 
 %make WmrModel object

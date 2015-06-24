@@ -1,4 +1,4 @@
-function [qacc, u, out] = forwardDynErpCfm( mdl, state0, qvel0, u, contacts, dt, inv_H, C, A, cis)
+function [qacc, u, out] = forwardDynErpCfm( mdl, state0, qvel0, u, contacts, dt, H, C, A, cis)
 %Compute *constrained* forward dynamics using erp, cfm like Open Dynamics Engine
 %TODO, bound contact forces
 
@@ -74,19 +74,19 @@ if njc > 0
 end
 b = b/dt;
 
-
-%Hl*lambda = fl
-Cfm = diag(cfm_diag/dt); %why divide by dt? because solving for acceleration (not velocity)
-Hl = A*inv_H*A' + Cfm;
-fl = b - A*inv_H*(tau-C);
-
 %TODO, bound contact forces
 %-normal force >= 0
 %-lon,lat force <= lim (mu*normal force)
 
-lambda = Hl\fl;
+%invert H
+U = chol(H);
+invU = U\eye(size(U)); %backslash operator recognizes upper triangular systems
+inv_H = invU*invU';
+        
+Cfm = diag(cfm_diag/dt); %why divide by dt? because solving for acceleration (not velocity)
+lambda = (A*inv_H*A' + Cfm)\(b - A*inv_H*(tau-C));
 
-qacc = inv_H*(tau-C+A'*lambda);
+qacc = inv_H*((tau-C)+A'*lambda);
 
 %set ForwardDynOutput
 if ncc > 0

@@ -22,7 +22,7 @@ if isempty(u.vis_act)
     u.vis_act(mdl.actframeinds+5) = true;
 end
 
-[H, inv_H, C] = HandC(mdl, HT_parent, qvel0);
+[H, C] = HandC(mdl, HT_parent, qvel0);
 
 if mdl.use_constraints
     %minimize the norm of H*qacc-(tau-C) or equivalently:
@@ -34,16 +34,21 @@ if mdl.use_constraints
     
     [A, cis] = constraintJacobians(mdl, state0, qvel0, u.vis_act, HT_world, contacts);
     
-    if isempty(mdl.wgc_fh)
-        [qacc, u, out] = forwardDynErpCfm(mdl, state0, qvel0, u, contacts, dt, inv_H, C, A, cis);
-    else
-%         [qacc, u, out] = forwardDynForceBalance_backup(mdl, state0, qvel0, u, contacts, dt, inv_H, C, A, cis);
-        [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis);
+    if ~isempty(A)
+        if isempty(mdl.wgc_fh)
+            [qacc, u, out] = forwardDynErpCfm(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis);
+        else
+            [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis);
+        end
+        
+        return
     end
     
-else
-    [qacc, u, out] = forwardDynUnc(mdl, state0, qvel0, u, HT_world, contacts, H, C);
 end
+
+%unconstrained
+[qacc, u, out] = forwardDynUnc(mdl, state0, qvel0, u, HT_world, contacts, H, C);
+
 
 
 

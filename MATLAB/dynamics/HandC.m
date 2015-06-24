@@ -1,4 +1,4 @@
-function [H, inv_H, C] = HandC(mdl, HT_parent, qvel)
+function [H, C] = HandC(mdl, HT_parent, qvel)
 %Compute the joint space inertia and bias force for forward dynamics
 
 %OPTIONS
@@ -6,7 +6,7 @@ do_reuse_H = 0;
 do_approx_C = 0; %treat WMR as single rigid body when computing joint space bias force
 
 %TODO, eliminate persistent vars, store in WmrModel instead
-persistent H_prev inv_H_prev Ist
+persistent H_prev Ist
 
 %spatial transforms
 Xup = invHTsToPluckers(HT_parent);
@@ -23,24 +23,6 @@ if ~do_reuse_H || isempty(H_prev)
     H_prev = H; 
 else
     H = H_prev;
-end
-
-if mdl.use_constraints %&& isempty(mdl.wgc_fh) %TODO
-    if ~do_reuse_H || isempty(inv_H_prev)
-        %invert H
-        %matrix inversion is slow & innaccurate in general, but inv(H) is required many times so precomputing saves time?
-        %faster than inv(H)?
-
-        U = chol(H);
-        invU = U\eye(size(U)); %backslash operator recognizes upper triangular systems
-        inv_H = invU*invU';
-
-        inv_H_prev = inv_H;
-    else
-        inv_H = inv_H_prev;
-    end
-else
-    inv_H = []; %not necessary
 end
 
 %joint space bias force
