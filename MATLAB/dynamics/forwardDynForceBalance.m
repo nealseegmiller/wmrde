@@ -1,8 +1,8 @@
-function [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, inv_H, C, A, cis)
+function [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis)
 %Compute *constrained* forward dynamics using force-balance optimization
 
 %OPTIONS
-qr_tol = 1e-3;
+% qr_tol = 1e-3;
 max_iter = 20;
 cost_tol = 1;
 dcost_tol = cost_tol/10;
@@ -49,9 +49,6 @@ nac = sum(cis.act);
 njc = sum(cis.joint);
 
 Acontact = A(cis.contact,:);
-Ajoint = A(cis.joint,:);
-
-vc0_incontact = reshape(A(cis.contact,:)*qvel0, 3, npic);
 
 jd0 = state0(isjd);
 
@@ -60,76 +57,23 @@ jd0 = state0(isjd);
 tau = zeros(nv,1);
 
 %allocate
-x = NaN(nc,1); %input vector for force-balance optimization
 
-%wheel constraints
-if ncc > 0
-    tmp = vc0_incontact;
-    tmp(3,:) = 0; %init vz to zero, or never reaches steady state
-
-    x(cis.contact) = tmp(:);
+%if ideal actuators
+if nac > 0 && isempty(mdl.act_fh) 
+    %ideal actuators
+    ninpt = nv - nac;
+else
+    ninpt = nv; %qacc
 end
+x = zeros(ninpt,1); %input vector for force-balance optimization
 
-%actuator constraints
-if nac > 0
-    x(cis.act) = qvel0(vis_act);
-%     x(cis.act) = u.cmd; %DEBUGGING
-end
-
-%holonomic joint constraints
-if njc > 0;
-    x(cis.joint) = Ajoint*qvel0;
-end
-
-
-%Get a maximal linearly independent subset of constraints (rows of A)
-cis.ind = true(1,nc);
-
-
-if (nc-nac) > 0
-    %actuator constraints are automatically included
-    A_ = A(~cis.act,:);
-    A_(:,vis_act) = [];
-
-    [~, R, E] = qr(A_',0); %A_' is (nv-na) x (nc-nac)
-    diagR = abs(diag(R));
-    is_ind_ = false(nc-nac,1); %logical, rows of A_ in linearly independent subset
-    is_ind_(E(diagR >= qr_tol*diagR(1))) = true; %length(diagR) < length(E) okay
-    
-    cis.ind(~cis.act) = is_ind_;
-
-end
-cis.inpt = cis.ind;
-
-if isempty(mdl.act_fh)
-    cis.inpt(cis.act)=false; 
-end %ideal actuators
-
-x = x(cis.inpt);
-ninpt = length(x);
-
-Aind = A(cis.ind,:);
-
-%precompute vars required for cost function
-
-%compute Hl,fl such that Hl*lambda = fl;
-Hl = Aind*inv_H*Aind';
-
-%invert Hl
-% inv_Hl = inv(Hl);
-%Hl is symmetric, this is faster (?)
-Ul = chol(Hl);
-invUl = Ul\eye(size(Ul));
-inv_Hl = invUl*invUl';
-        
-fl_c = - Aind*(inv_H*(tau-C)); %constant part of fl
 
 %initialize variables in nested functions to avoid dynamic assignment
 %computed in calcCost, needed in calcGradient
 mf = zeros(nc,1); %model force
 dmf = struct; %derivative of model force
 err = []; %force-balance error
-% dmf_dx = []; %DEBUGGING
+% dmf_dqacc = []; %DEBUGGING
 
 
 fh_calc_cost = @calcCost;
@@ -144,7 +88,7 @@ iter = 0;
 if cost > cost_tol
     %optimization required
 
-    [dqvel_dx, dwgcin_dx, dtaulambda_dx] = precomputeGrad();
+    [dwgcin_dqacc] = precomputeGrad();
     grad = calcGradient;
 
     cost_prev = cost;
@@ -154,7 +98,18 @@ if cost > cost_tol
 %         calcGradientNum(x)
 
         Hess = 2*(derr_dx'*derr_dx);
-        p = -Hess\grad'; %direction
+        
+        [Hess_R, Hess_p] = chol(Hess);
+        if Hess_p == 0
+            %Hess is positive definite, solve using Cholesky decomposition (faster)
+            p = -Hess_R\(Hess_R'\grad');
+%             p = -Hess\grad'; %DEBUGGING
+        else %else use pseudo-inverse, TODO CHECK THIS
+            p = -pinv(Hess)*grad';
+        end
+
+        
+%         p = -Hess\grad'; %direction
 
         [x,cost,grad] = linesearch(x,cost,grad,p,1,fh_calc_cost,fh_calc_gradient);
 
@@ -195,63 +150,43 @@ if ncc > 0
     out.vc(:,incontact) = vc_incontact;
 end
 
-    function [dqvel_dx, dwgcin_dx, dtaulambda_dx] = precomputeGrad()
+    function [dwgcin_dqacc] = precomputeGrad()
         
         %precompute vars required for gradient function, 
         %derivatives with respect to inputs x
         
         %init output
-        dwgcin_dx = [];
-        
-        dlambda_dx = inv_Hl(:,cis.inpt(cis.ind))/dt; %dlambda/dx
-        dqvel_dx = (inv_H*Aind'*dt)*dlambda_dx; %dqvel/dlambda*dlambda/dx
+        dwgcin_dqacc = [];
         
         if ncc > 0
-            %d(wheel-ground contact model inputs)/dx
-            dwgcin_dx = zeros(5,ninpt,npic);
-            
-            %TODO, simplify?
+            dwgcin_dqacc = zeros(5,nv,npic);
             picno = 0;
             for pno = find(incontact)
-                wtno = whichwt(pno); %wheel/sprocket number
+                wtno = whichwt(pno); %wheel/track number
                 picno = picno+1; %point in contact number
                 rows = (1:3) + (picno-1)*3;
-                dwgcin_dx(1:3,:,picno) = Acontact(rows,:)*dqvel_dx;
-                dwgcin_dx(4,:,picno) = radii(wtno)*dqvel_dx(wsframeinds(wtno)+5,:);
-                dwgcin_dx(5,:,picno) = dwgcin_dx(3,:,picno)*dt;
+                dwgcin_dqacc(1:3,:,picno) = Acontact(rows,:)*dt;
+                dwgcin_dqacc(4,wsframeinds(wtno)+5,picno) = radii(wtno)*dt;
+                dwgcin_dqacc(5,:,picno) = dwgcin_dqacc(3,:,picno)*dt;
             end
         end
-        
-        dtaulambda_dx = Aind'*dlambda_dx;
         
     end
 
     function cost = calcCost(x_)
-        xb=NaN(nc,1); %buffered
-        xb(cis.inpt)=x_;
         
-        b=NaN(nc,1);
-        if ncc > 0
-            b(cis.contact) = xb(cis.contact) - vc0_incontact(:);
+        if nac > 0 && isempty(mdl.act_fh)
+            %ideal actuators
+            qacc = zeros(nv,1);
+            qacc(~vis_act) = x_;
+            qacc(vis_act) = (u.cmd - qvel0(vis_act))/dt;
+        else
+            qacc = x_;
         end
-        if nac > 0
-            if isempty(mdl.act_fh)
-                b(cis.act) = u.cmd - qvel0(vis_act); %ideal actuators
-            else
-                b(cis.act) = xb(cis.act) - qvel0(vis_act);
-            end
-        end
-        if njc > 0
-            b(cis.joint) = xb(cis.joint) - Ajoint*qvel0; 
-        end
+        qvel = qvel0 + qacc*dt;
+        tau_lambda = -(tau - C) + H*qacc;
         
-        fl = b(cis.ind)/dt + fl_c;
-        
-        %constraint forces
-        lambda = inv_Hl*fl;
-        qacc = inv_H*(tau-C+Aind'*lambda); 
-        qvel = qvel0+qacc*dt; %new qvel, time i+1
-        
+        %compute model forces
         %wheel-ground contact model
         if ncc > 0
             vc_incontact = reshape(Acontact*qvel,3,npic); %velocity of contact points at time i+1, for wheels in contact
@@ -272,9 +207,8 @@ end
             [~, ~, mf(cis.joint), dmf.joint_djd, dmf.joint_djr] = feval(mdl.hjc_fh,mdl,jd,qvel(7:end));
         end
         
-        tau_lambda = Aind'*lambda;
-        tau_mf = A'*mf;
-
+        tau_mf = A'*mf;          
+        
         err = tau_lambda - tau_mf; %error
         
         if nac > 0 && isempty(mdl.act_fh) %ideal actuators
@@ -282,32 +216,37 @@ end
         end
         
         cost = err'*err;
+        
+%         blah = 1;
 
     end
 
     function grad_ = calcGradient()
+        dmf_dqacc = zeros(nc,nv);
 
-        dmf_dx = zeros(nc,ninpt);
-        
         if ncc > 0
-            dmfcontact_dx = zeros(ncc,ninpt);
+            off = find(cis.contact,1)-1; %offset, based on index of first contact constraint
             for picno = 1:npic
-                rows = (1:3) + (picno-1)*3;
-                dmfcontact_dx(rows,:) = dmf.wheel_dwgcin(:,:,picno)*dwgcin_dx(:,:,picno); %dfc/dwgcin*dwgcin/dx
+                rows = (1:3) + (picno-1)*3 + off;
+                dmf_dqacc(rows,:) = dmf.wheel_dwgcin(:,:,picno)*dwgcin_dqacc(:,:,picno);
             end
-            dmf_dx(cis.contact,:) = dmfcontact_dx;
         end
         if nac > 0 && ~isempty(mdl.act_fh)
-            dmfact_dx = dmf.act_du*dqvel_dx(vis_act,:);
-            dmf_dx(cis.act,:) = dmfact_dx;
+            dmf_dqacc(cis.act,vis_act) = dmf.act_du*dt;
         end
         if njc > 0
-            djd_dx = dqvel_dx(7:end,:)*dt;
-            dmfjoint_dx = dmf.joint_djd*(djd_dx) + dmf.joint_djr*dqvel_dx(7:end,:);
-            dmf_dx(cis.joint,:) = dmfjoint_dx;
+            dmf_dqacc(cis.joint,7:end) = (dmf.joint_djd * dt^2) + (dmf.joint_djr * dt);
         end
-        dtaumf_dx = A'*dmf_dx;
-        
+
+        if nac > 0 && isempty(mdl.act_fh)
+            %ideal actuators
+            dtaulambda_dx = H(:,~vis_act);
+            dtaumf_dx = A'*dmf_dqacc(:,~vis_act);
+        else
+            dtaulambda_dx = H;
+            dtaumf_dx = A'*dmf_dqacc;
+        end
+
         derr_dx = dtaulambda_dx - dtaumf_dx; %required to compute Hessian
         
         if nac > 0 && isempty(mdl.act_fh) %ideal actuators
@@ -316,23 +255,28 @@ end
         
         grad_ = 2*err'*derr_dx;
         
+%         blah = 1;
     end
 
     function calcGradientNum(x)
         %DEBUGGING, compute the gradient numerically
         
         x_backup = x;
+        
         cost_backup = cost;
 %         err_backup = err;
 %         mf_backup = mf;
+        
         grad_num = zeros(1,ninpt);
 %         derr_dx_num = zeros(length(err),ninpt);
 %         dmf_dx_num = zeros(nc,ninpt);
-        myeps = 1e-8; %how to choose?
+        
+        myeps = 1e-6; %how to choose?
         for k = 1:ninpt
             x = x_backup;
             x(k) = x(k) + myeps;
             cost = calcCost(x);
+            
             grad_num(k) = (cost-cost_backup)/myeps;
 %             derr_dx_num(:,k) = (err-err_backup)/myeps;
 %             dmf_dx_num(:,k) = (mf-mf_backup)/myeps;
@@ -342,6 +286,8 @@ end
         
         %print normalized error
         fprintf('norm. grad error: %s\n',num2str((grad-grad_num)/norm(grad_num)*100,'%.4f '))
+        
+%         blah = 1;
         
     end
 

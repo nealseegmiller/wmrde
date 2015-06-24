@@ -86,7 +86,8 @@ function numstr = getNumStr(fid)
         end
         numstr = [numstr, tmp]; %#ok<AGROW>
     end
-    numstr = strrep(numstr,[char(13) char(10)],''); %remove [carriage return, new line]
+    numstr = strrep(numstr,char(13),''); %remove carriage returns
+    numstr = strrep(numstr,char(10),''); %remove new lines
     numstr = strrep(numstr,',',''); %remove commas
 end
 

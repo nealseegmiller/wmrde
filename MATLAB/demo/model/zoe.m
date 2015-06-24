@@ -148,7 +148,7 @@ state(ispos) = [0 0 rad+D-.01]';
 
 
 %ANIMATION
-cdir = [CADdir() 'Zoe\'];
+cdir = [CADdir() 'Zoe/'];
 
 if nargout > 3
     anim = WmrAnimation();

@@ -146,7 +146,7 @@ state(ispos) = position;
 
 
 %ANIMATION
-cdir = [CADdir() 'Rocky7\'];
+cdir = [CADdir() 'Rocky7/'];
 
 
 if nargout > 3

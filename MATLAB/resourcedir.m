@@ -3,4 +3,5 @@ function path = resourcedir()
 %This function specifies the directory where those files are saved.
 %change this to the correct path for your machine
 
-path = 'C:\Users\nseegmil.NREC-014635\Documents\Thesis\src\resource\';
+% path = 'C:\Users\nseegmil.NREC-014635\Documents\Thesis\src\resource\';
+path = '/home/neal/Projects/wmrde/src/resource/';

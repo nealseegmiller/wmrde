@@ -118,7 +118,7 @@ state(ispos) = position;
 
 [~,qvel]=feval(mdl.controller_fh,mdl,0,state); %nonzero initial velocity
 
-cdir = [CADdir() 'Talon\'];
+cdir = [CADdir() 'Talon/'];
 
 if nargout > 3
     anim = WmrAnimation();

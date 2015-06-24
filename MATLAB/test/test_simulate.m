@@ -12,7 +12,7 @@ opts.ideal_actuators = 1;
 
 opts.initincontact = 1;
 opts.log = 1;
-opts.animate = 1;
+opts.animate = 0;
 opts.plot = 0;
 opts.profile = 0;
 

@@ -37,7 +37,8 @@ if mdl.use_constraints
     if isempty(mdl.wgc_fh)
         [qacc, u, out] = forwardDynErpCfm(mdl, state0, qvel0, u, contacts, dt, inv_H, C, A, cis);
     else
-        [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, inv_H, C, A, cis);
+%         [qacc, u, out] = forwardDynForceBalance_backup(mdl, state0, qvel0, u, contacts, dt, inv_H, C, A, cis);
+        [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis);
     end
     
 else

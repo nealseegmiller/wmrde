@@ -25,7 +25,7 @@ else
     H = H_prev;
 end
 
-if mdl.use_constraints
+if mdl.use_constraints %&& isempty(mdl.wgc_fh) %TODO
     if ~do_reuse_H || isempty(inv_H_prev)
         %invert H
         %matrix inversion is slow & innaccurate in general, but inv(H) is required many times so precomputing saves time?
