@@ -24,8 +24,6 @@ BaseApplication::BaseApplication(void)
     mWindow(0),
     //mResourcesCfg(Ogre::StringUtil::BLANK),
     //mPluginsCfg(Ogre::StringUtil::BLANK),
-    //mResourcesCfg(Ogre::BLANKSTRING), //changed by Neal
-    //mPluginsCfg(Ogre::BLANKSTRING),
     mResourcesCfg(""), //changed by Neal
     mPluginsCfg(""),
     mTrayMgr(0),
@@ -87,26 +85,18 @@ void BaseApplication::chooseSceneManager(void)
 //-------------------------------------------------------------------------------------
 void BaseApplication::createCamera(void)
 {
-    // Create the camera
-    mCamera = mSceneMgr->createCamera("PlayerCam");
-
-	/*
-    // Position it in Z direction
-    mCamera->setPosition(Ogre::Vector3(0,0,80));
-    // Look back along -Z
-    mCamera->lookAt(Ogre::Vector3(0,0,-300));
-
-	mCamera->setNearClipDistance(5);
-	*/
+  // Create the camera
+  mCamera = mSceneMgr->createCamera("PlayerCam");
 
 	//changed by Neal
-	mCamera->setFixedYawAxis(true,Ogre::Vector3(0,0,1.0f));
 	mCamera->setPosition(Ogre::Vector3(0,-5,2));
 	mCamera->lookAt(Ogre::Vector3(0,0,0));
+  mCamera->setNearClipDistance(.5);
 
-    mCamera->setNearClipDistance(.5);
+  mCameraMan = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
+  mCameraMan->setTopSpeed(10.0f);
 
-    mCameraMan = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
+  mCamera->setFixedYawAxis(true,Ogre::Vector3(0,0,1.0f));
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::createFrameListener(void)
@@ -257,7 +247,7 @@ bool BaseApplication::setup(void)
 
     setupResources();
 
-    bool carryOn = configure(); //commented out by Neal, skip configure dialog
+    bool carryOn = configure();
     if (!carryOn) return false;
 
     chooseSceneManager();

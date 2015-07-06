@@ -31,15 +31,13 @@ This source file is part of the
 #include <OgreTextureManager.h>
 #include <OgreMaterialManager.h>
 
-
 #include <OISEvents.h>
 #include <OISInputManager.h>
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
 #include <SdkTrays.h>
-//#include <SdkCameraMan.h>
-#include <animate/SdkCameraManModified.h> //changed by Neal (modified velocity)
+#include <SdkCameraMan.h>
 
 class BaseApplication : public Ogre::FrameListener, public Ogre::WindowEventListener, public OIS::KeyListener, public OIS::MouseListener, OgreBites::SdkTrayListener
 {
