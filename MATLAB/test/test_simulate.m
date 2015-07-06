@@ -20,8 +20,8 @@ dt = .04;
 nsteps = 10/dt + 1;
 
 %uncomment one of the following:
-model_fh = @zoe;
-% model_fh = @rocky;
+% model_fh = @zoe;
+model_fh = @rocky;
 % model_fh = @talon;
 
 %make WmrModel object

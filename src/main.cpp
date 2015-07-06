@@ -1,5 +1,4 @@
 #include <test.h>
-#include <../mytest.h>
 
 //int main()
 int main(int argc, char *argv[]) //use this for console output

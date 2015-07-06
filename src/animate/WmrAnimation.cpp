@@ -2,8 +2,10 @@
 
 //-------------------------------------------------------------------------------------
 WmrAnimation::WmrAnimation(void)
+:
+nn(0),
+nl(0)
 {
-	nn=0;
 }
 //-------------------------------------------------------------------------------------
 WmrAnimation::~WmrAnimation(void)
@@ -478,6 +480,7 @@ void WmrAnimation::addEntityGridSurf(GridSurf* surf) {
 
 void WmrAnimation::addLine( const int num_chains ) {
 	//use billboard chain to draw thick lines
+  printf("nl = %d, MAXNL = %d\n", nl, MAXNL); //DEBUGGING
 	assert(nl<MAXNL);
 
 	lines[nl] = mSceneMgr->createBillboardChain();

@@ -1510,10 +1510,10 @@ void test_simulate() {
 			if (!anim.updateRender())
 				goto stop;
 
-			while (anim.get_mPause()) {
-				if (!anim.updateRender())
-					goto stop;
-			}
+//			while (anim.get_mPause()) {
+//				if (!anim.updateRender())
+//					goto stop;
+//			}
 		}
 #endif
 	}

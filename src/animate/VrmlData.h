@@ -12,6 +12,21 @@
 #include <vector>
 
 
+template<typename Type> //Type is float or int
+void stringToNumVector( std::string& tmp, std::vector<Type>& out ) { 
+	//remove commas, line breaks such that numbers are delimited only by spaces
+	tmp.erase(std::remove(tmp.begin(), tmp.end(), ','), tmp.end());
+	tmp.erase(std::remove(tmp.begin(), tmp.end(), '\n'), tmp.end());
+	
+	std::stringstream ss(tmp);
+	while (!ss.fail()) {
+		Type f;
+		ss >> f;
+		if (!ss.fail()) 
+			out.push_back(f);
+	}
+}
+
 template <typename T> //float or double, TODO a better way?
 class VrmlData {
 public:
@@ -124,17 +139,4 @@ public:
 
 #endif
 
-template<typename Type> //Type is float or int
-void stringToNumVector( std::string& tmp, std::vector<Type>& out ) { 
-	//remove commas, line breaks such that numbers are delimited only by spaces
-	tmp.erase(std::remove(tmp.begin(), tmp.end(), ','), tmp.end());
-	tmp.erase(std::remove(tmp.begin(), tmp.end(), '\n'), tmp.end());
-	
-	std::stringstream ss(tmp);
-	while (!ss.fail()) {
-		Type f;
-		ss >> f;
-		if (!ss.fail()) 
-			out.push_back(f);
-	}
-}
+

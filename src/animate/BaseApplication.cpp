@@ -24,8 +24,10 @@ BaseApplication::BaseApplication(void)
     mWindow(0),
     //mResourcesCfg(Ogre::StringUtil::BLANK),
     //mPluginsCfg(Ogre::StringUtil::BLANK),
-    mResourcesCfg(Ogre::BLANKSTRING), //changed by Neal
-    mPluginsCfg(Ogre::BLANKSTRING),
+    //mResourcesCfg(Ogre::BLANKSTRING), //changed by Neal
+    //mPluginsCfg(Ogre::BLANKSTRING),
+    mResourcesCfg(""), //changed by Neal
+    mPluginsCfg(""),
     mTrayMgr(0),
     mCameraMan(0),
     mDetailsPanel(0),
