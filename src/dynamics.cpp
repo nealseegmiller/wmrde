@@ -757,9 +757,9 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 		Real cost = dotVec(nv,err,err);
 
 		//DEBUGGING
-		//std::cout << "tau_lambda=\n"; printMatReal(nv,1,tau_lambda,-1,-1);
-		//std::cout << "tau_mf=\n"; printMatReal(nv,1,tau_mf,-1,-1);
-		//std::cout << "err=\n"; printMatReal(nv,1,err,-1,-1);
+//		std::cout << "tau_lambda=\n"; printMatReal(nv,1,tau_lambda,-1,-1);
+//		std::cout << "tau_mf=\n"; printMatReal(nv,1,tau_mf,-1,-1);
+//		std::cout << "err=\n"; printMatReal(nv,1,err,-1,-1);
 
 		return cost;
 
@@ -800,12 +800,12 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 
 					setMat(3,nv,0.0,dwgcin_dqacc[i]);
 					//d [vx vy vz] /dqacc
-					copyMatBlock(ncc,3*i,0,3,nv,A.contact, 3,0,0,dwgcin_dqacc[i]);
+					copyMatBlock(ncc,3*i,0,3,nv,A.contact, 5,0,0,dwgcin_dqacc[i]);
 					//d Rw /dqacc
 					dwgcin_dqacc[i][S2I(3,TOQVELI(fi),5)] = frames[fi].rad;
 					//d dz /dqacc = dvz/dqacc*dt
 					copyMatRow(5,nv,2,dwgcin_dqacc[i], 5,4,dwgcin_dqacc[i]);
-					mulcMatRow(5,ninpt,4,dt,dwgcin_dqacc[i]);
+					mulcMatRow(5,nv,4,dt,dwgcin_dqacc[i]);
 					//multiply by dt
 					mulcMat(5,nv,dt,dwgcin_dqacc[i]);
 
@@ -848,7 +848,7 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			if (nac > 0 && mdl.actuatorModel != 0) {
 			  for (int ai = 0; ai < nac; ai++) {
 			    int vi = TOQVELI(actframeinds[ai]);
-			    addmMatBlock(nac,0,ai,nac,1,dmf.act_du, nc,act_i0+ai,vi,dt,dmf_dqacc);
+			    addmMatBlock(nac,0,ai,nac,1,dmf.act_du, nc,act_i0,vi,dt,dmf_dqacc);
 			  }
 			}
 			if (njc > 0) {
@@ -883,16 +883,14 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			multMatTMat(nv,1,err,ninpt,derr_dx,2.0,grad_); //grad = 2*err^T*(derr/dx)
 
 			//DEBUGGING
-			//std::cout << "dtaulambda_dx=\n"; printMatReal(nv,ninpt,dtaulambda_dx,-1,-1);
-			//std::cout << "dtaumf_dx=\n"; printMatReal(nv,ninpt,dtaumf_dx,-1,-1);
-			//std::cout << "derr_dx=\n"; printMatReal(nv,ninpt,derr_dx,-1,-1);
-			//std::cout << "grad_=\n"; printMatReal(1,ninpt,grad_,-1,-1);
+//			std::cout << "dmf_dqacc=\n"; printMatReal(nc,nv,dmf_dqacc,-1,-1);
+//			std::cout << "derr_dx=\n"; printMatReal(nv,ninpt,derr_dx,-1,-1);
+//			std::cout << "grad_=\n"; printMatReal(1,ninpt,grad_,-1,-1);
 
 			return;
 
 		};
 		forwardDynGradient(grad);
-		
 
 		for (iter=1; iter<max_iter; iter++) {
 
