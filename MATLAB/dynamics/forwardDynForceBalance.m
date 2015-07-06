@@ -194,7 +194,7 @@ end
             Rw = radii(whichwt) .* qvel(wsframeinds(whichwt)+5)';
             dz_incontact = dz0(incontact) + vc_incontact(3,:)*dt; %symplectic Euler
             
-            [mf(cis.contact),dmf.wheel_dwgcin] = feval(mdl.wgc_fh,mdl.wgc_p,incontact,vc_incontact,Rw(incontact),dz_incontact);
+            [mf(cis.contact),dmf.contact_dwgcin] = feval(mdl.wgc_fh,mdl.wgc_p,incontact,vc_incontact,Rw(incontact),dz_incontact);
         end
 
         %actuator model
@@ -229,7 +229,7 @@ end
             off = find(cis.contact,1)-1; %offset, based on index of first contact constraint
             for picno = 1:npic
                 rows = (1:3) + (picno-1)*3 + off;
-                dmf_dqacc(rows,:) = dmf.wheel_dwgcin(:,:,picno)*dwgcin_dqacc(:,:,picno);
+                dmf_dqacc(rows,:) = dmf.contact_dwgcin(:,:,picno)*dwgcin_dqacc(:,:,picno);
             end
         end
         if nac > 0 && ~isempty(mdl.act_fh)

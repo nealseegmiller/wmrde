@@ -8,7 +8,7 @@ clc
 opts.dyn = 1; %dynamic sim (else kinematic)
 %for dynamic sim
 opts.use_erp_cfm = 0; %use error reduction parameters & constraint force mixing like Open Dynamics Engine
-opts.ideal_actuators = 1;
+opts.ideal_actuators = 0;
 
 opts.initincontact = 1;
 opts.log = 1;

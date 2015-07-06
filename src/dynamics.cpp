@@ -13,7 +13,7 @@ void subtreeInertias(const WmrModel &mdl, const Mat6b Xup[], Mat6b Is_subt[]) {
 		copyMat6b(frames[fi].get_Is(),Is_subt[fi]);
 	}
 	
-	Mat6b Is_pc;
+	Mat6b Is_pc; //parent coords
 
 	for (int fi=(nf-1); fi > 0; fi--) { //frame index
 		//transform to parent coords
@@ -163,7 +163,7 @@ void jointSpaceBiasForce(const WmrModel& mdl, const Mat6b Xup[], const Real qvel
 
 //compute joint space inertia and bias force
 void HandC(const WmrModel& mdl, const HomogeneousTransform HT_parent[], const Real qvel[], //input
-	Real H[], Real HL[], Real C[]) { //output
+	Real H[], Real C[]) { //output
 
 	//OPTIONS
 	const bool do_reuse_H = false; //reuse joint space inertia
@@ -180,7 +180,6 @@ void HandC(const WmrModel& mdl, const HomogeneousTransform HT_parent[], const Re
 	//TODO, eliminate static vars, store in WmrModel instead
 	static Mat6b Is_subt[WmrModel::MAXNF];
 	static Real H_prev[MAXNV*MAXNV]; 
-	static Real HL_prev[MAXNV*MAXNV]; //lower triangular
 	static bool H_init = false; //flag, H is initialized
 
 	//convert HomogeneousTransforms to Plucker transforms
@@ -203,13 +202,6 @@ void HandC(const WmrModel& mdl, const HomogeneousTransform HT_parent[], const Re
 		copyMat(nv,nv,H_prev,H);
 	}
 
-	//Cholesky decomposition of H
-	if (!do_reuse_H || !H_init) {
-		chol(nv,H,HL);
-		copyMat(nv,nv,HL,HL_prev);
-	} else {
-		copyMat(nv,nv,HL_prev,HL);
-	}
 	H_init = true;
 
 	//joint space bias force, C
@@ -247,10 +239,9 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], Co
 
 	//compute joint space inertia and bias force
 	Real H[MAXNV*MAXNV];
-	Real HL[MAXNV*MAXNV];
 	Real C[MAXNV];
 
-	HandC(mdl, HT_parent, qvel0, H, HL, C);
+	HandC(mdl, HT_parent, qvel0, H, C);
 
 	if (mdl.use_constraints) {
 		ConstraintJacobian A;
@@ -258,10 +249,10 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], Co
 		constraintJacobians(mdl, state0, qvel0, HT_world, contacts, A );
 
 		if (mdl.wheelGroundContactModel == 0) {
-			forwardDynErpCfm(mdl, state0, qvel0, u.cmd, contacts, dt, HL, C, A, //input
+			forwardDynErpCfm(mdl, state0, qvel0, u.cmd, contacts, dt, H, C, A, //input
 				qacc); //output
 		} else {
-			forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, HL, C, A, //input
+			forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, //input
 				qacc); //output
 		}
 	} else {
@@ -368,7 +359,7 @@ int parseTrackContacts(const TrackContactGeom* tcontacts, const int nt,	bool inc
 
 
 void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0[], const Real u_cmd[], const ContactGeom* contacts, const Real dt, 
-	const Real HL[], const Real C[], const ConstraintJacobian& A, //input
+	Real H[], const Real C[], const ConstraintJacobian& A, //input
 	Real qacc[]) { //output
 	//use erp, cfm like Open Dynamics Engine
 
@@ -490,6 +481,10 @@ void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0
 	copyVec(nv,tau,tau_minus_C);
 	addmVec(nv,C,-1.0,tau_minus_C);
 
+	//Cholesky decomposition of H
+	Real HL[MAXNV*MAXNV];
+	chol(nv,H,HL);
+
 	Real invH_tau_minus_C[MAXNV]; //inv(H)*(tau-C)
 	cholSolve(nv, HL, tau_minus_C, invH_tau_minus_C);
 
@@ -538,7 +533,7 @@ void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0
 
 
 void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real qvel0[], ControllerIO& u, const ContactGeom* contacts, const Real dt, 
-	const Real HL[], const Real C[], const ConstraintJacobian& A, //input
+	const Real H[], const Real C[], const ConstraintJacobian& A, //input
 	Real qacc[]) { //output
 
 	//OPTIONS
@@ -604,142 +599,25 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 	// END PRE-PROCESS
 
 	//initialize inputs
-	Real xall[MAXNC]; //size nc
-	Real x[MAXNC]; //size ninpt
 
-
-	//contact constraints
-	Real vc0_incontact[3*MAXNP]; //contact point velocities for points in contact, concatenated into single vector
-	if (ncc > 0) {
-
-		multMatVec(3*npic,nv,A.contact,qvel0,1.0,vc0_incontact);
-
-		//init to contact pt velocity at previous time step
-		copyVec(ncc,vc0_incontact,xall+contact_i0);
-
-		//init vz to zero, or never reaches steady state
-		for (int i=0; i<npic; i++) 
-			xall[contact_i0+(3*i)+2] = 0;
-	}
-
-	Real u_act0[WmrModel::MAXNA]; //na x 1, from qvel0
-	if (nac > 0) {
-
-		for (int ai = 0; ai < na; ai++) {
-			int vi = TOQVELI(actframeinds[ai]);
-			u_act0[ai] = qvel0[vi];
-		}
-
-		copyVec(nac,u_act0, xall+act_i0); //init to joint velocity at previous time step
-	}
-
+	int ninpt; //number of inputs
+	if (nac > 0 && mdl.actuatorModel == 0)
+	  ninpt = nv - nac;
+	else
+	  ninpt = nv;
 	
-	Real cd0[WmrModel::MAXNJC]; //d/dt c based on qvel0
-	if (njc > 0) {
+	Real x[MAXNV]; //size ninpt
+	setVec(ninpt,0.0,x);
 
-		multMatVec(njc,nv,A.joint,qvel0,1.0,cd0);
-
-		copyVec(njc,cd0,xall+joint_i0);
-	}
-
-	//TODO, move to subfunction?
-	//get maximal linearly independent subset of constraints (rows of A)
-	//set includes all actuator constraints, some wheel and joint constraints
-	
-	struct ConstraintBool {
-		bool ind[MAXNC]; //independent
-		bool inpt[MAXNC]; //input
-	};
-	ConstraintBool cis;
-
-
-	setVec(nc, true, cis.ind); //initialize
-	
-	int nind; //number of constraints in independent subset
-	int ncc_ind;
-	int njc_ind;
-
-	
-	if (nc-nac > 0) {
-
-		//is NOT actuator constraint
-		bool cis_nact[MAXNC];
-		setVec(nc,true,cis_nact);
-		setVec(nac,false,cis_nact+act_i0);
-
-		//is actuated DOF in joint space vel
-		bool vis_act[MAXNV];
-		setVec(VI_JR,false,vis_act);
-		for (int fi = 1; fi < nf; fi++)
-			vis_act[TOQVELI(fi)] = frames[fi].isactuated;
-
-		Real A_[MAXNC*MAXNV]; //submatrix of A, (nc-nac) x (nv-na)
-		int col = 0;
-		for (int vi=0; vi < nv; vi++) {
-			if (!vis_act[vi]) {
-				logicalIndexIn(nc,cis_nact,A.all+S2I(0,vi,nc),A_+S2I(0,col,nc-nac));
-				col++;
-			}
-		}
-
-		//DEBUGGING
-		//std::cout << "A=\n"; printMatReal(nc,nv,A,-1,-1);
-		//std::cout << "A_=\n"; printMatReal(nc-nac,nv-na,A_,-1,-1);
-
-		bool is_ind_[MAXNC];
-		subset(nc-nac, nv-na, A_, qr_tol, is_ind_);
-
-		logicalIndexOut(nc,cis_nact,is_ind_,cis.ind);
-		ncc_ind = logicalCount(ncc,cis.ind + contact_i0);
-		njc_ind = logicalCount(njc,cis.ind + joint_i0);
-		nind = ncc_ind + nac + njc_ind;
-
-	} else {
-		nind = nc;
-		ncc_ind = ncc;
-		njc_ind = njc;
-	}
-
-	//for indexing the independent subset of constraints
-	int contact_i0_ind, act_i0_ind, joint_i0_ind;
-	contact_i0_ind = 0;
-	act_i0_ind = ncc_ind;
-	joint_i0_ind = ncc_ind + nac;
-
-
-	//eliminate dependent rows from A
-	const int MAXNIND = MAXNV; //max number of independent constraints, = max number of inputs
-
-	Real Aind[MAXNIND*MAXNV]; 
-	int row=0; //row in Aind
-	for (int ci=0; ci<nc; ci++) {
-		if (cis.ind[ci]) {
-			copyMatRow(nc,nv,ci,A.all, nind,row,Aind);
-			row++;
-		}
-	}
-
-	//DEBUGGING
-	//std::cout << "Aind=\n"; printMatReal(nind,nv,Aind,-1,-1);
-
-	//independent wheel, joint constraints
-	Real Acontact_ind[MAXNIND*MAXNV]; 
-	Real Ajoint_ind[WmrModel::MAXNJC*MAXNV];
-
-	copyMatBlock(nind,contact_i0_ind,0,ncc_ind,nv,Aind, ncc_ind,0,0,Acontact_ind);
-	copyMatBlock(nind,joint_i0_ind,0,njc_ind,nv,Aind, njc_ind,0,0,Ajoint_ind);
-
-
-	//is input
-	copyVec(nc, cis.ind, cis.inpt);
-	if (nac > 0 && mdl.actuatorModel == 0) //ideal actuators
-		setVec(nac, false, cis.inpt + act_i0);
-	int ninpt = logicalIndexIn(nc,cis.inpt,xall,x);
-
+  bool vis_act[MAXNV]; //is actuated element of joint space vel
+  setVec(nv,false,vis_act);
+  for (int ai=0; ai<nac; ai++) {
+    int vi = TOQVELI(actframeinds[ai]);
+    vis_act[vi] = true;
+  }
 
 	//PRECOMPUTE VARS FOR COST FUNCTION
 
-	//TODO, duplication
 	//applied force
 	Real tau[MAXNV];
 	setVec(nv,0.0,tau);
@@ -749,30 +627,7 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 	copyVec(nv,tau,tau_minus_C);
 	addmVec(nv,C,-1.0,tau_minus_C);
 
-	Real invH_tau_minus_C[MAXNV]; //inv(H)*(tau-C)
-	cholSolve(nv, HL, tau_minus_C, invH_tau_minus_C);
 
-	//end duplication
-
-	//Hl*lambda = fl
-
-	Real fl_c[MAXNV]; //constant part of fl
-	//fl_c = Aind*inv(H)*(tau-C)
-	multMatVec(nind, nv, Aind, invH_tau_minus_C, -1.0, fl_c);
-
-	//Hl = Aind*inv(H)*Aind^T
-	Real Hl[MAXNIND*MAXNIND];
-	Real AindT[MAXNV*MAXNIND]; //Aind^T
-	copyTMat(nind,nv,Aind,AindT); //TODO, eliminate this?
-	Real invH_AindT[MAXNV*MAXNIND]; //inv(H)*Aind^T
-	cholSolveMat(nv,HL,nind,AindT,invH_AindT);
-	multMatMat(nind,nv,Aind,nind,invH_AindT,1.0,Hl);
-
-
-	//Cholesky decomposition of Hl
-	Real HlL[MAXNIND*MAXNIND]; //lower triangular
-	chol(nind,Hl,HlL);
-	
 	Real cost;
 
 	//additional outputs of cost function
@@ -800,57 +655,26 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 		const int MAXNV = NUMQVEL(WmrModel::MAXNF);
 		const int MAXNP = ConstraintJacobian::MAXNP;
 		const int MAXNC = ConstraintJacobian::MAXNC;
-		const int MAXNIND = MAXNV;
 
-
-		//x_ is size ninpt
-		Real xb[MAXNC]; //buffered, size nc
-		logicalIndexOut(nc,cis.inpt,x_,xb);
-
-		Real b[MAXNC]; //size nc
-
-		if (ncc > 0) {
-			copyVec(ncc, xb+contact_i0, b+contact_i0);
-			addmVec(ncc, vc0_incontact, -1.0, b+contact_i0);
+		if (nac > 0 && mdl.actuatorModel == 0) { //ideal actuators
+		  int ai = 0;
+      for (int vi=0; vi<nv; vi++) {
+        if (vis_act[vi]) {
+          qacc[vi] = (u.cmd[ai] - qvel0[vi])/dt;
+          ai++;
+        } else {
+          qacc[vi] = x_[vi - ai];
+        }
+      }
+		} else {
+		  copyVec(nv,x_,qacc);
 		}
-		if (nac > 0) {
-			if (mdl.actuatorModel != 0)	
-				copyVec(nac, xb+act_i0, b+act_i0);
-			else 
-				copyVec(nac, u.cmd, b+act_i0); //ideal actuators
-			addmVec(nac, u_act0, -1.0, b+act_i0);
-		}
-		if (njc > 0) {
-			copyVec(njc, xb+joint_i0, b+joint_i0);
-			addmVec(njc, cd0, -1.0, b+joint_i0);
-		}
-
-		Real b_[MAXNIND]; //size nind
-		logicalIndexIn(nc, cis.ind, b, b_);
-
-		mulcVec(nind, 1/dt, b_);
-
-		//fl = b + fl_c
-		Real fl[MAXNIND];
-		copyVec(nind, b_, fl);
-		addmVec(nind, fl_c, 1.0, fl);
-
-
-		Real lambda[MAXNIND]; //constraint forces
-		cholSolve(nind, HlL, fl, lambda);
-		
-		//DEBUGGING
-		//std::cout << "lambda=\n"; printMatReal(nind,1,lambda,-1,-1);
-
-		//compute acceleration
-		//qacc = inv(H)*(tau-C + Aind^T*lambda)
-		//qacc = inv(H)*(tau-C) + (inv(H)*Aind^T)*lambda
-		multMatVec(nv,nind,invH_AindT,lambda,1.0,qacc);
-		addmVec(nv,invH_tau_minus_C,1.0,qacc);
 
 		Real qvel[MAXNV]; //new qvel, at time i+1
 		copyVec(nv,qvel0,qvel);
 		addmVec(nv,qacc,dt,qvel);
+
+		//
 
 		//force-balance error
 		
@@ -915,11 +739,12 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 
 		}
 
-		Real tau_lambda[MAXNV];
 		Real tau_mf[MAXNV];
-
-		multMatTVec(nind,nv,Aind,lambda,1.0,tau_lambda);
 		multMatTVec(nc,nv,A.all,mf,1.0,tau_mf);
+
+    Real tau_lambda[MAXNV]; // = -(tau - C) + H*qacc
+    multMatVec(nv,nv,H,qacc,1.0,tau_lambda);
+    addmVec(nv,tau_minus_C,-1.0,tau_lambda);
 
 		for (int vi=0; vi < nv; vi++) 
 			err[vi] = tau_lambda[vi] - tau_mf[vi];
@@ -943,15 +768,11 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 
 
 	//precomputed vars
-	Real dwgcin_dx[MAXNP][5*MAXNIND]; //nwic x 5 x ninpt, Jacobian of [vx vy vz Rw dz] wrt x
-	Real du_dx[WmrModel::MAXNA*MAXNIND]; //na x ninpt
-	Real djd_dx[MAXNJ*MAXNIND]; //nj x ninpt
-	Real djr_dx[MAXNJ*MAXNIND]; //nj x ninpt
-	Real dtaulambda_dx[MAXNV*MAXNIND]; //nv x ninpt
+	Real dwgcin_dqacc[MAXNP][5*MAXNV]; //nwic x 5 x nv, Jacobian of [vx vy vz Rw dz] wrt qacc
 
 	//additional outputs of gradient function
-	Real derr_dx[MAXNV*MAXNIND];
-	Real grad[MAXNIND]; // 1 x ninpt, dcost/dx
+	Real derr_dx[MAXNV*MAXNV];
+	Real grad[MAXNV]; // 1 x ninpt, dcost/dx
 
 	int iter=0;
 
@@ -964,50 +785,10 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			//the following must be mutable: dwgcin_dx, du_dx, djd_dx, djr_dx, dtaulambda_dx
 
 			const int MAXNV = NUMQVEL(WmrModel::MAXNF);
-			const int MAXNIND = MAXNV;
-
-			Real dlambda_dx[MAXNIND*MAXNIND]; //nind x ninpt
-
-			Real inv_Hl[MAXNIND*MAXNIND]; //TODO, avoid computing this?
-			Real I_nind[MAXNIND*MAXNIND]; //identity matrix
-			setMat(nind,nind,0.0,I_nind);
-			for (int i=0; i<nind; i++) 
-				I_nind[S2I(i,i,nind)]=1.0;
-			
-			cholSolveMat(nind,HlL,nind,I_nind,inv_Hl);
-
-			//dlambda_dx, a subset of columns of inv_Hl
-			{
-				int indno=0; //column index in Hl
-				int inptno=0; //column index in dlambda_dx;
-				for (int i=0; i<nc; i++) { //loop over constraints
-					if (cis.ind[i]) {
-						if (cis.inpt[i]) {
-							copyMatCol(nind,indno,inv_Hl, inptno,dlambda_dx);
-							inptno++;
-						}
-						indno++;
-					}
-				}
-			}
-
-
-			mulcMat(nind,ninpt,1/dt,dlambda_dx);
-
-			//dqvel/dx = inv(H)*Aind^T * dlambda/dx (*dt)
-			Real dqvel_dx[MAXNV*MAXNIND]; //nv x ninpt
-			multMatMat(nv,nind,invH_AindT,ninpt,dlambda_dx,dt,dqvel_dx);
-		
-
-			//std::cout << "dlambda_dx=\n"; printMatReal(nv,ninpt,dlambda_dx,-1,-1);
-			//std::cout << "dqvel_dx=\n"; printMatReal(nv,ninpt,dqvel_dx,-1,-1);
-		
 
 			if (ncc > 0) {
-				Real Acontact_[3*MAXNV]; // submatrix for a single point
-				Real dvc_dx[3*MAXNIND]; // 3 x ninpt, temporary
 
-				for (int i=0; i<npic; i++) {
+				for (int i=0; i<npic; i++) { //loop over points in contact
 					int fi; //frame index
 					if (nw > 0) {
 						int wno = incontactinds[i];
@@ -1017,43 +798,28 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 						fi = sprocketframeinds[tno];
 					}
 
-					//d [vx vy vz] /dx
-					//TODO, eliminate copy?
-					copyMatBlock(ncc,contact_i0+3*i,0,3,nv,A.contact, 3,0,0,Acontact_);
-					multMatMat(3,nv,Acontact_,ninpt,dqvel_dx,1.0,dvc_dx);
-					copyMatBlock(3,0,0,3,ninpt,dvc_dx, 5,0,0,dwgcin_dx[i]);
-					//d Rw /dx
-					copyMatRow(nv,ninpt,TOQVELI(fi),dqvel_dx, 5,3,dwgcin_dx[i]);
-					mulcMatRow(5,ninpt,3,frames[fi].rad,dwgcin_dx[i]);
-					//d dz /dx = dvz/dx*dt
-					copyMatRow(5,ninpt,2,dwgcin_dx[i], 5,4,dwgcin_dx[i]);
-					mulcMatRow(5,ninpt,4,dt,dwgcin_dx[i]);
+					setMat(3,nv,0.0,dwgcin_dqacc[i]);
+					//d [vx vy vz] /dqacc
+					copyMatBlock(ncc,3*i,0,3,nv,A.contact, 3,0,0,dwgcin_dqacc[i]);
+					//d Rw /dqacc
+					dwgcin_dqacc[i][S2I(3,TOQVELI(fi),5)] = frames[fi].rad;
+					//d dz /dqacc = dvz/dqacc*dt
+					copyMatRow(5,nv,2,dwgcin_dqacc[i], 5,4,dwgcin_dqacc[i]);
+					mulcMatRow(5,ninpt,4,dt,dwgcin_dqacc[i]);
+					//multiply by dt
+					mulcMat(5,nv,dt,dwgcin_dqacc[i]);
 
 				}
 
 			}
-			if (nac > 0 && mdl.actuatorModel != 0) {
-				//du/dx
-				for (int ai=0; ai<nac; ai++) {
-					int vi=TOQVELI(actframeinds[ai]);
-					copyMatRow(nv,ninpt,vi,dqvel_dx, nac,ai,du_dx);
-				}
-			}
-			if (njc > 0) {
-				// djr/dx and djd/dx (= djr/dx*dt)
-				copyMatBlock(nv,VI_JR,0,nj,ninpt,dqvel_dx, nj,0,0,djr_dx);
-				copyMat(nj,ninpt,djr_dx,djd_dx);
-				mulcMat(nj,ninpt,dt,djd_dx);
-			}
-			multMatTMat(nind,nv,Aind,ninpt,dlambda_dx,1.0,dtaulambda_dx);
 		};
 		forwardDynPrecompute();
 
 		//optimize
 		Real cost_prev = REALMAX;
-		Real Hess[MAXNIND*MAXNIND]; //ninpt x ninpt
-		Real HessL[MAXNIND*MAXNIND]; //lower triangular
-		Real p[MAXNIND];
+		Real Hess[MAXNV*MAXNV]; //ninpt x ninpt
+		Real HessL[MAXNV*MAXNV]; //lower triangular
+		Real p[MAXNV];
 
 		
 		//calculate gradient
@@ -1067,45 +833,51 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			const int MAXNV = TOQVELI(WmrModel::MAXNF);
 			const int MAXNP = ConstraintJacobian::MAXNP;
 			const int MAXNC = ConstraintJacobian::MAXNC;
-			const int MAXNIND = MAXNV;
 
-			Real dmf_dx[MAXNC*MAXNIND]; //nc x ninpt
+			Real dmf_dqacc[MAXNC*MAXNV]; //nc x nv
+			setMat(nc,nv,0.0,dmf_dqacc);
 
 			if (ncc > 0) {
-				Real dmfcontact_dx[3*MAXNIND]; // 3 x ninpt, for a single point
+				Real dmfcontact_dqacc[3*MAXNV]; // 3 x nv, for a single point
 				
 				for (int i=0; i<npic; i++) { //loop over points in contact
-					multMatMat(3,5,(Real*)dmf.contact_dwgcin+(i*3*5), ninpt,(Real*)dwgcin_dx+(i*5*MAXNIND), 1.0, dmfcontact_dx);
-					copyMatBlock(3,0,0,3,ninpt,dmfcontact_dx, nc,contact_i0+(i*3),0,dmf_dx);
+					multMatMat(3,5,(Real*)dmf.contact_dwgcin+(i*3*5), nv,(Real*)dwgcin_dqacc+(i*5*MAXNV), 1.0, dmfcontact_dqacc);
+					copyMatBlock(3,0,0,3,nv,dmfcontact_dqacc, nc,contact_i0+(i*3),0,dmf_dqacc);
 				}
 			}
 			if (nac > 0 && mdl.actuatorModel != 0) {
-				Real dmfact_dx[WmrModel::MAXNA*MAXNIND]; //na x ninpt
-				multMatMat(nac,nac,dmf.act_du,ninpt,du_dx,1.0,dmfact_dx);
-				copyMatBlock(na,0,0,na,ninpt,dmfact_dx, nc,act_i0,0,dmf_dx);
+			  for (int ai = 0; ai < nac; ai++) {
+			    int vi = TOQVELI(actframeinds[ai]);
+			    addmMatBlock(nac,0,ai,nac,1,dmf.act_du, nc,act_i0+ai,vi,dt,dmf_dqacc);
+			  }
 			}
 			if (njc > 0) {
-				Real dmfjoint_dx[WmrModel::MAXNJC*MAXNIND]; //nv x ninpt
-
-				multMatMat(njc,nj,dmf.joint_djd,ninpt,djd_dx,1.0,dmfjoint_dx);
-				copyMatBlock(njc,0,0,njc,ninpt,dmfjoint_dx, nc,joint_i0,0,dmf_dx); //dmf_joint_djd * djd_dx
-
-				multMatMat(njc,nj,dmf.joint_djr,ninpt,djr_dx,1.0,dmfjoint_dx); //dmf_joint_djr * djr_dx
-				addmMatBlock(njc,0,0,njc,ninpt,dmfjoint_dx, nc,joint_i0,0,1.0,dmf_dx);
+			  addmMatBlock(njc,0,0,njc,nj,dmf.joint_djd, nc,joint_i0,VI_JR,dt*dt,dmf_dqacc);
+			  addmMatBlock(njc,0,0,njc,nj,dmf.joint_djr, nc,joint_i0,VI_JR,dt,dmf_dqacc);
 			}
 
-			Real dtaumf_dx[MAXNV*MAXNIND]; //nv x ninpt
-			multMatTMat(nc,nv,A.all,ninpt,dmf_dx,1.0,dtaumf_dx); //A*dtaumf/dx
+			Real dtaumf_dqacc[MAXNV*MAXNV];
+			multMatTMat(nc,nv,A.all,nv,dmf_dqacc,1.0,dtaumf_dqacc);
 
-			for (int i=0; i<nv*ninpt; i++) 
-				derr_dx[i] = dtaulambda_dx[i] - dtaumf_dx[i];
+			const Real* dtaulambda_dqacc = H;
+
+			Real derr_dqacc[MAXNV*MAXNV];
+
+			for (int i=0; i<nv*nv; i++)
+				derr_dqacc[i] = dtaulambda_dqacc[i] - dtaumf_dqacc[i];
 
 
 			if (nac > 0 && mdl.actuatorModel == 0) { //ideal actuators
-				for (int ai=0; ai<nac; ai++) {
-					int fi = actframeinds[ai];
-					setMatRow(nv,ninpt,TOQVELI(fi),0.0,derr_dx);
+			  int ai = 0;
+				for (int vi=0; vi<nv; vi++) {
+					if (vis_act[vi]) {
+					  ai++;
+					} else {
+					  copyMatCol(nv, vi, derr_dqacc, vi-ai, derr_dx);
+					}
 				}
+			} else {
+			  copyMat(nv,nv,derr_dqacc, derr_dx);
 			}
 
 			multMatTMat(nv,1,err,ninpt,derr_dx,2.0,grad_); //grad = 2*err^T*(derr/dx)
@@ -1128,6 +900,7 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			multMatTMat(nv,ninpt,derr_dx,ninpt,derr_dx,2.0,Hess);
 
 			chol(ninpt,Hess,HessL);
+			//TODO, handle not positive definite
 			cholSolve(ninpt,HessL,grad,p);
 
 			mulcVec(ninpt,-1.0,p); //negate
@@ -1145,10 +918,6 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			//std::cout << "Hess = \n"; printMatReal(ninpt,ninpt,Hess,-1,-1);
 			//std::cout << "p = \n"; printMatReal(ninpt,1,p,-1,-1);
 
-			//DEBUGGING, force-balance stabilization, take a single Newton's method step
-			//if (0)
-			//	break;
-
 			//std::cout << "iter= " << iter << ", cost= " << cost << std::endl; //DEBUGGING
 
 			if (cost < cost_tol) 
@@ -1158,8 +927,7 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			cost_prev = cost;
 
 		}
-		
-		
+
 	}	
 	
 	return;

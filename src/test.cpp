@@ -1386,7 +1386,7 @@ void test_simulate() {
 	//options
 	bool do_dyn = true; //do dynamic simulation, else kinematic
 	bool use_erp_cfm = false;
-	bool ideal_actuators = true;
+	bool ideal_actuators = false;
 	bool do_anim = true; //do animation
 
 	const Real dt = .04;

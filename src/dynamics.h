@@ -43,7 +43,7 @@ void jointSpaceInertia( const WmrModel& mdl, const Mat6b Xup[], const Mat6b Is_s
 void jointSpaceBiasForce(const WmrModel& mdl, const Mat6b Xup[], const Real qvel[], Real C[]);
 
 void HandC(const WmrModel& mdl, const HomogeneousTransform HT_parent[], const Real qvel[], //input
-	Real H[], Real HL[], Real C[]); //output
+	Real H[], Real C[]); //output
 
 void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], ControllerIO& u, 
 	const HomogeneousTransform HT_parent[], const HomogeneousTransform HT_world[], const ContactGeom* contacts, const Real dt, //inputs
@@ -57,11 +57,11 @@ int parseWheelContacts(const WheelContactGeom* wcontacts, const int nw, bool inc
 int parseTrackContacts(const TrackContactGeom* tcontacts, const int nt,	bool incontact[], Real dz0[], int whichtrack[]);
 
 void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0[], const Real u_cmd[], const ContactGeom* contacts, const Real dt, 
-	const Real HL[], const Real C[], const ConstraintJacobian& A, //input
+	Real H[], const Real C[], const ConstraintJacobian& A, //input
 	Real qacc[]); //output
 
 void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real qvel0[], ControllerIO& u, const ContactGeom* contacts, const Real dt, 
-	const Real HL[], const Real C[], const ConstraintJacobian& A, //input
+	const Real H[], const Real C[], const ConstraintJacobian& A, //input
 	Real qacc[]); //output
 
 //TODO forwardDynUnc()
