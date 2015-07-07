@@ -164,7 +164,7 @@ void eigenCholFixed( const int n, Real* A, Real* L) {
 #endif
 
 #if PRINT_MATRIX_SIZE_IF_DYNAMIC
-	std::cout << "resorting to eigenCholDynamic, n = " << n << stc::endl;
+	std::cout << "resorting to eigenCholDynamic, n = " << n << std::endl;
 #endif
 
 	eigenCholDynamic(n,A,L); //fail safe

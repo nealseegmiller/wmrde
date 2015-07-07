@@ -49,6 +49,7 @@ inline void solve(const int nrows, const int ncols, Real* A, Real* b, Real* x) {
 	eigenSolveFixed(nrows,ncols,A,b,x);	
 }
 
+//TODO, remove this
 //obtain linearly independent subset of *rows* of A
 //if is_ind[i] is true, row i belongs to the independent subset
 void eigenSubsetDynamic( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]);

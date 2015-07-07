@@ -1,5 +1,10 @@
 #include <test.h>
 
+inline double tosec(timeval tim)
+{
+  return tim.tv_sec + (tim.tv_usec/1000000.0);
+}
+
 void test_common() {
 
 	if (1) {
@@ -1404,8 +1409,8 @@ void test_simulate() {
 	Real qvel[MAXNV]; //for dynamic sim
 
 	//uncomment one of the following:
-	//zoe(mdl,state,qvel);
-	rocky(mdl,state,qvel);
+	zoe(mdl,state,qvel);
+//	rocky(mdl,state,qvel);
 	//talon(mdl,state,qvel);
 
 	//also uncomment the corresponding scene function below!
@@ -1481,8 +1486,8 @@ void test_simulate() {
 
 		//uncomment the scene function that corresponds to the model function above
 
-		//zoeScene(mdl, anim);
-		rockyScene(mdl, anim);
+		zoeScene(mdl, anim);
+//		rockyScene(mdl, anim);
 		//talonScene(mdl, tcontacts, anim);
 
 		for (int i=0; i<surfs.size(); i++)
@@ -1533,11 +1538,14 @@ void test_simulate() {
 	if (0) {
 		//time it
 		int n= (int) 100;
-		clock_t t;
+//		clock_t t;
 
 		time = 0;
 
-		t=clock();
+//		t=clock();
+
+	  timeval t0,t1;
+	  gettimeofday(&t0, NULL);
 		for (int iter=0; iter<n; iter++) {
 			copyVec(ny,y0,y); //reset to backup
 
@@ -1552,10 +1560,14 @@ void test_simulate() {
 			}
 			//std::cout << "state(" << time << ")=\n"; printMatReal(ns,1,y,-1,-1); std::cout << std::endl;
 		}
-		t=clock()-t;
+    gettimeofday(&t1, NULL);
+
+//		t=clock()-t;
+
 		std::cout << "simulate\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+//		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (ms): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 
 }

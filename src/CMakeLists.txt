@@ -101,9 +101,9 @@ file(GLOB_RECURSE HDRS
 file(GLOB_RECURSE SRCS
 	./*.cpp
 )
- 
-find_package(Eigen REQUIRED)
-set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}") #added by Neal
+find_package(Eigen REQUIRED) #added by Neal
 
 include_directories( 
   ./  
@@ -111,7 +111,7 @@ include_directories(
 	${OGRE_INCLUDE_DIRS}
 	${OGRE_SAMPLES_INCLUDEPATH}
 	${OGRE_Overlay_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIRS} #added by Neal
 )
  
 add_executable(OgreApp WIN32 ${HDRS} ${SRCS})
