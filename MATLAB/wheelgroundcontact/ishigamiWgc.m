@@ -162,7 +162,7 @@ taux(isnan(taux))=0;
 tauy(isnan(tauy))=0;
 
 
-if 1
+if 0
     %compute bulldozing reaction force as f(theta)   
     htheta = r*(ctheta - ones(np,1)*cos(theta_f)); %sinkage h as a function of theta
 

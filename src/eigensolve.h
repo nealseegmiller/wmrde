@@ -36,8 +36,8 @@
 //#define FIXED_N_2 4 /*initTerrainContact*/
 
 //rocky
-//#define FIXED_N_0 18
-//#define FIXED_N_1 10 /*ideal actuators*/
+#define FIXED_N_0 18
+#define FIXED_N_1 10 /*ideal actuators*/
 
 typedef Eigen::Matrix<Real,Eigen::Dynamic,Eigen::Dynamic> MatrixXr;
 

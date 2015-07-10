@@ -19,9 +19,9 @@ if nargin==1
     end
     
     %make the lookup tables given the parameters
-    ns = 51;
-    nb = 51;
-    nz = 25;
+    ns = 101;
+    nb = 101;
+    nz = 51;
     n = ns*nb*nz;
     
     s = linspace(-s_lim,s_lim,ns); 
@@ -64,7 +64,7 @@ if nargin==1
 
         FigNames = {'FX','FY','FZ'};
         for i=1:3
-            j=1;
+            j= round(.8*nz);
             set(figure,'name',FigNames{i})
             mesh(S(:,:,j),B(:,:,j)*180/pi,M{i}(:,:,j)) 
             xlabel('s')
@@ -95,7 +95,7 @@ if nargin==1
         end
         
     end
-
+    blah = 1;
     return
 end
 

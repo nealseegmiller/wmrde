@@ -431,6 +431,9 @@ void ishigamiWgcSubfn( const Real params[], const Vec3 vc, const Real Rw, const 
 void ishigamiWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
     Vec3 fw, Real J[]) { //outputs
 
+  if (vc == 0) //if null
+    return;
+
   ishigamiWgcSubfn(params,vc,Rw,dz, fw);
 
   //compute Jacobian using finite differences
@@ -454,16 +457,15 @@ void ishigamiWgc( const Real params[], const Vec3 vc, const Real Rw, const Real 
 
     ishigamiWgcSubfn(params,vc_,Rw_,dz_, fw_);
 
-    J[S2I(0,ci,3)] = (fw_[0] - fw[0])/eps;
-    J[S2I(1,ci,3)] = (fw_[1] - fw[1])/eps;
-    J[S2I(2,ci,3)] = (fw_[2] - fw[2])/eps;
+    for (int ri=0; ri<3; ri++)
+      J[S2I(ri,ci,3)] = (fw_[ri] - fw[ri])/eps;
   }
 }
 
 void ishigamiLUTWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
 		Vec3 fw, Real J[]) { //outputs
 
-	const int buffer = 51*51*51;
+	const int buffer = 101*101*51+1;
 
 	//lookup table data
 	static bool init = false;

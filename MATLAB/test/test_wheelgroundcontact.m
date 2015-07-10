@@ -18,7 +18,7 @@ vz = zeros(1,n);
 
 
 %%
-wgc_fh = @pacejkaWgc; %function handle
+wgc_fh = @ishigamiWgc; %function handle
 wgc_name = func2str(wgc_fh);
 
 

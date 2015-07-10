@@ -1392,7 +1392,7 @@ void test_simulate() {
 	bool do_dyn = true; //do dynamic simulation, else kinematic
 	bool use_erp_cfm = false;
 	bool ideal_actuators = true;
-	bool do_anim = true; //do animation
+	bool do_anim = false; //do animation
 
 	const Real dt = .04;
 	const int nsteps = (int) floor(10.0/dt);
@@ -1486,8 +1486,8 @@ void test_simulate() {
 
 		//uncomment the scene function that corresponds to the model function above
 
-		zoeScene(mdl, anim);
-//		rockyScene(mdl, anim);
+//		zoeScene(mdl, anim);
+		rockyScene(mdl, anim);
 		//talonScene(mdl, tcontacts, anim);
 
 		for (int i=0; i<surfs.size(); i++)
@@ -1535,7 +1535,7 @@ void test_simulate() {
 	stop: //goto
 #endif
 	
-	if (0) {
+	if (1) {
 		//time it
 		int n= (int) 100;
 //		clock_t t;

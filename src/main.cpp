@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) //use this for console output
 	//in test_ode.h
 
 	//test_convertToWmrModelODE();
-	//test_simulate_ODE();
+//	test_simulate_ODE();
 	//test_benchmark();
 
 	

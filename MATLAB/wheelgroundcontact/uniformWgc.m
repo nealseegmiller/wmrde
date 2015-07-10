@@ -7,8 +7,8 @@ J=[];
 
 % fh=@odeWgc;
 % fh=@pacejkaWgc;
-% fh=@ishigamiWgc;
-fh=@ishigamiLUTWgc;
+fh=@ishigamiWgc;
+% fh=@ishigamiLUTWgc;
 
 if nargin==0
     %just return function handle

@@ -82,8 +82,8 @@ void test_simulate_ODE() {
 	Real state[MAXNS];
 	Real qvel[MAXNV]; //for dynamic sim
 
-	zoe(mdl,state,qvel);
-	//rocky(mdl,state,qvel);
+//	zoe(mdl,state,qvel);
+	rocky(mdl,state,qvel);
 
 	//get from WmrModel
 	const int nf = mdl.get_nf();
@@ -123,8 +123,8 @@ void test_simulate_ODE() {
 	if (do_anim) { //animate
 		anim.start();
 
-		zoeScene(mdl, anim);
-		//rockyScene(mdl, anim);
+//		zoeScene(mdl, anim);
+		rockyScene(mdl, anim);
 
 		for (int i=0; i<surfs.size(); i++)
 			anim.addEntitySurface(surfs[i].get());
