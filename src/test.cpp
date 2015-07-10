@@ -1392,7 +1392,7 @@ void test_simulate() {
 	bool do_dyn = true; //do dynamic simulation, else kinematic
 	bool use_erp_cfm = false;
 	bool ideal_actuators = true;
-	bool do_anim = false; //do animation
+	bool do_anim = true; //do animation
 
 	const Real dt = .04;
 	const int nsteps = (int) floor(10.0/dt);
@@ -1535,7 +1535,7 @@ void test_simulate() {
 	stop: //goto
 #endif
 	
-	if (1) {
+	if (0) {
 		//time it
 		int n= (int) 100;
 //		clock_t t;

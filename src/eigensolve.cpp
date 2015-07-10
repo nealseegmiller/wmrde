@@ -128,38 +128,52 @@ void eigenSubsetFixed( const int nrows, const int ncols, Real* A, const Real tol
 }
 
 //Cholesky decomposition
-void eigenCholDynamic( const int n, Real* A, Real* L) {
+bool eigenCholDynamic( const int n, Real* A, Real* L) {
 	Eigen::Map<MatrixXr> A_(A,n,n);
 	Eigen::Map<MatrixXr> L_(L,n,n);
-	L_ = A_.llt().matrixL();
+//	L_ = A_.llt().matrixL();
+
+	Eigen::LLT<MatrixXr> A_llt(A_);
+	L_ = A_llt.matrixL();
+
+	return A_llt.info() != Eigen::Success;
 }
 
-void eigenCholFixed( const int n, Real* A, Real* L) {
+bool eigenCholFixed( const int n, Real* A, Real* L) {
 #ifdef FIXED_N_0
 	if (FIXED_N_0 == n) {
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_0,FIXED_N_0>> A_(A);
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_0,FIXED_N_0>> L_(L);
-		L_ = A_.llt().matrixL();
+//		L_ = A_.llt().matrixL();
 
-		return;
+	  Eigen::LLT<MatrixXr> A_llt(A_);
+	  L_ = A_llt.matrixL();
+
+	  return A_llt.info() != Eigen::Success;
 	}
 #endif
 #ifdef FIXED_N_1
 	if (FIXED_N_1 == n) {
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_1,FIXED_N_1>> A_(A);
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_1,FIXED_N_1>> L_(L);
-		L_ = A_.llt().matrixL();
+//		L_ = A_.llt().matrixL();
 
-		return;
+	  Eigen::LLT<MatrixXr> A_llt(A_);
+	  L_ = A_llt.matrixL();
+
+	  return A_llt.info() != Eigen::Success;
 	}
 #endif
 #ifdef FIXED_N_2
 	if (FIXED_N_2 == n) {
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_2,FIXED_N_2>> A_(A);
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_2,FIXED_N_2>> L_(L);
-		L_ = A_.llt().matrixL();
+//		L_ = A_.llt().matrixL();
 
-		return;
+	  Eigen::LLT<MatrixXr> A_llt(A_);
+	  L_ = A_llt.matrixL();
+
+	  return A_llt.info() != Eigen::Success;
 	}
 #endif
 
@@ -167,6 +181,6 @@ void eigenCholFixed( const int n, Real* A, Real* L) {
 	std::cout << "resorting to eigenCholDynamic, n = " << n << std::endl;
 #endif
 
-	eigenCholDynamic(n,A,L); //fail safe
+	return eigenCholDynamic(n,A,L); //fail safe
 
 }

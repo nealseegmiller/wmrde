@@ -897,9 +897,13 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			//compute Hessian, H = 2*(drre_dx^T * derr_dx)
 			multMatTMat(nv,ninpt,derr_dx,ninpt,derr_dx,2.0,Hess);
 
-			chol(ninpt,Hess,HessL);
-			//TODO, handle not positive definite
-			cholSolve(ninpt,HessL,grad,p);
+			if (chol(ninpt,Hess,HessL))	{
+			  cholSolve(ninpt,HessL,grad, p);
+			} else {
+			  //not positive definite, get least-squares solution
+			  //TODO, validate this
+			  solve(ninpt,ninpt,Hess,grad, p);
+			}
 
 			mulcVec(ninpt,-1.0,p); //negate
 
