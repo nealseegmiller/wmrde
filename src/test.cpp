@@ -1409,8 +1409,8 @@ void test_simulate() {
 	Real qvel[MAXNV]; //for dynamic sim
 
 	//uncomment one of the following:
-	zoe(mdl,state,qvel);
-//	rocky(mdl,state,qvel);
+//	zoe(mdl,state,qvel);
+	rocky(mdl,state,qvel);
 	//talon(mdl,state,qvel);
 
 	//also uncomment the corresponding scene function below!

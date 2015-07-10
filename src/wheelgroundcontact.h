@@ -24,6 +24,9 @@ void odeWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, /
 void pacejkaWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
 		Vec3 fw, Real J[]); //outputs
 
+void ishigamiWgc(const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
+    Vec3 fw, Real J[]); //outputs
+
 void ishigamiLUTWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
 		Vec3 fw, Real J[]); //outputs
 
@@ -35,7 +38,8 @@ void calcSlip( const Real vx, const Real vy, const Real Rw, const int method, //
 
 #define ODE_WGC 0
 #define PACEJKA_WGC 1
-#define ISHIGAMI_LUT_WGC 2
+#define ISHIGAMI_WGC 2
+#define ISHIGAMI_LUT_WGC 3
 //modify this:
 #define WGC_MODEL_TYPE ODE_WGC
 
@@ -47,6 +51,8 @@ inline void uniformWgc( const int wheelno, const Real params[], const Vec3 vc, c
 	odeWgc(params,vc,Rw,dz, fw,J);
 #elif WGC_MODEL_TYPE == PACEJKA_WGC
 	pacejkaWgc(params,vc,Rw,dz, fw,J);
+#elif WGC_MODEL_TYPE == ISHIGAMI_WGC
+	ishigamiWgc(params,vc,Rw,dz, fw,J);
 #elif WGC_MODEL_TYPE == ISHIGAMI_LUT_WGC
 	ishigamiLUTWgc(params,vc,Rw,dz, fw,J);
 #endif

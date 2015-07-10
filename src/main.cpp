@@ -1,4 +1,5 @@
 #include <test.h>
+#include <ode/test_ode.h>
 
 //int main()
 int main(int argc, char *argv[]) //use this for console output
@@ -31,7 +32,7 @@ int main(int argc, char *argv[]) //use this for console output
 	test_simulate();
 
 
-	//in mytest.h
+	//in test_ode.h
 
 	//test_convertToWmrModelODE();
 	//test_simulate_ODE();

@@ -42,6 +42,27 @@ void setWgcParams( const Real Kp, Real params[] ) {
 	params[12] = 100.0; //Ka
 	params[13] = Crr;
 
+#elif WGC_MODEL_TYPE == ISHIGAMI_WGC
+	params[0] = Kd;
+
+//	params[1] = 0.18/2;
+//	params[2] = 0.11;
+	//rocky
+	params[1] = .0650;
+	params[2] = .08;
+
+	params[3] = 0.8;
+	params[4] = DEGTORAD(37.2);
+	params[5] = DEGTORAD(26.4);
+	params[6] = 1.37e3;
+	params[7] = 8.14e5;
+	params[8] = 1.0;
+	params[9] = 0.4;
+	params[10] = 0.15;
+	params[11] = (1.6e3)*9.81;
+	params[12] = 1.0;
+	params[13] = .025;
+
 #elif WGC_MODEL_TYPE == ISHIGAMI_LUT_WGC
 	//ishigamiLUTWgc
 
@@ -270,6 +291,173 @@ void pacejkaWgc( const Real params[], const Vec3 vc, const Real Rw, const Real d
 	//DEBUGGING
 	//std::cout << "fw=\n"; printVec3(fw,-1,-1);
 	//std::cout << "J=\n"; printMatReal(3,5,J,-1,-1);
+}
+
+
+
+inline double trapz (const int n, const double x[], const double dy_dx[])
+{
+  double y = 0;
+  for (int i=1; i<n; i++)
+  {
+    y += .5*(dy_dx[i] + dy_dx[i+1]) * (x[i] - x[i-1]);
+  }
+  return y;
+}
+
+void ishigamiWgcSubfn( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
+    Vec3 fw) { //outputs
+
+  //parse params
+  double Kd = params[0];
+  double r = params[1];
+  double b = params[2];
+  double c = params[3];
+  double phi = params[4];
+  double Xc = params[5];
+  double kc = params[6];
+  double kphi = params[7];
+  double n = params[8];
+  double a0 = params[9];
+  double a1 = params[10];
+  double rhod = params[11];
+  double lambda = params[12];
+  double K = params[13];
+
+  if (dz > 0)
+  {
+    //TODO
+  }
+
+  double vx = vc[0];
+  double vy = vc[1];
+  double vz = vc[2];
+
+  const int np = 61;
+  //convert to slip ratio and angle
+  double s,beta;
+  calcSlip(vx,vy,Rw,2, &s,&beta,0,0,0,0,0);
+
+  //entry and exit angles
+  double h = -dz;
+  if (h < 0) h = 0;
+  double theta_f = acos(1.0 - h/r);
+  double theta_r = -acos(1.0- (lambda/r)*h);
+
+  //discretize angles
+  double theta[np];
+  linspace(theta_r, theta_f, np, theta);
+
+  //precompute
+  double ctheta[np];
+  double stheta[np];
+  for (int i=0; i<np; i++)
+  {
+    ctheta[i] = cos(theta[i]);
+    stheta[i] = sin(theta[i]);
+  }
+
+  //normal stress distribution
+  double sigma[np];
+  double theta_m = (a0 + a1*s) * theta_f;
+  double temp1 = pow(r,n) * (kc/b + kphi);
+  double temp2 = (theta_f - theta_m)/(theta_m - theta_r);
+
+  for (int i=0; i<np; i++)
+  {
+    if (theta[i] >= theta_m) //front
+      sigma[i] = temp1*pow(ctheta[i] - cos(theta_f), n);
+    else
+      sigma[i] = temp1*pow(cos(theta_f - (theta[i] - theta_r)*temp2) - cos(theta_f),n);
+  }
+
+  //soil deformations
+  double jx[np];
+  double jy[np];
+
+  //shear stress distributions
+  double taux[np];
+  double tauy[np];
+
+  for (int i=0; i<np; i++)
+  {
+    jx[i] = r*( theta_f - theta[i] - (1-s)*(sin(theta_f) - stheta[i]) );
+    jy[i] = -r*(1-fabs(s))*(theta_f-theta[i])*tan(beta); //symmetric
+
+    double jnorm = sqrt(jx[i]*jx[i] + jy[i]*jy[i]);
+    double tau = (c+sigma[i]*tan(phi)) * (1-exp(-jnorm/K));
+
+    if (jnorm > 0.0)
+    {
+      taux[i] = tau*jx[i]/jnorm;
+      tauy[i] = tau*jy[i]/jnorm;
+    }
+    else
+    {
+      taux[i] = 0;
+      tauy[i] = 0;
+    }
+  }
+
+  //TODO, bulldozing reaction force in y direction
+
+  //integrate to compute forces
+  double dfx_[np];
+  double dfz_[np];
+
+  for (int i=0; i<np; i++)
+  {
+    dfx_[i] = taux[i]*ctheta[i] - sigma[i]*stheta[i];
+    dfz_[i] = taux[i]*stheta[i] + sigma[i]*ctheta[i];
+  }
+  double fx = r*b*trapz(np, theta, dfx_);
+  double fy = r*b*trapz(np, theta, tauy);
+  double fz = r*b*trapz(np, theta, dfz_);
+
+  //add damping to normal force
+  fz = fz - Kd*vz;
+
+  if (fz < 0) fz = 0; //normal force must be positive
+
+  //reverse sign for reverse
+  //TODO, check this
+  double Vx = vx + Rw;
+  if (Rw < 0) fx = -fx;
+  if (Vx < 0) fy = -fy;
+
+  setVec3(fx,fy,fz, fw);
+}
+
+void ishigamiWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
+    Vec3 fw, Real J[]) { //outputs
+
+  ishigamiWgcSubfn(params,vc,Rw,dz, fw);
+
+  //compute Jacobian using finite differences
+  //TODO, move this to function, use for pacejkaWgc too
+  setMat(3,5,0.0,J);
+
+  double fw_[3];
+  double eps = 1e-6;
+
+  for (int ci=0; ci<5; ci++)
+  {
+    double vc_[3]; copyVec3(vc,vc_);
+    double Rw_ = Rw;
+    double dz_ = dz;
+
+    if (ci == 0) vc_[0] += eps;
+    else if (ci == 1) vc_[1] += eps;
+    else if (ci == 2) vc_[2] += eps;
+    else if (ci == 3) Rw_ += eps;
+    else if (ci == 4) dz_ += eps;
+
+    ishigamiWgcSubfn(params,vc_,Rw_,dz_, fw_);
+
+    J[S2I(0,ci,3)] = (fw_[0] - fw[0])/eps;
+    J[S2I(1,ci,3)] = (fw_[1] - fw[1])/eps;
+    J[S2I(2,ci,3)] = (fw_[2] - fw[2])/eps;
+  }
 }
 
 void ishigamiLUTWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs

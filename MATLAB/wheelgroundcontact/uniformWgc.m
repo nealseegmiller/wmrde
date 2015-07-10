@@ -5,10 +5,10 @@ function [f,J,fh] = uniformWgc(p,~,vc,Rw,dz)
 f=[];
 J=[];
 
-fh=@odeWgc;
+% fh=@odeWgc;
 % fh=@pacejkaWgc;
 % fh=@ishigamiWgc;
-% fh=@ishigamiLUTWgc;
+fh=@ishigamiLUTWgc;
 
 if nargin==0
     %just return function handle
