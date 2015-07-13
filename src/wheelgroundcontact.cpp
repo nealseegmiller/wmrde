@@ -1,4 +1,4 @@
-#include <wheelgroundcontact.h>
+#include <wmrde/wheelgroundcontact.h>
 
 void setWgcParams( const Real Kp, Real params[] ) {
 

@@ -4,11 +4,11 @@
 //http://royfeatherstone.org/spatial/index.html#spatial-software
 //can convert between macros and inline functions based on profiling
 
-#ifndef _WMRSIM_SPATIAL_H_
-#define _WMRSIM_SPATIAL_H_
+#ifndef _WMRDE_SPATIAL_H_
+#define _WMRDE_SPATIAL_H_
 
-#include <algebra/transform.h>
-#include <algebra/matrix.h>
+#include <wmrde/algebra/transform.h>
+//#include <wmrde/algebra/matrix.h>
 
 typedef Real Vec6b[2*SIZEVEC3];
 typedef Real Mat6b[4*SIZEMAT3];
@@ -359,4 +359,4 @@ void fromSpatialInertia(const Mat6b Is, Real m, Vec3 c, Mat3 I);
 
 void multPluckerTInertiaPlucker(const Mat6b P, const Mat6b I, Mat6b R); //faster alternative
 
-#endif //_WMRSIM_SPATIAL_H_
+#endif //_WMRDE_SPATIAL_H_

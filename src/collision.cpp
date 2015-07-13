@@ -1,4 +1,4 @@
-#include <collision.h>
+#include <wmrde/collision.h>
 
 //update WheelContactGeom by discretizing wheel surface into points, selecting the point for which dz is minimized
 void updateWheelContactGeomDiscretize(const SurfaceVector& surfaces, const HomogeneousTransform HT_wheel_to_world, const Real radius,  //input

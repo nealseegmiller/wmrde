@@ -6,8 +6,8 @@
 //http://msdn.microsoft.com/en-us/library/jj658585.aspx
 
 
-#ifndef _WMRSIM_MATRIX_H_
-#define _WMRSIM_MATRIX_H_
+#ifndef _WMRDE_MATRIX_H_
+#define _WMRDE_MATRIX_H_
 
 
 //for printMat*
@@ -15,8 +15,8 @@
 #include <iomanip>
 #include <cmath>
 
-//#include <common.h>
-#include <common/index.h> //for findMaxAbs() for print functions
+//#include <wmrde/options.h>
+#include <wmrde/util/index_util.h> //for findMaxAbs() for print functions
 
 //column-major order assumed!
 //subscripts to index
@@ -326,4 +326,4 @@ void printMatReal(const int nrows, const int ncols, const Real M[], int precisio
 void printMatInt(const int nrows, const int ncols, const int M[], int width);
 void printMatBool(const int nrows, const int ncols, const bool M[], int width);
 
-#endif  //_WMRSIM_MATRIX_H_
+#endif  //_WMRDE_MATRIX_H_

@@ -2,13 +2,13 @@
 //The PlaneSurf class is derived from the surface class
 //This class specifies an infinite planar surface.
 
-#ifndef _WMRSIM_PLANESURF_H_
-#define _WMRSIM_PLANESURF_H_
+#ifndef _WMRDE_PLANESURF_H_
+#define _WMRDE_PLANESURF_H_
 
 #include <assert.h>
 
-#include <surface/Surface.h>
-#include <algebra/transform.h>
+#include <wmrde/surface/Surface.h>
+#include <wmrde/algebra/transform.h>
 
 //need public so conversion from PlaneSurf* to Surface* is possible?
 class PlaneSurf : public Surface {
@@ -30,4 +30,4 @@ public:
 	
 };
 
-#endif //_WMRSIM_PLANESURF_H_
+#endif //_WMRDE_PLANESURF_H_

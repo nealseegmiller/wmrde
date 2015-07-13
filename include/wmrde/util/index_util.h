@@ -1,11 +1,11 @@
 //index.h
 //implements built-in MATLAB functionality for indexing arrays
 
-#ifndef _WMRSIM_INDEX_H_
-#define _WMRSIM_INDEX_H_
+#ifndef _WMRDE_INDEX_H_
+#define _WMRDE_INDEX_H_
 
 #include <algorithm>
-#include <common/common.h>
+#include <wmrde/util/common_util.h>
 
 //inline functions
 
@@ -140,4 +140,4 @@ inline void sortIndex(const int n, const Type val[], int idx[], Type val_sort[])
 }
 
 
-#endif
+#endif //_WMRDE_INDEX_H_

@@ -1,8 +1,8 @@
 //VrmlData.h
 //This class parses vertex, index, and color information from VRML files (.wrl) for use in animation
 
-#ifndef _VRML_DATA_H_
-#define _VRML_DATA_H_
+#ifndef _WMRDE_VRMLDATA_H_
+#define _WMRDE_VRMLDATA_H_
 
 #include <iostream>
 #include <fstream>
@@ -137,6 +137,6 @@ public:
 
 };
 
-#endif
+#endif //_WMRDE_VRMLDATA_H_
 
 

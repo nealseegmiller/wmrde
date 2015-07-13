@@ -1,10 +1,10 @@
 //dynamics.h
 //functions for dynamic motion prediction for WMRs
 
-#ifndef _WMRSIM_DYNAMICS_H_
-#define _WMRSIM_DYNAMICS_H_
+#ifndef _WMRDE_DYNAMICS_H_
+#define _WMRDE_DYNAMICS_H_
 
-#include <kinematics.h>
+#include <wmrde/kinematics.h>
 
 //classes to reduce the number of function parameters
 //always pass by reference!
@@ -70,4 +70,4 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 void odeDyn(const Real time, const Real y[], const WmrModel& mdl, const SurfaceVector& surfaces, ContactGeom* contacts, const Real dt, //inputs
 	Real ydot[], HomogeneousTransform HT_parent[]); //outputs
 
-#endif //_WMRSIM_DYNAMICS_H_
+#endif //_WMRDE_DYNAMICS_H_

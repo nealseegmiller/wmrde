@@ -1,14 +1,37 @@
 //common.h
 //#defines used throughout the project
 
-#ifndef _WMRSIM_COMMON_H_
-#define _WMRSIM_COMMON_H_
+#ifndef _WMRDE_COMMON_H_
+#define _WMRDE_COMMON_H_
 
 //#include <iostream>
 #include <cmath>
 #include <limits> //for NaN
 #include <algorithm> //for std::max()
 
+#include <wmrde/options.h> //for typedef Real
+
+
+//TODO, move this to options.h?
+//defines based on options
+#if WMRSIM_DOUBLE_PRECISION
+typedef double Real;
+#else
+typedef float Real;
+#endif
+
+#if WMRSIM_USE_QUATERNION
+#define SIZEORIENT 4
+#else
+#define SIZEORIENT 3
+#endif
+
+//for output only in Debug mode
+#ifdef _DEBUG
+#define DEBUG_CERR(x) std::cerr << x << std::endl;
+#else
+#define DEBUG_CERR(x) //do {} while (0)
+#endif
 
 //signum
 #define TYPESIGN(val,Type) ( Type((val > 0) - (val < 0)) )
@@ -38,4 +61,4 @@ const Real M_TAU = 2*M_PI; //faster?
 #define DIFFDEG(a,b) ( WRAPDEG((a-b),180) )
 
 
-#endif  //_WMRSIM_COMMON_H_
+#endif  //_WMRDE_COMMON_H_

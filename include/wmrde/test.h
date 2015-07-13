@@ -1,8 +1,8 @@
 //test.h
 //unit tests for functions, ordered from low to high level
 
-#ifndef _WMRSIM_TEST_H_
-#define _WMRSIM_TEST_H_
+#ifndef _WMRDE_TEST_H_
+#define _WMRDE_TEST_H_
 
 #include <iostream>
 #include <iomanip>
@@ -12,9 +12,9 @@
 
 #include <Eigen/Dense>
 
-#include <demo/terrains.h>
-#include <demo/models.h>
-#include <dynamics.h>
+#include <wmrde/demo/terrains.h>
+#include <wmrde/demo/models.h>
+#include <wmrde/dynamics.h>
 
 void test_common();
 
@@ -50,4 +50,4 @@ void test_forwardDyn();
 
 void test_simulate();
 
-#endif //_WMRSIM_TEST_H_
+#endif //_WMRDE_TEST_H_

@@ -11,10 +11,10 @@
 //qacc is the same at the 2nd derivative of state wrt time, except d^2/dt^2 pose is replaced with spatial acceleration
 
 
-#ifndef _WMRSIM_STATE_H_
-#define _WMRSIM_STATE_H_
+#ifndef _WMRDE_STATE_H_
+#define _WMRDE_STATE_H_
 
-#include<WmrModel.h>
+#include<wmrde/WmrModel.h>
 
 //for indexing state vector
 #define SI_ORIENT 0
@@ -39,4 +39,4 @@ void qvelToQdot(const int nf, const Real qvel[], const VecOrient orient, const M
 void qdotToQvel(const int nf, const Real qdot[], const VecOrient orient, const Mat3 R_body_to_world, Real qvel[]);
 void qvelToSpatialVel(const WmrModel &mdl, Mat6b Xup[], const Real qvel[], Vec6b v[]);
 
-#endif //_WMRSIM_STATE_H_
+#endif //_WMRDE_STATE_H_

@@ -1,4 +1,4 @@
-#include <demo/talonscene.h>
+#include <wmrde/demo/talonscene.h>
 
 
 void talonScene(const WmrModel& mdl, const TrackContactGeom contacts[], WmrAnimation& anim) {

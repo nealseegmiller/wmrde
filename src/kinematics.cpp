@@ -1,4 +1,4 @@
-#include <kinematics.h>
+#include <wmrde/kinematics.h>
 
 //HT_world:		size nf, HT_world[i] is transform from frame i to world coords
 //contacts:		size nw

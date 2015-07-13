@@ -2,20 +2,20 @@
 //This class is derived from the Ogre BaseApplication class used in Ogre tutorials
 //This class is used to animate wheeled mobile robots simulations
 
-#ifndef __WMRSIM_WMRANIMATION_H_
-#define __WMRSIM_WMRANIMATION_H_
+#ifndef _WMRDE_WMRANIMATION_H_
+#define _WMRDE_WMRANIMATION_H_
 
 //OGRE
-#include "animate/BaseApplication.h"
+#include <wmrde/animate/BaseApplication.h>
 #include <OgreManualObject.h>
 #include <OgreBillboardChain.h>
 #include <OgreTechnique.h>
-#include <animate/VrmlData.h>
 
-//WmrSim
-#include <contactgeom.h>
-#include <surface/TriMeshSurf.h>
-#include <surface/GridSurf.h>
+//WMRDE
+#include <wmrde/animate/VrmlData.h>
+#include <wmrde/contactgeom.h>
+#include <wmrde/surface/TriMeshSurf.h>
+#include <wmrde/surface/GridSurf.h>
 
 class WmrAnimation : public BaseApplication
 {
@@ -81,4 +81,4 @@ protected:
     virtual void createScene(void);
 };
 
-#endif
+#endif //__WMRDE_WMRANIMATION_H_

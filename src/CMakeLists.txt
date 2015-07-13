@@ -95,7 +95,7 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 endif()
  
 file(GLOB_RECURSE HDRS
-	./*.h
+	../include/*.h
 )
  
 file(GLOB_RECURSE SRCS
@@ -107,13 +107,13 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}") #added by Neal
 find_package(Eigen REQUIRED) #added by Neal
 
 include_directories( 
-  ./  
+  ../include #added by Neal
   ${OIS_INCLUDE_DIRS}
 	${OGRE_INCLUDE_DIRS}
 	${OGRE_SAMPLES_INCLUDEPATH}
 	${OGRE_Overlay_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS} #added by Neal
-  /usr/local/include/ode #added by Neal
+  /usr/local/include/ode #added by Neal, TODO /ode necessary?
 )
  
 add_executable(OgreApp WIN32 ${HDRS} ${SRCS})

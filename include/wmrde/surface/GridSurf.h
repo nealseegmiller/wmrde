@@ -2,8 +2,8 @@
 //The GridSurf class is derived from the Surface base class.
 //This class specifies a uniformly-spaced grid of height data. Interpolation is required to compute heights and surface normals.
 
-#ifndef _WMRSIM_GRIDSURF_H_
-#define _WMRSIM_GRIDSURF_H_
+#ifndef _WMRDE_GRIDSURF_H_
+#define _WMRDE_GRIDSURF_H_
 
 //to read in data from csv file
 #include <iostream>
@@ -11,11 +11,10 @@
 #include <string>
 #include <assert.h>
 
-#include <external/xs_Float.h> //cast float to int
+#include <wmrde/util/interp_util.h>
+#include <wmrde/surface/Surface.h>
+#include <wmrde/algebra/transform.h>
 
-#include <surface/Surface.h>
-#include <algebra/transform.h>
-#include <common/interp.h>
 
 //need public so conversion from GridSurf* to Surface* is possible?
 class GridSurf : public Surface {
@@ -61,4 +60,4 @@ public:
 };
 
 
-#endif //_WMRSIM_GRIDSURF_H_
+#endif //_WMRDE_GRIDSURF_H_

@@ -2,12 +2,12 @@
 //abstract Surface class
 //all pure (=0) virtual functions must be defined by derived classes
 
-#ifndef _WMRSIM_SURFACE_H_
-#define _WMRSIM_SURFACE_H_
+#ifndef _WMRDE_SURFACE_H_
+#define _WMRDE_SURFACE_H_
 
 #include <vector>
 #include <memory>
-#include <algebra/linalg3.h>
+#include <wmrde/algebra/linalg3.h>
 
 class Surface {
 public:
@@ -39,4 +39,4 @@ int surfacesHeight(const SurfaceVector& surfaces, const Vec3 pt, Real& height);
 int surfacesDz(const SurfaceVector& surfaces, const Vec3 pt, Real& dz, Vec3 normal);
 
 
-#endif //_WMRSIM_SURFACE_H_
+#endif //_WMRDE_SURFACE_H_

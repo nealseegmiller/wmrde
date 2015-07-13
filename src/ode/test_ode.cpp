@@ -1,4 +1,4 @@
-#include <ode/test_ode.h>
+#include <wmrde/ode/test_ode.h>
 
 inline double tosec(timeval tim)
 {

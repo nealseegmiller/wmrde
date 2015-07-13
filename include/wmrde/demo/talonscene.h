@@ -1,9 +1,9 @@
-#ifndef __WMRSIM_TALONSCENE_H_
-#define __WMRSIM_TALONSCENE_H_
+#ifndef _WMRDE_TALONSCENE_H_
+#define _WMRDE_TALONSCENE_H_
 
-#include <WmrModel.h>
-#include <animate/WmrAnimation.h>
-#include <contactgeom.h>
+#include <wmrde/WmrModel.h>
+#include <wmrde/animate/WmrAnimation.h>
+#include <wmrde/contactgeom.h>
 
 void talonScene(const WmrModel& mdl, const TrackContactGeom contacts[], WmrAnimation& anim ); 
 

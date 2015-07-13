@@ -1,4 +1,4 @@
-#include <ode/WmrModelODE.h>
+#include <wmrde/ode/WmrModelODE.h>
 
 //constructor
 WmrModelODE::WmrModelODE() {

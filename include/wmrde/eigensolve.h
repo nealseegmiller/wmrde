@@ -4,11 +4,11 @@
 //if not included, must include alternative files to define:
 //solve(), subset(), and chol()
 
-#ifndef _WMRSIM_EIGENSOLVE_H_
-#define _WMRSIM_EIGENSOLVE_H_
+#ifndef _WMRDE_EIGENSOLVE_H_
+#define _WMRDE_EIGENSOLVE_H_
 
 #include <Eigen/Dense>
-#include <algebra/matrix.h>
+#include <wmrde/algebra/matrix.h>
 
 //print matrix size if dynamic (vs. fixed)
 #define PRINT_MATRIX_SIZE_IF_DYNAMIC 0
@@ -86,4 +86,4 @@ inline bool chol( const int n, Real* A, Real* L) {
 	return eigenCholFixed(n,A,L);
 }
 
-#endif  //_WMRSIM_EIGENSOLVE_H_
+#endif  //_WMRDE_EIGENSOLVE_H_

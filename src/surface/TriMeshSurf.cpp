@@ -1,4 +1,4 @@
-#include <surface/TriMeshSurf.h>
+#include <wmrde/surface/TriMeshSurf.h>
 
 TriMeshSurf::TriMeshSurf() {
 	nv = 0;

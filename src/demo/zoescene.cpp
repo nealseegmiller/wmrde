@@ -1,4 +1,4 @@
-#include <demo/zoescene.h>
+#include <wmrde/demo/zoescene.h>
 
 
 void zoeScene(const WmrModel& mdl, WmrAnimation& anim) {

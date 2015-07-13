@@ -2,9 +2,8 @@
 //This class stores model information for Wheeled Mobile Robots
 
 
-
-#ifndef _WMRSIM_WMRMODEL_H_
-#define _WMRSIM_WMRMODEL_H_
+#ifndef _WMRDE_WMRMODEL_H_
+#define _WMRDE_WMRMODEL_H_
 
 //to write data to csv file
 #include <iostream>
@@ -15,7 +14,7 @@
 #include <vector>
 
 
-#include <algebra/spatial.h>
+#include <wmrde/algebra/spatial.h>
 
 //Frame is a sub class of WmrModel
 class Frame {
@@ -212,4 +211,4 @@ void inertiaBox(const Real m, const Real x, const Real y, const Real z, Mat3 I);
 void inertiaCylinder(const Real m, const Real r, const Real h, const int axis, Mat3 I);
 void KpKdToErpCfm( const Real kp, const Real kd, const Real dt, Real& erp, Real& cfm );
 
-#endif //_WMRSIM_WMRMODEL_H_
+#endif //_WMRDE_WMRMODEL_H_

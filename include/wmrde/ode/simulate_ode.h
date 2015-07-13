@@ -1,12 +1,12 @@
 //simulateODE.h
 //functions to convert a WmrModel object to a WmrModelODE object (Open Dynamics Engine) and simulate it
 
-#ifndef _WMRSIM_SIMULATEODE_H_
-#define _WMRSIM_SIMULATEODE_H_
+#ifndef _WMRDE_SIMULATEODE_H_
+#define _WMRDE_SIMULATEODE_H_
 
-#include <state.h>
-#include <ode/WmrModelODE.h>
-#include <collision.h>
+#include <wmrde/state.h>
+#include <wmrde/ode/WmrModelODE.h>
+#include <wmrde/collision.h>
 
 
 //pass by reference

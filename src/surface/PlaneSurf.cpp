@@ -1,4 +1,4 @@
-#include <surface/PlaneSurf.h>
+#include <wmrde/surface/PlaneSurf.h>
 
 //overloaded constructor
 PlaneSurf::PlaneSurf(const Real PlaneEqnCoeff[4]) {

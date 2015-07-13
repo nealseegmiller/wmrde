@@ -1,4 +1,4 @@
-#include <algebra/matrix.h>
+#include <wmrde/algebra/matrix.h>
 
 //solve a linear system given the Cholesky decomposition
 //A*x=b

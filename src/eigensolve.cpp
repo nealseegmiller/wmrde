@@ -1,4 +1,4 @@
-#include <eigensolve.h>
+#include <wmrde/eigensolve.h>
 
 void eigenSolveDynamic( const int nrows, const int ncols, Real* A, Real* b, Real* x ) {
 	Eigen::Map<MatrixXr> A_(A,nrows,ncols);

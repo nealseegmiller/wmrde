@@ -1,13 +1,14 @@
 //collision.h
 //functions for collision detection between wheels/tracks and terrain
 
-#ifndef _WMRSIM_COLLISION_H_
-#define _WMRSIM_COLLISION_H_
+#ifndef _WMRDE_COLLISION_H_
+#define _WMRDE_COLLISION_H_
 
 #include <assert.h>
-#include <surface/Surface.h>
-#include <contactgeom.h>
-#include <search.h>
+
+#include <wmrde/surface/Surface.h>
+#include <wmrde/contactgeom.h>
+#include <wmrde/linesearch.h>
 
 void updateWheelContactGeomDiscretize(const SurfaceVector& surfaces, const HomogeneousTransform HT_wheel_to_world, const Real radius,  //input
 	WheelContactGeom& contact); //output
@@ -42,4 +43,4 @@ int HTContactToTrack(const Real rad, const Real rad2, const Real L, const int np
 void updateTrackContactGeom(const SurfaceVector& surfaces, const HomogeneousTransform HT_track_to_world, //input
 	TrackContactGeom& contact); //output
 
-#endif
+#endif //_WMRDE_COLLISION_H_

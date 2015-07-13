@@ -1,4 +1,4 @@
-#include <demo/rockyscene.h>
+#include <wmrde/demo/rockyscene.h>
 
 
 void rockyScene(const WmrModel& mdl, WmrAnimation& anim) {

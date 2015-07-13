@@ -1,10 +1,10 @@
-#ifndef _WMRSIM_ROCKYMODEL_H_
-#define _WMRSIM_ROCKYMODEL_H_
+#ifndef _WMRDE_ROCKYMODEL_H_
+#define _WMRDE_ROCKYMODEL_H_
 
-#include <state.h>
-#include <algebra/matrix.h>
-#include <wheelgroundcontact.h>
-#include <actuator.h>
+#include <wmrde/state.h>
+#include <wmrde/algebra/matrix.h>
+#include <wmrde/wheelgroundcontact.h>
+#include <wmrde/actuator.h>
 
 //& to pass object by reference
 void rocky(WmrModel& mdl, Real state[], Real qvel[]);

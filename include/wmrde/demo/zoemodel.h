@@ -1,10 +1,10 @@
-#ifndef _WMRSIM_ZOEMODEL_H_
-#define _WMRSIM_ZOEMODEL_H_
+#ifndef _WMRDE_ZOEMODEL_H_
+#define _WMRDE_ZOEMODEL_H_
 
-#include <state.h>
-#include <algebra/matrix.h>
-#include <wheelgroundcontact.h>
-#include <actuator.h>
+#include <wmrde/state.h>
+#include <wmrde/algebra/matrix.h>
+#include <wmrde/wheelgroundcontact.h>
+#include <wmrde/actuator.h>
 
 //& to pass object by reference
 void zoe(WmrModel& mdl, Real state[], Real qvel[]);

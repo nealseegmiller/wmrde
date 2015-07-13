@@ -2,10 +2,10 @@
 //WheelContactGeom and TrackContactGeom classes
 //required inputs to kinematics and dynamics functions for contact constraints
 
-#ifndef _WMRSIM_CONTACTGEOM_H_
-#define _WMRSIM_CONTACTGEOM_H_
+#ifndef _WMRDE_CONTACTGEOM_H_
+#define _WMRDE_CONTACTGEOM_H_
 
-#include <algebra/transform.h>
+#include <wmrde/algebra/transform.h>
 
 //base class
 //avoid conflict with Open Dynamics Engine dContactGeom
@@ -47,4 +47,4 @@ public:
 	
 };
 
-#endif
+#endif //_WMRDE_CONTACTGEOM_H_

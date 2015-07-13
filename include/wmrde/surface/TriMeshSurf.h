@@ -2,11 +2,11 @@
 //The TriMeshSurf class is derived from the Surface class
 //This class specifies a triangular mesh
 
-#ifndef _WMRSIM_TRIMESHSURF_H_
-#define _WMRSIM_TRIMESHSURF_H_
+#ifndef _WMRDE_TRIMESHSURF_H_
+#define _WMRDE_TRIMESHSURF_H_
 
-#include <surface/Surface.h>
-#include <algebra/transform.h>
+#include <wmrde/surface/Surface.h>
+#include <wmrde/algebra/transform.h>
 
 class TriMeshSurf : public Surface {
 public:
@@ -52,4 +52,4 @@ public:
 };
 
 
-#endif
+#endif //_WMRDE_TRIMESHSURF_H_

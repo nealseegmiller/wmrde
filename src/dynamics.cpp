@@ -1,4 +1,4 @@
-#include <dynamics.h>
+#include <wmrde/dynamics.h>
 
 //Xup:		size nf array of Plucker transforms, Xup[i]^T*f transforms spatial *force* vector f from frame i to parent coords
 //Is_subt:	size nf array of spatial inertias, Is_subt[i] is the inertia of the subtree rooted at frame i

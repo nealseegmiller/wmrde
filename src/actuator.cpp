@@ -1,4 +1,4 @@
-#include <actuator.h>
+#include <wmrde/actuator.h>
 
 void PIact( const Real params[], const Real ucmd, const Real u, const Real interr, //inputs
 		   Real& f, Real& err, Real& dfdu) { //outputs

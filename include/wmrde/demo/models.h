@@ -1,14 +1,14 @@
-#ifndef _WMRSIM_MODELS_H_
-#define _WMRSIM_MODELS_H_
+#ifndef _WMRDE_MODELS_H_
+#define _WMRDE_MODELS_H_
 
-#include <demo/rockymodel.h>
-#include <demo/zoemodel.h>
-#include <demo/talonmodel.h>
+#include <wmrde/demo/rockymodel.h>
+#include <wmrde/demo/zoemodel.h>
+#include <wmrde/demo/talonmodel.h>
 
 #if WMRSIM_ENABLE_ANIMATION
-#include <demo/rockyscene.h>
-#include <demo/zoescene.h>
-#include <demo/talonscene.h>
+#include <wmrde/demo/rockyscene.h>
+#include <wmrde/demo/zoescene.h>
+#include <wmrde/demo/talonscene.h>
 #endif
 
 

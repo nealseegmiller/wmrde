@@ -2,8 +2,8 @@
 //functions for the computation of wheel-ground contact forces
 //required for dynamic simulation
 
-#ifndef _WMRSIM_WHEELGROUNDCONTACT_H_
-#define _WMRSIM_WHEELGROUNDCONTACT_H_
+#ifndef _WMRDE_WHEELGROUNDCONTACT_H_
+#define _WMRDE_WHEELGROUNDCONTACT_H_
 
 //wheel-ground contact models
 
@@ -12,8 +12,8 @@
 #include <string>
 #include <assert.h>
 
-#include <algebra/linalg3.h>
-#include <common/interp.h>
+#include <wmrde/algebra/linalg3.h>
+#include <wmrde/util/interp_util.h>
 
 
 void setWgcParams( const Real Kp, Real params[] );

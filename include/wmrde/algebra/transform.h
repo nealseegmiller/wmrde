@@ -5,10 +5,10 @@
 //extra elements for 16 byte alignment
 //can convert between macros and inline functions based on profiling
 
-#ifndef _WMRSIM_TRANSFORM_H_
-#define _WMRSIM_TRANSFORM_H_
+#ifndef _WMRDE_TRANSFORM_H_
+#define _WMRDE_TRANSFORM_H_
 
-#include <algebra/linalg3.h>
+#include <wmrde/algebra/linalg3.h>
 
 typedef Real HomogeneousTransform[4*SIZEVEC3];
 
@@ -241,4 +241,4 @@ typedef MatEuler MatOrient;
 
 
 
-#endif //_WMRSIM_TRANSFORM_H_
+#endif //_WMRDE_TRANSFORM_H_

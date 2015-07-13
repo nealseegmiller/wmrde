@@ -1,4 +1,4 @@
-#include "animate/WmrAnimation.h"
+#include "wmrde/animate/WmrAnimation.h"
 
 //-------------------------------------------------------------------------------------
 WmrAnimation::WmrAnimation(void)

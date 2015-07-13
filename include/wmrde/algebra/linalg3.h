@@ -7,8 +7,8 @@
 //http://msdn.microsoft.com/en-us/library/jj658585.aspx
 
 
-#ifndef _WMRSIM_LINALG3_H_
-#define _WMRSIM_LINALG3_H_
+#ifndef _WMRDE_LINALG3_H_
+#define _WMRDE_LINALG3_H_
 
 #include <cmath> //for sqrt
 
@@ -18,7 +18,7 @@
 #define SIZEVEC3 4
 #define SIZEMAT3 12
 
-#include <algebra/matrix.h>
+#include <wmrde/algebra/matrix.h>
 
 typedef Real Vec3[SIZEVEC3];
 typedef Real Mat3[SIZEMAT3];
@@ -301,4 +301,4 @@ inline void printMat3(const Mat3 M, int precision, int width) {
 	printMatReal(3,3,M_,precision,width);
 }
 
-#endif
+#endif //_WMRDE_LINALG3_H_

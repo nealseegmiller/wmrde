@@ -14,7 +14,7 @@ This source file is part of the
       http://www.ogre3d.org/tikiwiki/
 -----------------------------------------------------------------------------
 */
-#include "animate/BaseApplication.h"
+#include "wmrde/animate/BaseApplication.h"
 
 //-------------------------------------------------------------------------------------
 BaseApplication::BaseApplication(void)

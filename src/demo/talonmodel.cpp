@@ -1,4 +1,4 @@
-#include <demo/talonmodel.h>
+#include <wmrde/demo/talonmodel.h>
 
 void talon(WmrModel& mdl, Real state[], Real qvel[]) {
 	//dimensions from:

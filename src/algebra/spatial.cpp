@@ -1,4 +1,4 @@
-#include <algebra/spatial.h>
+#include <wmrde/algebra/spatial.h>
 
 //convert to spatial inertia
 //m:	mass

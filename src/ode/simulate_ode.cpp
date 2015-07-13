@@ -1,4 +1,4 @@
-#include <ode/simulateODE.h>
+#include <wmrde/ode/simulate_ode.h>
 
 void convertToWmrModelODE( const WmrModel &mdl, WmrModelODE &mdl_ode ) {
 	//convert WmrModel object to WmrModelODE object

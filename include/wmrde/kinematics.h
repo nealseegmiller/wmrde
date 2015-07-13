@@ -2,13 +2,12 @@
 //functions for kinematic motion prediction for WMRs
 //and to initialize terrain contact
 
-#ifndef _WMRSIM_KINEMATICS_H_
-#define _WMRSIM_KINEMATICS_H_
+#ifndef _WMRDE_KINEMATICS_H_
+#define _WMRDE_KINEMATICS_H_
 
-#include <state.h>
-//#include <contactgeom.h>
-#include <collision.h> //necessary for initTerrainContact only
-#include <eigensolve.h>
+#include <wmrde/state.h>
+#include <wmrde/collision.h> //necessary for initTerrainContact only
+#include <wmrde/eigensolve.h>
 
 
 int wheelJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], const WheelContactGeom contacts[], Real A[]);
@@ -25,4 +24,4 @@ void odeKin(const Real time, const Real y[], const WmrModel& mdl, const SurfaceV
 
 void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, ContactGeom* contacts, Real state[] ); 
 
-#endif //_WMRSIM_KINEMATICS_H_
+#endif //_WMRDE_KINEMATICS_H_

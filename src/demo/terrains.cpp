@@ -1,4 +1,4 @@
-#include <demo/terrains.h>
+#include <wmrde/demo/terrains.h>
 
 //generate a PlaneSurf object for flat ground, i.e. a level plane (z=0 everywhere)
 void flat(SurfaceVector& surfaces) {

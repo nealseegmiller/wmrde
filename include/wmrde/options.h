@@ -1,8 +1,8 @@
 //options.h
 //compile-time options for WMR simulations
 
-#ifndef _WMRSIM_OPTIONS_H_
-#define _WMRSIM_OPTIONS_H_
+#ifndef _WMRDE_OPTIONS_H_
+#define _WMRDE_OPTIONS_H_
 
 #include <string>
 
@@ -14,7 +14,7 @@
 
 inline std::string ResourceDir() {
 	//return std::string("C:/Users/nseegmil.NREC-014635/Documents/Thesis/src/resource/");
-  return std::string("/home/neal/Projects/wmrde/src/resource/");
+  return std::string("/home/neal/Projects/wmrde/resource/");
 }
 
 inline std::string CADdir() {
@@ -23,13 +23,9 @@ inline std::string CADdir() {
 }
 
 
-//for output only in Debug mode
-#ifdef _DEBUG
-#define DEBUG_CERR(x) std::cerr << x << std::endl;
-#else
-#define DEBUG_CERR(x) //do {} while (0)
-#endif
+//don't modify below here
 
+/*
 //defines based on options
 #if WMRSIM_DOUBLE_PRECISION
 typedef double Real;
@@ -43,4 +39,12 @@ typedef float Real;
 #define SIZEORIENT 3
 #endif
 
-#endif  //_WMRSIM_OPTIONS_H_
+//for output only in Debug mode
+#ifdef _DEBUG
+#define DEBUG_CERR(x) std::cerr << x << std::endl;
+#else
+#define DEBUG_CERR(x) //do {} while (0)
+#endif
+*/
+
+#endif  //_WMRDE_OPTIONS_H_

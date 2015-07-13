@@ -3,11 +3,11 @@
 //use templates to pass in functions parameters
 //alternative is to use std::function but that is much slower!
 
-#ifndef _WMRSIM_SEARCH_H_
-#define _WMRSIM_SEARCH_H_
+#ifndef _WMRDE_LINESEARCH_H_
+#define _WMRDE_LINESEARCH_H_
 
 //#include <functional> //for std::function, too slow!
-#include <common/common.h>
+#include <wmrde/util/common_util.h>
 
 //find root via bisection
 //a:	lower bound
@@ -270,4 +270,4 @@ Real linesearch( const int n, const Real p[], const Real alpha_max, Func1 fCost,
 }
 
 
-#endif 
+#endif //_WMRDE_LINESEARCH_H_

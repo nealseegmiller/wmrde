@@ -1,4 +1,4 @@
-#include <WmrModel.h>
+#include <wmrde/WmrModel.h>
 //WmrModel class implementation file
 
 //constructor

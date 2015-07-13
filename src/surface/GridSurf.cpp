@@ -1,4 +1,4 @@
-#include <surface/GridSurf.h>
+#include <wmrde/surface/GridSurf.h>
 
 int GridSurf::readfile(const std::string FileName ) {
 	// declare file stream: http://www.cplusplus.com/reference/iostream/ifstream/

@@ -2,13 +2,13 @@
 //This class stores an Open Dynamics Engine model of a WMR
 //Used for benchmarking against WmrModel
 
-#ifndef _WMRSIM_WMRMODELODE_H_
-#define _WMRSIM_WMRMODELODE_H_
+#ifndef _WMRDE_WMRMODELODE_H_
+#define _WMRDE_WMRMODELODE_H_
 
 #include <assert.h>
 
 #include <ode/ode.h>
-#include <algebra/transform.h>
+#include <wmrde/algebra/transform.h>
 
 
 //Open Dynamics Engine
