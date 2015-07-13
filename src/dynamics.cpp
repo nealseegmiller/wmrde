@@ -357,7 +357,7 @@ int parseTrackContacts(const TrackContactGeom* tcontacts, const int nt,	bool inc
 	return np;
 }
 
-
+//TODO, remove this
 void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0[], const Real u_cmd[], const ContactGeom* contacts, const Real dt, 
 	Real H[], const Real C[], const ConstraintJacobian& A, //input
 	Real qacc[]) { //output
