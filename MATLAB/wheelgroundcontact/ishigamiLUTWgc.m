@@ -76,7 +76,8 @@ if nargin==1
     if 0
         %%
         %print to txt file
-        FileNames = {'LUT_FX','LUT_FY','LUT_FZ'};
+        FileNames = {'LUT_FX_zoe','LUT_FY_zoe','LUT_FZ_zoe'};
+%         FileNames = {'LUT_FX_rocky','LUT_FY_rocky','LUT_FZ_rocky'};
         
         for fileno = 1:3
             F = f(fileno,:);

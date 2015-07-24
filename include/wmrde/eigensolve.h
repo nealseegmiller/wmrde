@@ -11,14 +11,14 @@
 #include <wmrde/algebra/matrix.h>
 
 //print matrix size if dynamic (vs. fixed)
-#define PRINT_MATRIX_SIZE_IF_DYNAMIC 0
+#define PRINT_MATRIX_SIZE_IF_DYNAMIC 1
 
 //Eigen is faster for fixed size matrices
 //to used fixed size matrices for solve(), subset()
 
 //zoe
-//#define FIXED_NROWS_0 12+0 /*+0 if fix front axle roll, else +1*/
-//#define FIXED_NCOLS_0 9+0
+#define FIXED_NROWS_0 12+0 /*+0 if fix front axle roll, else +1*/
+#define FIXED_NCOLS_0 9+0
 
 //rocky
 //#define FIXED_NROWS_0 19
@@ -30,10 +30,8 @@
 //for chol()
 
 //zoe
-//#define FIXED_N_0 13+0
-//#define FIXED_N_1 9+0 /*ideal actuators*/
-//#define FIXED_N_1 16+0 /*use erp cfm*/
-//#define FIXED_N_2 4 /*initTerrainContact*/
+#define FIXED_N_0 13+0
+#define FIXED_N_1 9+0 /*ideal actuators*/
 
 //rocky
 //#define FIXED_N_0 18
@@ -50,6 +48,7 @@ inline void solve(const int nrows, const int ncols, Real* A, Real* b, Real* x) {
 }
 
 //TODO, remove this
+/*
 //obtain linearly independent subset of *rows* of A
 //if is_ind[i] is true, row i belongs to the independent subset
 void eigenSubsetDynamic( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]);
@@ -58,6 +57,7 @@ void eigenSubsetFixed( const int nrows, const int ncols, Real* A, const Real tol
 inline void subset( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]) {
 	eigenSubsetFixed(nrows,ncols,A,tol,is_ind);
 }
+
 
 //TODO, slow to use subfunction?
 //templatize to avoid temporaries
@@ -76,6 +76,7 @@ void eigenSetIsInd( const Eigen::MatrixBase<DerivedA>& R, const Eigen::MatrixBas
 			is_ind[I(i)]=true;
 	}
 }
+*/
 
 //compute the Cholesky decomposition of A = LL^T, L is lower triangular
 //return true if Success. to succeed A must be positive definite

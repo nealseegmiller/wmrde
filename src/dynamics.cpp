@@ -248,13 +248,14 @@ void forwardDyn(const WmrModel& mdl, const Real state0[], const Real qvel0[], Co
 
 		constraintJacobians(mdl, state0, qvel0, HT_world, contacts, A );
 
-		if (mdl.wheelGroundContactModel == 0) {
-			forwardDynErpCfm(mdl, state0, qvel0, u.cmd, contacts, dt, H, C, A, //input
-				qacc); //output
-		} else {
+		//TODO, remove this
+//		if (mdl.wheelGroundContactModel == 0) {
+//			forwardDynErpCfm(mdl, state0, qvel0, u.cmd, contacts, dt, H, C, A, //input
+//				qacc); //output
+//		} else {
 			forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, //input
 				qacc); //output
-		}
+//		}
 	} else {
 		//TODO, forwardDynUnc()
 	}
@@ -358,6 +359,7 @@ int parseTrackContacts(const TrackContactGeom* tcontacts, const int nt,	bool inc
 }
 
 //TODO, remove this
+/*
 void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0[], const Real u_cmd[], const ContactGeom* contacts, const Real dt, 
 	Real H[], const Real C[], const ConstraintJacobian& A, //input
 	Real qacc[]) { //output
@@ -530,7 +532,7 @@ void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0
 
 	return;
 }
-
+*/
 
 void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real qvel0[], ControllerIO& u, const ContactGeom* contacts, const Real dt, 
 	const Real H[], const Real C[], const ConstraintJacobian& A, //input
@@ -897,13 +899,18 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			//compute Hessian, H = 2*(drre_dx^T * derr_dx)
 			multMatTMat(nv,ninpt,derr_dx,ninpt,derr_dx,2.0,Hess);
 
-			if (chol(ninpt,Hess,HessL))	{
-			  cholSolve(ninpt,HessL,grad, p);
-			} else {
-			  //not positive definite, get least-squares solution
-			  //TODO, validate this
-			  solve(ninpt,ninpt,Hess,grad, p);
-			}
+			//DEBUGGING
+			chol(ninpt,Hess,HessL);
+			cholSolve(ninpt,HessL,grad, p);
+
+			//TODO, check this
+//			if (chol(ninpt,Hess,HessL))	{
+//			  cholSolve(ninpt,HessL,grad, p);
+//			} else {
+//			  //not positive definite, get least-squares solution
+//			  //TODO, validate this
+//			  solve(ninpt,ninpt,Hess,grad, p);
+//			}
 
 			mulcVec(ninpt,-1.0,p); //negate
 

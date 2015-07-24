@@ -68,6 +68,7 @@ void test_simulate_ODE() {
 
 	//options
 	bool do_anim = false;
+	bool do_time = true;
 
 	Real dt = .04;
 	int nsteps = (int) floor(10.0/dt);
@@ -82,8 +83,8 @@ void test_simulate_ODE() {
 	Real state[MAXNS];
 	Real qvel[MAXNV]; //for dynamic sim
 
-//	zoe(mdl,state,qvel);
-	rocky(mdl,state,qvel);
+	zoe(mdl,state,qvel);
+//	rocky(mdl,state,qvel);
 
 	//get from WmrModel
 	const int nf = mdl.get_nf();
@@ -123,8 +124,8 @@ void test_simulate_ODE() {
 	if (do_anim) { //animate
 		anim.start();
 
-//		zoeScene(mdl, anim);
-		rockyScene(mdl, anim);
+		zoeScene(mdl, anim);
+//		rockyScene(mdl, anim);
 
 		for (int i=0; i<surfs.size(); i++)
 			anim.addEntitySurface(surfs[i].get());
@@ -168,10 +169,10 @@ void test_simulate_ODE() {
 #endif
 
 
-	if (1) {
+	if (do_time) {
 		//time it
 		int n= (int) 100;
-		clock_t t;
+//		clock_t t;
 
 		time = 0;
 
@@ -196,7 +197,7 @@ void test_simulate_ODE() {
 		std::cout << "simulate ODE\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
 //		std::cout << "clock (ms): " << t << std::endl;
-		std::cout << "clock (ms): " << tosec(t1)-tosec(t0) << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 
 }
@@ -207,7 +208,7 @@ void test_simulate_ODE() {
 void test_benchmark() {
 
 	//options
-	bool do_dyn = false;
+	bool do_dyn = true;
 	bool do_ode = false; //do Open Dynamics Engine
 
 	const int nss = 4; //number of step sizes
@@ -230,7 +231,7 @@ void test_benchmark() {
 	mdl.wheelGroundContactModel(0, mdl.wgc_p, 0, 0, 0, //inputs
 					0, 0); //outputs
 	
-	mdl.wheelGroundContactModel=0; //use erp,cfm
+//	mdl.wheelGroundContactModel=0; //use erp,cfm //TODO, remove this
 	mdl.actuatorModel=0; //ideal actuators (using ideal actuators in Open Dynamics Engine)
 
 	//get from WmrModel
@@ -262,7 +263,8 @@ void test_benchmark() {
 
 	HomogeneousTransform HT_parent[WmrModel::MAXNF];
 	
-	clock_t tt[nss] = {0,0,0,0}; //total time, for each step size
+//	clock_t tt[nss] = {0,0,0,0}; //total time, for each step size
+	double tt[nss] = {0,0,0,0};
 
 	for (int surfno=0; surfno<10; surfno++) { //loop over surfaces
 
@@ -304,9 +306,11 @@ void test_benchmark() {
 
 			//time it
 			int n= (int) 10;
-			clock_t t;
+//			clock_t t;
 
-			t=clock();
+			timeval t0,t1;
+			gettimeofday(&t0, NULL);
+//			t=clock();
 			for (int iter=0; iter<n; iter++) {
 
 				time = 0;
@@ -333,18 +337,22 @@ void test_benchmark() {
 					}
 				}
 			}
-			t=clock()-t;
-			
-			std::cout << "clock (ms): " << t << std::endl;
+//			t=clock()-t;
+			gettimeofday(&t1, NULL);
 
+			double time_elapsed = tosec(t1) - tosec(t0);
+			std::cout << "clock (sec): " << time_elapsed << std::endl;
+			
+//			std::cout << "clock (ms): " << t << std::endl;
 			std::cout << "state(" << time << ")=\n"; printMatReal(ns,1,y,-1,-1); std::cout << std::endl;
 
-			tt[ssno] += t; //total time
+//			tt[ssno] += t; //total time
+			tt[ssno] += time_elapsed;
 		}
 
 	}
 
 	for (int ssno=0; ssno<nss; ssno++) {
-		std::cout << "step size: " << stepsizes[ssno] << ", clock (ms): " << tt[ssno] << std::endl;
+		std::cout << "step size: " << stepsizes[ssno] << ", clock (sec): " << tt[ssno] << std::endl;
 	}
 }

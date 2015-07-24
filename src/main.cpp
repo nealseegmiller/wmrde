@@ -29,14 +29,14 @@ int main(int argc, char *argv[]) //use this for console output
 	//test_jointSpaceBiasForce();
 	//test_forwardDyn();
 
-	test_simulate();
+//	test_simulate();
 
 
 	//in test_ode.h
 
 	//test_convertToWmrModelODE();
 //	test_simulate_ODE();
-	//test_benchmark();
+	test_benchmark();
 
 	
 	std::cin.get();

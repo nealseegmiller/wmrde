@@ -79,7 +79,8 @@ void eigenSolveFixed( const int nrows, const int ncols, Real* A, Real* b, Real* 
 	eigenSolveDynamic(nrows, ncols, A, b, x); //fail safe
 }
 
-
+//TODO, remove this
+/*
 void eigenSubsetDynamic( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]) {
 	//obtain linearly independent subset of *rows* of A using QR decomposition
 
@@ -126,6 +127,7 @@ void eigenSubsetFixed( const int nrows, const int ncols, Real* A, const Real tol
 
 	return;
 }
+*/
 
 //Cholesky decomposition
 bool eigenCholDynamic( const int n, Real* A, Real* L) {
@@ -136,7 +138,7 @@ bool eigenCholDynamic( const int n, Real* A, Real* L) {
 	Eigen::LLT<MatrixXr> A_llt(A_);
 	L_ = A_llt.matrixL();
 
-	return A_llt.info() != Eigen::Success;
+	return A_llt.info() == Eigen::Success;
 }
 
 bool eigenCholFixed( const int n, Real* A, Real* L) {
@@ -146,10 +148,10 @@ bool eigenCholFixed( const int n, Real* A, Real* L) {
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_0,FIXED_N_0>> L_(L);
 //		L_ = A_.llt().matrixL();
 
-	  Eigen::LLT<MatrixXr> A_llt(A_);
+	  Eigen::LLT<Eigen::Matrix<Real,FIXED_N_0,FIXED_N_0>> A_llt(A_);
 	  L_ = A_llt.matrixL();
 
-	  return A_llt.info() != Eigen::Success;
+	  return A_llt.info() == Eigen::Success;
 	}
 #endif
 #ifdef FIXED_N_1
@@ -158,10 +160,10 @@ bool eigenCholFixed( const int n, Real* A, Real* L) {
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_1,FIXED_N_1>> L_(L);
 //		L_ = A_.llt().matrixL();
 
-	  Eigen::LLT<MatrixXr> A_llt(A_);
+	  Eigen::LLT<Eigen::Matrix<Real,FIXED_N_1,FIXED_N_1>> A_llt(A_);
 	  L_ = A_llt.matrixL();
 
-	  return A_llt.info() != Eigen::Success;
+	  return A_llt.info() == Eigen::Success;
 	}
 #endif
 #ifdef FIXED_N_2
@@ -170,10 +172,10 @@ bool eigenCholFixed( const int n, Real* A, Real* L) {
 		Eigen::Map<Eigen::Matrix<Real,FIXED_N_2,FIXED_N_2>> L_(L);
 //		L_ = A_.llt().matrixL();
 
-	  Eigen::LLT<MatrixXr> A_llt(A_);
+	  Eigen::LLT<Eigen::Matrix<Real,FIXED_N_2,FIXED_N_2>> A_llt(A_);
 	  L_ = A_llt.matrixL();
 
-	  return A_llt.info() != Eigen::Success;
+	  return A_llt.info() == Eigen::Success;
 	}
 #endif
 

@@ -1390,9 +1390,10 @@ void test_simulate() {
 
 	//options
 	bool do_dyn = true; //do dynamic simulation, else kinematic
-	bool use_erp_cfm = false;
+//	bool use_erp_cfm = false;
 	bool ideal_actuators = true;
 	bool do_anim = true; //do animation
+	bool do_time = true;
 
 	const Real dt = .04;
 	const int nsteps = (int) floor(10.0/dt);
@@ -1409,9 +1410,9 @@ void test_simulate() {
 	Real qvel[MAXNV]; //for dynamic sim
 
 	//uncomment one of the following:
-//	zoe(mdl,state,qvel);
-	rocky(mdl,state,qvel);
-	//talon(mdl,state,qvel);
+	zoe(mdl,state,qvel);
+//	rocky(mdl,state,qvel);
+//	talon(mdl,state,qvel);
 
 	//also uncomment the corresponding scene function below!
 
@@ -1419,8 +1420,8 @@ void test_simulate() {
 	mdl.wheelGroundContactModel(0, mdl.wgc_p, 0, 0, 0, //inputs
 		0, 0); //outputs
 
-	if (use_erp_cfm)
-		mdl.wheelGroundContactModel=0;
+//	if (use_erp_cfm)
+//		mdl.wheelGroundContactModel=0;
 	if (ideal_actuators)
 		mdl.actuatorModel=0;
 
@@ -1486,9 +1487,9 @@ void test_simulate() {
 
 		//uncomment the scene function that corresponds to the model function above
 
-//		zoeScene(mdl, anim);
-		rockyScene(mdl, anim);
-		//talonScene(mdl, tcontacts, anim);
+		zoeScene(mdl, anim);
+//		rockyScene(mdl, anim);
+//		talonScene(mdl, tcontacts, anim);
 
 		for (int i=0; i<surfs.size(); i++)
 			anim.addEntitySurface(surfs[i].get());
@@ -1535,7 +1536,7 @@ void test_simulate() {
 	stop: //goto
 #endif
 	
-	if (0) {
+	if (do_time) {
 		//time it
 		int n= (int) 100;
 //		clock_t t;
@@ -1567,7 +1568,7 @@ void test_simulate() {
 		std::cout << "simulate\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
 //		std::cout << "clock (ms): " << t << std::endl;
-		std::cout << "clock (ms): " << tosec(t1)-tosec(t0) << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 
 }

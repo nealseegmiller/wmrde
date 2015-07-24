@@ -113,7 +113,7 @@ include_directories(
 	${OGRE_SAMPLES_INCLUDEPATH}
 	${OGRE_Overlay_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS} #added by Neal
-  /usr/local/include/ode #added by Neal, TODO /ode necessary?
+  /usr/local/include #added by Neal, TODO /ode necessary?
 )
  
 add_executable(OgreApp WIN32 ${HDRS} ${SRCS})
