@@ -1,1 +1,0 @@
-This directory contains functions to generate surface objects that represent terrain

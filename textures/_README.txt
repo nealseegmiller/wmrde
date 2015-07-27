@@ -1,1 +1,0 @@
-This directory contains terrain texture images used for animations

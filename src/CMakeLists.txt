@@ -93,7 +93,7 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	add_definitions(-DBOOST_ALL_NO_LIB)
 	set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 endif()
- 
+
 file(GLOB_RECURSE HDRS
 	../include/*.h
 )
@@ -101,7 +101,6 @@ file(GLOB_RECURSE HDRS
 file(GLOB_RECURSE SRCS
 	./*.cpp
 )
-
 
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}") #added by Neal
 find_package(Eigen REQUIRED) #added by Neal

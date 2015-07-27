@@ -1,1 +1,0 @@
-This directory contains the WmrModel class and associated functions.
