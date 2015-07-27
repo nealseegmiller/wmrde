@@ -11,14 +11,14 @@
 #include <wmrde/algebra/matrix.h>
 
 //print matrix size if dynamic (vs. fixed)
-#define PRINT_MATRIX_SIZE_IF_DYNAMIC 1
+#define PRINT_MATRIX_SIZE_IF_DYNAMIC 0
 
 //Eigen is faster for fixed size matrices
 //to used fixed size matrices for solve(), subset()
 
 //zoe
-#define FIXED_NROWS_0 12+0 /*+0 if fix front axle roll, else +1*/
-#define FIXED_NCOLS_0 9+0
+//#define FIXED_NROWS_0 12+0 /*+0 if fix front axle roll, else +1*/
+//#define FIXED_NCOLS_0 9+0
 
 //rocky
 //#define FIXED_NROWS_0 19
@@ -30,8 +30,8 @@
 //for chol()
 
 //zoe
-#define FIXED_N_0 13+0
-#define FIXED_N_1 9+0 /*ideal actuators*/
+//#define FIXED_N_0 13+0
+//#define FIXED_N_1 9+0 /*ideal actuators*/
 
 //rocky
 //#define FIXED_N_0 18
@@ -46,37 +46,6 @@ void eigenSolveFixed( const int nrows, const int ncols, Real* A, Real* b, Real* 
 inline void solve(const int nrows, const int ncols, Real* A, Real* b, Real* x) {
 	eigenSolveFixed(nrows,ncols,A,b,x);	
 }
-
-//TODO, remove this
-/*
-//obtain linearly independent subset of *rows* of A
-//if is_ind[i] is true, row i belongs to the independent subset
-void eigenSubsetDynamic( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]);
-void eigenSubsetFixed( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]);
-//call this one:
-inline void subset( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]) {
-	eigenSubsetFixed(nrows,ncols,A,tol,is_ind);
-}
-
-
-//TODO, slow to use subfunction?
-//templatize to avoid temporaries
-//http://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
-template <typename DerivedA, typename DerivedB>
-void eigenSetIsInd( const Eigen::MatrixBase<DerivedA>& R, const Eigen::MatrixBase<DerivedB>& I, const Real tol, bool is_ind[]) {
-	//set is_ind bool array
-	int Rrows = (int) R.rows();
-	int Rcols = (int) R.cols();
-	
-	setVec(Rcols,false,is_ind); //initialize
-	Real tol_ = tol*fabs(R(0,0)); //fabs is necessary!
-	int n = std::min(Rrows,Rcols);
-	for (int i=0; i<n; i++) {
-		if (fabs(R(i,i)) > tol_) 
-			is_ind[I(i)]=true;
-	}
-}
-*/
 
 //compute the Cholesky decomposition of A = LL^T, L is lower triangular
 //return true if Success. to succeed A must be positive definite

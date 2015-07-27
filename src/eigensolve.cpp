@@ -79,56 +79,6 @@ void eigenSolveFixed( const int nrows, const int ncols, Real* A, Real* b, Real* 
 	eigenSolveDynamic(nrows, ncols, A, b, x); //fail safe
 }
 
-//TODO, remove this
-/*
-void eigenSubsetDynamic( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]) {
-	//obtain linearly independent subset of *rows* of A using QR decomposition
-
-	Eigen::Map<MatrixXr> A_(A,nrows,ncols);
-	Eigen::ColPivHouseholderQR<MatrixXr> QR(A_.transpose());
-
-	MatrixXr R = QR.matrixQR().triangularView<Eigen::Upper>();
-	Eigen::Matrix<int,Eigen::Dynamic,1> I = QR.colsPermutation().indices();
-
-	eigenSetIsInd(R, I, tol, is_ind);
-	
-	//DEBUGGING
-	//std::cout << "R=\n" << R << std::endl << std::endl;
-	//std::cout << "I=\n" << I << std::endl;
-
-	return;
-}
-
-
-//TODO
-
-void eigenSubsetFixed( const int nrows, const int ncols, Real* A, const Real tol, bool is_ind[]) {
-	//get linearly independent subset of *rows* of A using QR decomposition
-
-#ifdef FIXED_NROWS_0
-	if (FIXED_NROWS_0 == nrows && FIXED_NCOLS_0 == ncols) {
-		Eigen::Map<Eigen::Matrix<Real,FIXED_NROWS_0,FIXED_NCOLS_0>> A_(A);
-		Eigen::ColPivHouseholderQR<Eigen::Matrix<Real,FIXED_NCOLS_0,FIXED_NROWS_0>> QR(A_.transpose());
-
-		Eigen::Matrix<Real,FIXED_NCOLS_0,FIXED_NROWS_0> R = QR.matrixQR().triangularView<Eigen::Upper>();
-		Eigen::Matrix<int,FIXED_NROWS_0,1> I = QR.colsPermutation().indices();
-		
-		eigenSetIsInd(R, I, tol, is_ind);
-
-		return;
-	}
-#endif
-
-#if PRINT_MATRIX_SIZE_IF_DYNAMIC
-	std::cout << "resorting to eigenSubsetDynamic, nrows = " << nrows << ", ncols = " << ncols << std::endl;
-#endif
-
-	eigenSubsetDynamic( nrows, ncols, A, tol, is_ind ); //fail safe
-
-	return;
-}
-*/
-
 //Cholesky decomposition
 bool eigenCholDynamic( const int n, Real* A, Real* L) {
 	Eigen::Map<MatrixXr> A_(A,n,n);

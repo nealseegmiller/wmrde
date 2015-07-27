@@ -358,182 +358,6 @@ int parseTrackContacts(const TrackContactGeom* tcontacts, const int nt,	bool inc
 	return np;
 }
 
-//TODO, remove this
-/*
-void forwardDynErpCfm(const WmrModel& mdl, const Real state0[], const Real qvel0[], const Real u_cmd[], const ContactGeom* contacts, const Real dt, 
-	Real H[], const Real C[], const ConstraintJacobian& A, //input
-	Real qacc[]) { //output
-	//use erp, cfm like Open Dynamics Engine
-
-	//for allocation
-	const int MAXNJ = WmrModel::MAXNF-1;
-	const int MAXNV = NUMQVEL(WmrModel::MAXNF);
-	const int MAXNP = ConstraintJacobian::MAXNP;
-	const int MAXNC = ConstraintJacobian::MAXNC;
-
-	// PRE-PROCESS
-	const int nf = mdl.get_nf();
-	const int nv = NUMQVEL(nf);
-	const int nw = mdl.get_nw();
-	const int nt = mdl.get_nt();
-	const int na = mdl.get_na();
-
-	const int* actframeinds = mdl.get_actframeinds();
-
-	//contacts
-	int np; //total number of points
-	bool incontact[MAXNP];
-	Real dz0[MAXNP]; //contact height errors
-	int whichtrack[MAXNP];
-	
-	const WheelContactGeom* wcontacts;
-	const TrackContactGeom* tcontacts;
-
-	if (nw > 0) {
-		wcontacts = static_cast<const WheelContactGeom*>(contacts);
-		np = parseWheelContacts(wcontacts, nw, incontact, dz0);
-	} else if (nt > 0) {
-		tcontacts = static_cast<const TrackContactGeom*>(contacts);
-		np = parseTrackContacts(tcontacts, nt, incontact, dz0, whichtrack);
-	}
-
-	assert(np <= MAXNP); //DEBUGGING
-
-	int incontactinds[MAXNP];
-	int npic; //number of points in contact
-	npic = logicalFind(np, incontact, incontactinds);
-
-	//count constraints
-	const int ncc = 3*npic;
-	const int nac = na;
-	const int njc = mdl.get_njc();
-	const int nc = ncc + nac + njc;
-
-	//for constraint indexing
-	const int contact_i0 = 0;
-	const int act_i0 = ncc;
-	const int joint_i0 = ncc + nac;
-
-	// END PRE-PROCESS
-
-
-	Real b[MAXNC];
-	Real cfm_diag[MAXNC];
-		
-	if (ncc > 0) {
-
-		Real vc0_incontact[3*MAXNP]; //contact point velocities for points in contact, concatenated into single vector
-		multMatVec(3*npic,nv,A.contact,qvel0,1.0,vc0_incontact);
-
-		for (int i=0; i<npic; i++) {
-			int pno = incontactinds[i]; //point number in list of all
-			int wtno; //wheel or track number
-			if (nw > 0)
-				wtno = pno;
-			else if (nt > 0)
-				wtno = whichtrack[pno];
-
-			b[contact_i0+(i*3)+0] = - vc0_incontact[(i*3)+0];
-			b[contact_i0+(i*3)+1] = - vc0_incontact[(i*3)+1];
-			b[contact_i0+(i*3)+2] = -(mdl.erp_z[wtno] * dz0[pno])/dt - vc0_incontact[(i*3)+2];
-
-			cfm_diag[contact_i0+(i*3)+0] = mdl.fds_x[wtno];
-			cfm_diag[contact_i0+(i*3)+1] = mdl.fds_y[wtno];
-			cfm_diag[contact_i0+(i*3)+2] = mdl.cfm_z[wtno];
-
-		}
-	}
-		
-	if (nac > 0) {
-
-		for (int i=0; i<nac; i++) {
-			int vi = TOQVELI(actframeinds[i]);
-
-			b[act_i0+i] = u_cmd[i] - qvel0[vi];
-			cfm_diag[act_i0+i] = 0;
-		}
-	}
-
-	if (njc > 0) {
-
-		Real c[WmrModel::MAXNJC];
-		Real Jc[WmrModel::MAXNJC*MAXNJ]; //dummy
-
-		mdl.holonomicJointConstraints(mdl, state0+SI_JD, qvel0+VI_JR, //inputs
-			c, Jc, 0, 0, 0); //outputs
-
-		Real cd0[WmrModel::MAXNJC]; //d/dt c based on qvel0
-		multMatVec(njc,nv,A.joint,qvel0,1.0,cd0);
-
-		for (int i=0; i<njc; i++) {
-			b[joint_i0+i] = -mdl.erp_j[i]*c[i]/dt - cd0[i];
-			cfm_diag[joint_i0+i] = mdl.cfm_j[i];
-		}
-	}
-	mulcVec(nc,1/dt,b);
-	
-	//TODO, duplication
-
-	//applied force
-	Real tau[MAXNV];
-	setVec(nv,0.0,tau);
-
-	Real tau_minus_C[MAXNV]; //tau - C
-	//TODO, make this a single operation?
-	copyVec(nv,tau,tau_minus_C);
-	addmVec(nv,C,-1.0,tau_minus_C);
-
-	//Cholesky decomposition of H
-	Real HL[MAXNV*MAXNV];
-	chol(nv,H,HL);
-
-	Real invH_tau_minus_C[MAXNV]; //inv(H)*(tau-C)
-	cholSolve(nv, HL, tau_minus_C, invH_tau_minus_C);
-
-	//end duplication
-
-	//Hl*lambda = fl
-		
-	Real fl[MAXNC];
-	//fl = b - A*inv(H)*(tau-C)
-
-	multMatVec(nc, nv, A.all, invH_tau_minus_C, -1.0, fl);
-	addmVec(nc, b, 1.0, fl);
-
-	//Hl = A*inv(H)*A^T + CFM
-	Real Hl[MAXNC*MAXNC];
-	Real AT[MAXNV*MAXNC]; //A^T
-	copyTMat(nc,nv,A.all,AT); //TODO, eliminate this?
-	Real invH_AT[MAXNV*MAXNC]; //inv(H)*A^T
-	cholSolveMat(nv,HL,nc,AT,invH_AT);
-	multMatMat(nc,nv,A.all,nc,invH_AT,1.0,Hl);
-
-	//add cfm
-	for (int i=0; i<nc; i++)
-		Hl[S2I(i,i,nc)] += cfm_diag[i]/dt;
-
-	//DEBUGGING
-	//std::cout << "Hl=\n"; printMatReal(nc,nc,Hl,-1,-1);
-	//std::cout << "fl=\n"; printMatReal(nc,1,fl,-1,-1);
-
-	//Cholesky decomposition of Hl
-	Real HlL[MAXNC*MAXNC]; //lower triangular
-	chol(nc,Hl,HlL);
-
-
-	Real lambda[MAXNC]; //constraint forces
-	cholSolve(nc, HlL, fl, lambda);
-
-	//compute acceleration
-	//qacc = inv(H)*(tau-C + A^T*lambda)
-	//qacc = inv(H)*(tau-C) + (inv(H)*A^T)*lambda
-	multMatVec(nv,nc,invH_AT,lambda,1.0,qacc);
-	addmVec(nv,invH_tau_minus_C,1.0,qacc);
-
-	return;
-}
-*/
-
 void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real qvel0[], ControllerIO& u, const ContactGeom* contacts, const Real dt, 
 	const Real H[], const Real C[], const ConstraintJacobian& A, //input
 	Real qacc[]) { //output
@@ -900,17 +724,17 @@ void forwardDynForceBalance(const WmrModel& mdl, const Real state0[], const Real
 			multMatTMat(nv,ninpt,derr_dx,ninpt,derr_dx,2.0,Hess);
 
 			//DEBUGGING
-			chol(ninpt,Hess,HessL);
-			cholSolve(ninpt,HessL,grad, p);
+//			chol(ninpt,Hess,HessL);
+//			cholSolve(ninpt,HessL,grad, p);
 
 			//TODO, check this
-//			if (chol(ninpt,Hess,HessL))	{
-//			  cholSolve(ninpt,HessL,grad, p);
-//			} else {
-//			  //not positive definite, get least-squares solution
-//			  //TODO, validate this
-//			  solve(ninpt,ninpt,Hess,grad, p);
-//			}
+			if (chol(ninpt,Hess,HessL))	{
+			  cholSolve(ninpt,HessL,grad, p);
+			} else {
+			  //not positive definite, get least-squares solution
+			  //TODO, validate this
+			  solve(ninpt,ninpt,Hess,grad, p);
+			}
 
 			mulcVec(ninpt,-1.0,p); //negate
 

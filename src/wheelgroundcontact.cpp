@@ -482,9 +482,8 @@ void ishigamiLUTWgc( const Real params[], const Vec3 vc, const Real Rw, const Re
 		//load lookup table data from .txt files
 		//these files can be generated using MATLAB, ishigamiLUTWgc.m
 
-//		std::string FileNames[3] = {"LUT_FX_rocky.txt", "LUT_FY_rocky.txt", "LUT_FZ_rocky.txt"};
-		std::string FileNames[3] = {"LUT_FX_zoe.txt", "LUT_FY_zoe.txt", "LUT_FZ_zoe.txt"};
-		
+	  std::string FileNames[3];
+	  LUTFilenames( FileNames );
 
 		for (int fileno=0; fileno<3; fileno++) {
 

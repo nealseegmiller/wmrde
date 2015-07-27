@@ -1,10 +1,5 @@
 #include <wmrde/test.h>
 
-inline double tosec(timeval tim)
-{
-  return tim.tv_sec + (tim.tv_usec/1000000.0);
-}
-
 void test_common() {
 
 	if (1) {
@@ -40,7 +35,7 @@ void test_linalg3() {
 
 	//for timing
 	int n = (int) 1e9;
-	clock_t t;
+	timeval t0, t1;
 
 	Mat3 A,B,C;
 
@@ -48,17 +43,17 @@ void test_linalg3() {
 	addcMat3(A,1,B);
 
 	//computation time
-	t=clock();
+	gettimeofday(&t0, NULL);
 	for (int i=0; i<n; i++) {
 		multMatMat3(A,B,C);
 	}
-	t=clock()-t;
+	gettimeofday(&t1, NULL);
 
 	//must print or compiler will optimize out loop
 	std::cout << "(using linalg3) C=\n";
 	printMat3(C,-1,-1);
 	std::cout << "iterations: " << (Real) n << std::endl;
-	std::cout << "clock (ms): " << t << std::endl;
+	std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	std::cout << std::endl;
 
 
@@ -75,16 +70,16 @@ void test_linalg3() {
 		//std::cout << "A=\n" << A_ << std::endl;
 		//std::cout << "B=\n" << B_ << std::endl;
 	
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) { 
 			//C_ = A_+B_;
 			C_ = A_*B_;
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 
 		std::cout << "(using Eigen) C=\n" << C_ << std::endl;
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 		std::cout << std::endl;
 	}
 	
@@ -123,19 +118,19 @@ void test_transform() {
 		//time it
 
 		int n = (int) 1e8;
-		clock_t t;
+		timeval t0, t1;
 
 		//compose Homogeneous Transforms
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) { 
 			composeHT(HT,HT,HT2);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 
 		std::cout << "HT*HT=\n"; printHT(HT2,-1,-1);
 	
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	} else {
 		composeHT(HT,HT,HT2);
 		std::cout << "HT*HT=\n"; printHT(HT2,-1,-1);
@@ -189,7 +184,7 @@ void test_transform() {
 void test_spatial() {
 	//for timing
 	int n;
-	clock_t t;
+	timeval t0, t1;
 
 	//construct Homogeneous Transform
 	VecEuler euler;
@@ -217,14 +212,15 @@ void test_spatial() {
 		//time it
 		n= (int) 1e8;
 		
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			invHTToPlucker(HT,P2);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
+
 		std::cout << "inv(P)=\n"; printMat6b(P2,-1,-1);
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 		std::cout << std::endl;
 	} else {
 		invHTToPlucker(HT,P2);
@@ -251,16 +247,17 @@ void test_spatial() {
 		//time it
 		n= (int) 1e8;
 		
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			multPluckerVec6b(P,m,v);
 			multPluckerTVec6b(P,m,v2);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
+
 		std::cout << "P*m=\n"; printVec6b(v,-1,-1);
 		std::cout << "P'*m=\n"; printVec6b(v2,-1,-1);
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 		std::cout << std::endl;
 
 
@@ -281,18 +278,18 @@ void test_spatial() {
 		copyMat6bToArray(P,P_.data());
 		copyVec6bToArray(m,m_.data());
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			v_ = P_*m_;
 			v2_ = P_.transpose()*m_;
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 
 		std::cout << "using Eigen\n";
 		std::cout << "P*m=\n" << v_ << std::endl;
 		std::cout << "P'*m=\n" << v2_ << std::endl;
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 
 	//compute P'*I*P
@@ -321,17 +318,17 @@ void test_spatial() {
 		//time it
 		n = (int) 1e7;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 	
 		for (int i=0; i<n; i++) {
 			//multPluckerTMat6bPlucker(P,Is,Is2); //deprecated
 			multPluckerTInertiaPlucker(P,Is,Is2);
 		}
 
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "P'*Is*P=\n";	printMat6b(Is2,-1,-1);
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 		std::cout << std::endl;
 	} else {
 		//multPluckerTMat6bPlucker(P,Is,Is2);
@@ -348,16 +345,16 @@ void test_spatial() {
 		copyMat6bToArray(P,P_.data());
 		copyMat6bToArray(Is,Is_.data());
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			Is2_ = P_.transpose()*Is_*P_;
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 
 		std::cout << "using Eigen\n";
 		std::cout << "P'*Is*P=\n" << Is2_ << std::endl;
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 	
 }
@@ -369,7 +366,7 @@ void test_matrix() {
 
 	//for timing
 	int n = (int) 1e6;
-	clock_t t;
+	timeval t0, t1;
 
 	const int SIZE = 10;
 
@@ -404,7 +401,7 @@ void test_matrix() {
 	//Real m = 1.0 + 1e-6;
 	Real m = 1.0;
 
-	t=clock();
+	gettimeofday(&t0, NULL);
 
 	for (int i=0; i<n; i++) {
 		//setMat(SIZE,SIZE,val,B);
@@ -435,11 +432,11 @@ void test_matrix() {
 		multMatTMat(SIZE,SIZE,A,SIZE,A,m,B);
 
 	}
-	t=clock()-t;
+	gettimeofday(&t1, NULL);
 
 	std::cout << "(matrix.h) B=\n"; printMatReal(SIZE,SIZE,B,0,-1);
 	std::cout << "iterations: " << (Real) n << std::endl;
-	std::cout << "clock (ms): " << t << std::endl;
+	std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	std::cout << std::endl;
 
 
@@ -466,7 +463,7 @@ void test_matrix() {
 		//std::cout << "B_=\n" << B_ << std::endl;
 		//std::cout << "b_=\n" << b_ << std::endl;
 	
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			//B_.setConstant(val);
 			//B_.row(ri).setConstant(val);
@@ -495,11 +492,11 @@ void test_matrix() {
 			//B_ = A_*A_;
 			B_ = A_.transpose()*A_;
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 
 		std::cout << "(Eigen) B=\n" << B_ << std::endl;
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 }
 
@@ -567,19 +564,19 @@ void test_surface() {
 		//time it
 
 		int n = (int) 1e5;
-		clock_t t;
+		timeval t0, t1;
 		
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int iter=0; iter<n; iter++) {
 			for (int i=0; i<np; i++) { //loop over points
 				surfidx[i] = surfacesDz(surfs, pts[i], dz[i], normal[i] );
 			}
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 
 		std::cout << "number of points: " << np << std::endl;
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 
 	}
 	
@@ -627,18 +624,18 @@ void test_updateWheelContactGeom() {
 	if (1) {
 		//time it
 		int nw = 4;
-		clock_t t;
+		timeval t0, t1;
 
 		int n= (int) 1e5;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n*nw; i++) {
 			updateWheelContactGeom(surfs, HT_wheel_to_world, rad, contact );
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "num wheels: " << nw << std::endl;
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 }
 
@@ -724,17 +721,17 @@ void test_stateToHT() {
 
 	if (1) {
 		//time it
-		clock_t t;
+		timeval t0, t1;
 		int n= (int) 1e6;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			stateToHT(mdl, state, HT_parent, HT_world);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "stateToHT()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl << std::endl;
 	}
 
 
@@ -863,16 +860,16 @@ void test_wheelJacobians() {
 	if (1) {
 		//time it
 		int n= (int) 1e6;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			wheelJacobians(mdl, HT_world, wcontacts, A);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "wheelJacobians()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 	
 
@@ -937,16 +934,16 @@ void test_trackJacobians() {
 	if (1) {
 		//time it
 		int n= (int) 1e6;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			trackJacobians(mdl, HT_world, tcontacts, A);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "trackJacobians()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 	
 
@@ -1033,16 +1030,16 @@ void test_forwardVelKin() {
 	if (1) {
 		//time it
 		int n= (int) 1e5;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			forwardVelKin(mdl, state, u, HT_world, contacts, qvel, 0);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "wheelJacobians()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 	
 
@@ -1099,17 +1096,17 @@ void test_initTerrainContact() {
 	if (1) {
 		//time it
 		int n= (int) 1e4;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			copyVec(ns,state_before,state);
 			initTerrainContact(mdl, surfs, contacts, state);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "initTerrainContact()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 
 }
@@ -1166,16 +1163,16 @@ void test_subtreeInertias() {
 	if (1) {
 		//time it
 		int n= (int) 1e6;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			subtreeInertias(mdl, Xup, Is_subt);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "subtreeInertias()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 }
 
@@ -1221,16 +1218,16 @@ void test_jointSpaceInertia() {
 	if (1) {
 		//time it
 		int n= (int) 1e6;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			jointSpaceInertia(mdl,Xup,Is_subt,H);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "jointSpaceInertia()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 }
 
@@ -1278,16 +1275,16 @@ void test_jointSpaceBiasForce() {
 	if (1) {
 		//time it
 		int n= (int) 1e6;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			jointSpaceBiasForce(mdl,Xup,qvel,C);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "jointSpaceBiasForce()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 }
 
@@ -1372,16 +1369,16 @@ void test_forwardDyn() {
 	if (1) {
 		//time it
 		int n= (int) 1e4;
-		clock_t t;
+		timeval t0, t1;
 
-		t=clock();
+		gettimeofday(&t0, NULL);
 		for (int i=0; i<n; i++) {
 			forwardDyn(mdl, state, qvel, u, HT_parent, HT_world, contacts, dt, qacc);
 		}
-		t=clock()-t;
+		gettimeofday(&t1, NULL);
 		std::cout << "forwardDyn()\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (ms): " << t << std::endl;
+		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 }
 
@@ -1390,10 +1387,9 @@ void test_simulate() {
 
 	//options
 	bool do_dyn = true; //do dynamic simulation, else kinematic
-//	bool use_erp_cfm = false;
 	bool ideal_actuators = true;
 	bool do_anim = true; //do animation
-	bool do_time = true;
+	bool do_time = false;
 
 	const Real dt = .04;
 	const int nsteps = (int) floor(10.0/dt);
@@ -1410,8 +1406,9 @@ void test_simulate() {
 	Real qvel[MAXNV]; //for dynamic sim
 
 	//uncomment one of the following:
-	zoe(mdl,state,qvel);
-//	rocky(mdl,state,qvel);
+	//for animation, must also uncomment the corresponding scene function below
+//	zoe(mdl,state,qvel);
+	rocky(mdl,state,qvel);
 //	talon(mdl,state,qvel);
 
 	//also uncomment the corresponding scene function below!
@@ -1420,8 +1417,6 @@ void test_simulate() {
 	mdl.wheelGroundContactModel(0, mdl.wgc_p, 0, 0, 0, //inputs
 		0, 0); //outputs
 
-//	if (use_erp_cfm)
-//		mdl.wheelGroundContactModel=0;
 	if (ideal_actuators)
 		mdl.actuatorModel=0;
 
@@ -1457,7 +1452,6 @@ void test_simulate() {
 
 	initTerrainContact(mdl, surfs, contacts, state); //DEBUGGING
 
-
 	//allocate
 	Real y[MAXNY];
 	Real ydot[MAXNY];
@@ -1487,8 +1481,8 @@ void test_simulate() {
 
 		//uncomment the scene function that corresponds to the model function above
 
-		zoeScene(mdl, anim);
-//		rockyScene(mdl, anim);
+//		zoeScene(mdl, anim);
+		rockyScene(mdl, anim);
 //		talonScene(mdl, tcontacts, anim);
 
 		for (int i=0; i<surfs.size(); i++)
@@ -1539,13 +1533,10 @@ void test_simulate() {
 	if (do_time) {
 		//time it
 		int n= (int) 100;
-//		clock_t t;
+		timeval t0, t1;
 
 		time = 0;
 
-//		t=clock();
-
-	  timeval t0,t1;
 	  gettimeofday(&t0, NULL);
 		for (int iter=0; iter<n; iter++) {
 			copyVec(ny,y0,y); //reset to backup
@@ -1563,11 +1554,8 @@ void test_simulate() {
 		}
     gettimeofday(&t1, NULL);
 
-//		t=clock()-t;
-
 		std::cout << "simulate\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-//		std::cout << "clock (ms): " << t << std::endl;
 		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 

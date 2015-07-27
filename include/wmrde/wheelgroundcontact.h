@@ -29,6 +29,18 @@ void ishigamiWgc(const Real params[], const Vec3 vc, const Real Rw, const Real d
 
 void ishigamiLUTWgc( const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
 		Vec3 fw, Real J[]); //outputs
+inline void LUTFilenames( std::string FileNames[] )
+{
+  //uncomment one of the following blocks
+
+  FileNames[0] = "LUT_FX_rocky.txt";
+  FileNames[1] = "LUT_FY_rocky.txt";
+  FileNames[2] = "LUT_FZ_rocky.txt";
+
+//  FileNames[0] = "LUT_FX_zoe.txt";
+//  FileNames[1] = "LUT_FY_zoe.txt";
+//  FileNames[2] = "LUT_FZ_zoe.txt";
+}
 
 void pacejkaDerivatives(const Real Ba, const Real Bs, const Real Ca, const Real Cs, const Real Da, const Real Ds, const Real Ea, const Real Es, const Real Ka, const Real Ks, const Real alpha, const Real fz, const Real mu, const Real s, const Real sgn, //inputs
 			Real* dfx_ds, Real* dfy_ds, Real* dfx_dalpha, Real* dfy_dalpha); //outputs
@@ -41,7 +53,7 @@ void calcSlip( const Real vx, const Real vy, const Real Rw, const int method, //
 #define ISHIGAMI_WGC 2
 #define ISHIGAMI_LUT_WGC 3
 //modify this:
-#define WGC_MODEL_TYPE ISHIGAMI_LUT_WGC
+#define WGC_MODEL_TYPE ODE_WGC
 
 //uniform wheel-ground contact model. assumes all wheels are identical (wheelno is not used)
 inline void uniformWgc( const int wheelno, const Real params[], const Vec3 vc, const Real Rw, const Real dz, //inputs
@@ -57,6 +69,5 @@ inline void uniformWgc( const int wheelno, const Real params[], const Vec3 vc, c
 	ishigamiLUTWgc(params,vc,Rw,dz, fw,J);
 #endif
 }
-
 
 #endif

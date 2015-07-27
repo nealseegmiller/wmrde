@@ -16,6 +16,13 @@
 #include <wmrde/demo/models.h>
 #include <wmrde/dynamics.h>
 
+//TODO, define timeval, gettimeofday() for windows
+//http://stackoverflow.com/questions/10905892/equivalent-of-gettimeday-for-windows
+inline double tosec(timeval tim)
+{
+  return tim.tv_sec + (tim.tv_usec/1000000.0);
+}
+
 void test_common();
 
 //algebra

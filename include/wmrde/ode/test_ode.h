@@ -15,6 +15,7 @@
 #include <wmrde/demo/terrains.h>
 #include <wmrde/dynamics.h>
 #include <wmrde/ode/simulate_ode.h>
+#include <wmrde/test.h> //for tosec()
 
 void test_convertToWmrModelODE();
 void test_simulate_ODE();

@@ -1,10 +1,5 @@
 #include <wmrde/ode/test_ode.h>
 
-inline double tosec(timeval tim)
-{
-  return tim.tv_sec + (tim.tv_usec/1000000.0);
-}
-
 void test_convertToWmrModelODE() {
 
 	const int MAXNS = NUMSTATE(WmrModel::MAXNF);
@@ -16,7 +11,7 @@ void test_convertToWmrModelODE() {
 	Real qvel[MAXNV];
 
 	zoe(mdl,state,qvel);
-	//rocky(mdl,state,qvel);
+//	rocky(mdl,state,qvel);
 
 	//get from WmrModel
 	const int nf = mdl.get_nf();
@@ -172,14 +167,12 @@ void test_simulate_ODE() {
 	if (do_time) {
 		//time it
 		int n= (int) 100;
-//		clock_t t;
+		timeval t0, t1;
 
 		time = 0;
 
-//		t=clock();
-    timeval t0,t1;
-    gettimeofday(&t0, NULL);
 
+    gettimeofday(&t0, NULL);
 		for (int iter=0; iter<n; iter++) {
 			setStateODE(mdl, state0, mdl_ode);
 			setQvelODE(mdl, qvel, mdl_ode);
@@ -190,13 +183,11 @@ void test_simulate_ODE() {
 			}
 		}
 		gettimeofday(&t1, NULL);
-//		t=clock()-t;
 
 		//getStateODE(mdl_ode, state);
 		//std::cout << "state(" << time << ")=\n"; printMatReal(ns,1,state,-1,-1); std::cout << std::endl;
 		std::cout << "simulate ODE\n";
 		std::cout << "iterations: " << (Real) n << std::endl;
-//		std::cout << "clock (ms): " << t << std::endl;
 		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
 	}
 
@@ -225,13 +216,12 @@ void test_benchmark() {
 	Real qvel[MAXNV]; //for dynamic sim
 
 	zoe(mdl,state,qvel);
-	//rocky(mdl,state,qvel);
+//	rocky(mdl,state,qvel);
 
 	//initialize wheel-ground contact model
 	mdl.wheelGroundContactModel(0, mdl.wgc_p, 0, 0, 0, //inputs
 					0, 0); //outputs
 	
-//	mdl.wheelGroundContactModel=0; //use erp,cfm //TODO, remove this
 	mdl.actuatorModel=0; //ideal actuators (using ideal actuators in Open Dynamics Engine)
 
 	//get from WmrModel
@@ -263,8 +253,7 @@ void test_benchmark() {
 
 	HomogeneousTransform HT_parent[WmrModel::MAXNF];
 	
-//	clock_t tt[nss] = {0,0,0,0}; //total time, for each step size
-	double tt[nss] = {0,0,0,0};
+	double total_time[nss] = {0,0,0,0}; //total computation time for each step size
 
 	for (int surfno=0; surfno<10; surfno++) { //loop over surfaces
 
@@ -306,11 +295,9 @@ void test_benchmark() {
 
 			//time it
 			int n= (int) 10;
-//			clock_t t;
+			timeval t0, t1;
 
-			timeval t0,t1;
 			gettimeofday(&t0, NULL);
-//			t=clock();
 			for (int iter=0; iter<n; iter++) {
 
 				time = 0;
@@ -337,22 +324,18 @@ void test_benchmark() {
 					}
 				}
 			}
-//			t=clock()-t;
 			gettimeofday(&t1, NULL);
 
 			double time_elapsed = tosec(t1) - tosec(t0);
 			std::cout << "clock (sec): " << time_elapsed << std::endl;
-			
-//			std::cout << "clock (ms): " << t << std::endl;
-			std::cout << "state(" << time << ")=\n"; printMatReal(ns,1,y,-1,-1); std::cout << std::endl;
+      std::cout << "state(" << time << ")=\n"; printMatReal(ns,1,y,-1,-1); std::cout << std::endl;
 
-//			tt[ssno] += t; //total time
-			tt[ssno] += time_elapsed;
+			total_time[ssno] += time_elapsed;
 		}
 
 	}
 
 	for (int ssno=0; ssno<nss; ssno++) {
-		std::cout << "step size: " << stepsizes[ssno] << ", clock (sec): " << tt[ssno] << std::endl;
+		std::cout << "step size: " << stepsizes[ssno] << ", clock (sec): " << total_time[ssno] << std::endl;
 	}
 }
