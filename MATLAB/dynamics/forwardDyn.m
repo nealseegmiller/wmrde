@@ -35,12 +35,7 @@ if mdl.use_constraints
     [A, cis] = constraintJacobians(mdl, state0, qvel0, u.vis_act, HT_world, contacts);
     
     if ~isempty(A)
-        if isempty(mdl.wgc_fh)
-            [qacc, u, out] = forwardDynErpCfm(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis);
-        else
-            [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis);
-        end
-        
+        [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts, dt, H, C, A, cis);
         return
     end
     

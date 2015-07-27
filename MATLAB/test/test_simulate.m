@@ -7,7 +7,6 @@ clc
 %OPTIONS
 opts.dyn = 1; %dynamic sim (else kinematic)
 %for dynamic sim
-opts.use_erp_cfm = 0; %use error reduction parameters & constraint force mixing like Open Dynamics Engine
 opts.ideal_actuators = 1;
 
 opts.initincontact = 1;
@@ -20,8 +19,8 @@ dt = .04;
 nsteps = 10/dt + 1;
 
 %uncomment one of the following:
-model_fh = @zoe;
-% model_fh = @rocky;
+% model_fh = @zoe;
+model_fh = @rocky;
 % model_fh = @talon;
 
 %make WmrModel object
@@ -34,9 +33,6 @@ end
 feval(mdl.wgc_fh,mdl.wgc_p); %DEBUGGING, initialize wheel-ground contact model
 
 mdl.bsm_fh = []; %DEBUGGING
-if opts.use_erp_cfm
-    mdl.wgc_fh = [];
-end
 if opts.ideal_actuators
     mdl.act_fh = [];
 end

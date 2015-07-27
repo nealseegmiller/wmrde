@@ -19,8 +19,8 @@ void updateWheelContactGeomRoot(const SurfaceVector& surfaces, const Homogeneous
 inline void updateWheelContactGeom(const SurfaceVector& surfaces, const HomogeneousTransform HT_wheel_to_world, const Real radius, 
 	WheelContactGeom& contact) {
 	//uncomment one of the following:
-//	updateWheelContactGeomDiscretize(surfaces, HT_wheel_to_world, radius, contact); //matches MATLAB
-	updateWheelContactGeomRoot(surfaces, HT_wheel_to_world, radius, contact); //faster!
+	updateWheelContactGeomDiscretize(surfaces, HT_wheel_to_world, radius, contact); //matches MATLAB
+//	updateWheelContactGeomRoot(surfaces, HT_wheel_to_world, radius, contact); //faster!
 }
 
 //convert contact angle to point in wheel coordinates
