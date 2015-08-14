@@ -41,7 +41,7 @@ classdef WmrAnimation < handle %handle class to avoid unnecessary copying in fun
                 zlabel('z')
                 axis equal
 
-%                 obj.h_light = light('Position',[1 0 1],'Parent',obj.h_axis);
+                obj.h_light = light('Position',[1 0 1],'Parent',obj.h_axis);
                 
                 makeLegible(14)
             end

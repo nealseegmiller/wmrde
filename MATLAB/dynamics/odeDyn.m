@@ -32,7 +32,7 @@ u = ControllerIO();
 
 
 %split up y vector
-[state,qvel,u.interr]=odeDynSplitVec(y,nf,na);
+[state,qvel,u.interr]=odeDynDecat(y,nf,na);
 
 %convert state to homogeneous transforms
 [HT_parent, HT_world] = stateToHT(mdl,state);

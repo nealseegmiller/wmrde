@@ -4,30 +4,16 @@ clear_all
 close all
 clc
 
-%OPTIONS
-opts.dyn = 1; %dynamic sim (else kinematic)
-%for dynamic sim
-opts.ideal_actuators = 1;
+opts = simopts();
 
-opts.initincontact = 1;
-opts.log = 1;
-opts.animate = 1;
-opts.plot = 0;
-opts.profile = 0;
-
-dt = .04;
-nsteps = 10/dt + 1;
-
-%uncomment one of the following:
-% model_fh = @zoe;
-model_fh = @rocky;
-% model_fh = @talon;
+dt = opts.dt;
+nsteps = opts.nsteps;
 
 %make WmrModel object
 if opts.animate
-    [mdl, state, qvel, anim] = feval(model_fh);
+    [mdl, state, qvel, anim] = feval(opts.model_fh);
 else
-    [mdl, state, qvel] = feval(model_fh);
+    [mdl, state, qvel] = feval(opts.model_fh);
 end
 
 feval(mdl.wgc_fh,mdl.wgc_p); %DEBUGGING, initialize wheel-ground contact model
@@ -41,18 +27,7 @@ nf = mdl.nf;
 nw = mdl.nw;
 na = mdl.na;
 
-%make terrain
-surfs = {};
-
-% surfs{end+1} = flat();
-% surfs{end+1} = ramp(); %must also uncomment flat
-
-setseed(123);
-surfs{end+1} = randomgrid();
-% surfs{end+1} = fractalgrid();
-printGridSurf(surfs{end},[resourcedir() 'gridsurfdata.txt'])
-
-
+surfs = feval(opts.terrain_fh);
 
 %init contact geometry
 if mdl.nw > 0
@@ -106,37 +81,82 @@ do_pause = true;
 if opts.profile
     profile on
 end
-for i = 2:nsteps
-    
+tic
+
+if opts.use_builtin_solver
+    %use built-in MATLAB ode solver
+    mdl.use_constraints = false;
+
+    options = odeset('AbsTol',opts.abs_tol,'RelTol',opts.rel_tol,'MaxStep',.20);
+
+    tspan = [0 (nsteps-1)*dt];
     if opts.dyn
-        y=[state; qvel; interr];
-        [ydot,out] = odeDyn(time,y,mdl,surfs,contacts,dt);
-        y = y + ydot*dt;
-        [state,qvel,interr]=odeDynSplitVec(y,nf,na);
+        y0 = [state; qvel; interr];
+        addlin = {mdl,surfs,dt};
+        [time,yout] = feval(opts.solver,@odeDyn,tspan,y0,options,addlin{:});
+
+        [STATE,QVEL,~] = odeDynDecat(yout',nf,na);
+
+        STATE = STATE';
+        QVEL = QVEL';
+
     else
-        [statedot,out] = odeKin(time,state,mdl,surfs,contacts);
-        state = state + statedot*dt;
+        addlin={mdl,surfaces};
+        [time,yout] = feval(opts.solver,@odeKin,tspan,state,options,addlin{:});
+
+        STATE = yout;
+        [~,QVEL] = diffState(time,STATE,isorient);
     end
-    time = time + dt;
+
+    nsteps = length(time);
+
+    dlog = SimulationLog(nsteps,nf,np,na,opts.dyn); %number of steps changed
+
+    %data logging
+    set_time(dlog,1:nsteps,time);
+    set_state(dlog,1:nsteps,STATE);
+    set_qvel(dlog,1:nsteps,QVEL);
     
+    state(:) = dlog.state(end,:);
+else
+    %use force-balance optimization technique
+    for i = 2:nsteps
 
-    if opts.log
-        set_time(dlog,i,time);
-        set_state(dlog,i,state);
-        set_qvel(dlog,i,qvel);
-        %see SimulationLog for more to log
-    end
+        if opts.dyn
+            y=[state; qvel; interr];
+            [ydot,out] = odeDyn(time,y,mdl,surfs,contacts,dt);
+            y = y + ydot*dt;
 
-    if opts.animate
-        updateAnimation(anim, out.HT_parent, out.contacts);
-        
-        if do_pause
-            pause
-            do_pause = false;
+%             [y,out]=RK4step(@odeDyn,dt,time,y,{mdl,surfs,contacts,dt}); %DEBUGGING
+            
+            [state,qvel,interr]=odeDynDecat(y,nf,na);
+        else
+            [statedot,out] = odeKin(time,state,mdl,surfs,contacts);
+            state = state + statedot*dt;
         end
-    end
+        time = time + dt;
 
+
+        if opts.log
+            set_time(dlog,i,time);
+            set_state(dlog,i,state);
+            set_qvel(dlog,i,qvel);
+            %see SimulationLog for more to log
+        end
+
+        if opts.animate
+            updateAnimation(anim, out.HT_parent, out.contacts);
+
+            if do_pause
+                pause
+                do_pause = false;
+            end
+        end
+
+    end
 end
+
+comp_time = toc
 if opts.profile
     profile off
     profile viewer
@@ -152,6 +172,15 @@ if opts.plot
     qnames = stateNames(mdl);
     lw = 1.5; %line width
     
+    %path
+    set(figure,'name','path')
+    hold on
+    plot3(dlog.pos(:,1), dlog.pos(:,2), dlog.pos(:,3),'LineWidth',lw)
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    makeLegible(14)
+    axis equal
     
     %orientation vs time
     set(figure,'name','orientation vs time')
@@ -166,6 +195,14 @@ if opts.plot
     legend(qnames{isorient},'Location','Best')
     makeLegible(14)
     
+end
+
+%DEBUGGING
+if 0
+    %%
+    %save the data log
+    filename = '_autosave/ramp_ode23t.mat';
+    save(filename,'opts','dlog','comp_time');
 end
 
 

@@ -4,6 +4,7 @@ function [qacc, u, out] = forwardDynForceBalance(mdl, state0, qvel0, u, contacts
 %OPTIONS
 % qr_tol = 1e-3;
 max_iter = 20;
+err_tol = 1e-4;
 cost_tol = 1;
 dcost_tol = cost_tol/10;
 
@@ -83,9 +84,9 @@ cost = calcCost(x);
 
 iter = 0;
 
-% fprintf('iter: %d, cost: %f\n', iter, cost) %DEBUGGING
+% fprintf('iter: %d, max(abs(err)): %f, cost: %f\n', iter, max(abs(err)), cost) %DEBUGGING
 
-if cost > cost_tol
+if max(abs(err)) > err_tol
     %optimization required
 
     [dwgcin_dqacc] = precomputeGrad();
@@ -113,17 +114,20 @@ if cost > cost_tol
 
         [x,cost,grad] = linesearch(x,cost,grad,p,1,fh_calc_cost,fh_calc_gradient);
 
-%         fprintf('iter: %d, cost: %f\n', iter, cost) %DEBUGGING
+%         fprintf('iter: %d, max(abs(err)): %f, cost: %f\n', iter, max(abs(err)), cost) %DEBUGGING
 
-        if cost < cost_tol %global minimum
+        if max(abs(err)) <= err_tol
             break
         end
+        
+%         if cost <= cost_tol %global minimum
+%             break
+%         end
 
-        if cost_prev-cost < dcost_tol %local minimum
+        if cost_prev-cost <= dcost_tol %local minimum
             break
-        else
-            cost_prev = cost;
         end
+        cost_prev = cost;
     end
 end
 

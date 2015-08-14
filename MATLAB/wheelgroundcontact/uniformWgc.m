@@ -5,8 +5,8 @@ function [f,J,fh] = uniformWgc(p,~,vc,Rw,dz)
 f=[];
 J=[];
 
-fh=@odeWgc;
-% fh=@pacejkaWgc;
+% fh=@odeWgc;
+fh=@pacejkaWgc;
 % fh=@ishigamiWgc;
 % fh=@ishigamiLUTWgc;
 

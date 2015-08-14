@@ -20,7 +20,7 @@ if 0
     y = -1;
     yaw = 0*pi/180;
 
-elseif 1
+elseif 0
     %Zoe rover ramp with no flat
     w = 24*intom;
     h = 16.5*intom;
@@ -30,7 +30,7 @@ elseif 1
     y = -.9;
     yaw = 0*pi/180;
 
-elseif 0
+elseif 1
     %for LandTamer
     w = 2;
     h = 2;

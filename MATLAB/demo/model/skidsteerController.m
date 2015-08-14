@@ -45,19 +45,20 @@ nv = mdl.nf+5;
 %     omega = 7;
 % end
 
-% if time < 1
-%     speed = 1;
-%     omega = 0;
-% elseif time >= 1 && time < 10
-%     speed = 2;
-%     omega = 0;
-% elseif time >= 10 && time < 15
-%     speed = 2;
-%     omega = 1;
-% else
-%     speed = 2;
-%     omega = -1;
-% end
+% for ramp test
+if time < 1
+    speed = 1;
+    omega = 0;
+elseif time >= 1 && time < 10
+    speed = 2;
+    omega = 0;
+elseif time >= 10 && time < 15
+    speed = 2;
+    omega = 1;
+else
+    speed = 2;
+    omega = -1;
+end
 
 %for monte-carlo sim.
 % if time < 5
@@ -68,8 +69,8 @@ nv = mdl.nf+5;
 %     omega = -.5;
 % end
 
-speed = .5;
-omega = 0;
+% speed = .5;
+% omega = 0;
 
 % [vl vr]' = [.5 .5; -1/B 1/B]\[speed omega]';
 

@@ -55,6 +55,7 @@ mdl.min_npic = 3;
 mdl.update_Is();
 
 mdl.dz_target = -.02*ones(1,nw);
+% mdl.dz_target = -.05*ones(1,nw); %?
 mdl.tc_z = .1*ones(1,nw);
 
 mdl.bsm_fh = @universalBsm;
@@ -78,7 +79,9 @@ mdl.cov_p = zeros(4,1);
 
 %initialize state
 orientation = [0 0 0]'*pi/180; %Euler angles
-position = [0 0 rad]';
+% position = [0 0 rad]';
+position = [-12 -7 rad]';
+
 
 olen = SIZEORIENT();
 dlen = -1+olen+3;
@@ -100,25 +103,25 @@ state(ispos) = position;
 [~,qvel]=feval(mdl.controller_fh,mdl,0,state); %nonzero initial velocity
 
 %ANIMATION
-cdir = [CADdir() 'LandTamer\'];
+cdir = [CADdir() 'LandTamer/'];
 
 if nargout > 3
     anim = WmrAnimation();
     
-    if 0 %load from .fig file (faster) 
+    if 1 %load from .fig file (faster) 
         loadHgt(anim,'_autosave/anim_hgt_landtamer')
     else
         addHgt(anim,[mdl.frames.parent_ind]);
         
-        use_vrml = 0; %use VRML files
+        use_vrml = 1; %use VRML files
         if use_vrml
 
             %construct from VRML files
-            draw_edges = 1;
+            draw_edges = 0;
             fix_lighting = 1;
             
-            alpha = 0;
-            alpha_wheel = 0;
+            alpha = 1;
+            alpha_wheel = 1;
 
             %Body
             i=1;

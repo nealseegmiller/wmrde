@@ -1,5 +1,5 @@
-function [s,q,e]= odeDynSplitVec(y,nf,na)
-%split the input vector y (or output vector ydot) of the odeDyn function
+function [s,q,e]= odeDynDecat(y,nf,na)
+%decatenate input vector y (or output vector ydot) of the odeDyn function
 %INPUTS
 %y:     y (or ydot)
 %nf:    number of frames in WmrModel object
