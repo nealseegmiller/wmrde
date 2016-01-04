@@ -51,7 +51,7 @@ classdef WmrAnimation < handle %handle class to avoid unnecessary copying in fun
         function setHgtParent(obj,index,parent_index)
             if parent_index > 0
                 set(obj.h_hgt(index),'Parent',obj.h_hgt(parent_index))
-            else %<0 or NaN, body frame
+            else %< 0 or NaN, body frame
                 set(obj.h_hgt(index),'Parent',obj.h_axis) 
             end
             obj.parent_ind(index) = parent_index;
@@ -152,7 +152,7 @@ classdef WmrAnimation < handle %handle class to avoid unnecessary copying in fun
             
             h = zeros(1,length(inds));
             for i = 1:length(inds)
-                h(i) = str(0,0,0,str{i});
+                h(i) = text(0,0,0,str{i});
                 set(h(i),'Parent',obj.h_hgt(inds(i)));
             end
         end

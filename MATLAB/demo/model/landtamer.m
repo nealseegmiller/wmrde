@@ -79,8 +79,8 @@ mdl.cov_p = zeros(4,1);
 
 %initialize state
 orientation = [0 0 0]'*pi/180; %Euler angles
-% position = [0 0 rad]';
-position = [-12 -7 rad]';
+position = [0 0 rad]';
+% position = [-12 -7 rad]';
 
 
 olen = SIZEORIENT();

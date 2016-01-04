@@ -195,6 +195,7 @@ if opts.plot
     legend(qnames{isorient},'Location','Best')
     makeLegible(14)
     
+    
 end
 
 %DEBUGGING

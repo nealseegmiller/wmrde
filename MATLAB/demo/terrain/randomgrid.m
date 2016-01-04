@@ -28,8 +28,8 @@ CorrLength = .8;
 % RmsHeight = .1;
 % CorrLength = 0.8;
 
-cx = 4; %center
-cy = 0;
+cx = 16; %center
+cy = 7;
 
 Z = randommat(lx,ly,ppm,RmsHeight,CorrLength);
 
