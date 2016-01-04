@@ -1,5 +1,8 @@
 function surface = randomgrid()
 
+% cx = 0; 
+% cy = 0;
+
 % %for Crusher
 % lx = 30;
 % ly = 10;
@@ -8,18 +11,24 @@ function surface = randomgrid()
 % CorrLength = 1;
 
 % %for Zoe
-% lx = 20;
-% ly = 10;
-% ppm = 10;
-% RmsHeight = .15;
-% CorrLength = .8;
+lx = 20;
+ly = 10;
+ppm = 10;
+RmsHeight = .15;
+CorrLength = .8;
+
+cx = 8;
+cy = 0;
 
 % for LandTamer
-lx = 40;
-ly = 20;
-ppm = 10;
-RmsHeight = .10;
-CorrLength = .8;
+% lx = 40;
+% ly = 20;
+% ppm = 10;
+% RmsHeight = .10;
+% CorrLength = .8;
+
+% cx = 16; %center
+% cy = 7;
 
 % %for Rocky7
 % lx = 10;
@@ -27,9 +36,6 @@ CorrLength = .8;
 % ppm = 20;
 % RmsHeight = .1;
 % CorrLength = 0.8;
-
-cx = 16; %center
-cy = 7;
 
 Z = randommat(lx,ly,ppm,RmsHeight,CorrLength);
 
