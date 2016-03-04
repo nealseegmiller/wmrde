@@ -5,9 +5,8 @@
 int main(int argc, char *argv[]) //use this for console output
 {
 	//in test.h
-	//test_common();
 
-	//test_linalg3();
+	test_linalg3();
 	//test_transform();
 	//test_spatial();
 	//test_matrix();
@@ -29,7 +28,7 @@ int main(int argc, char *argv[]) //use this for console output
 	//test_jointSpaceBiasForce();
 	//test_forwardDyn();
 
-	test_simulate();
+//	test_simulate();
 
 
 	//in test_ode.h

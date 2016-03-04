@@ -104,31 +104,34 @@ endif()
 
 SET(SRCS
   algebra/matrix.cpp
-  algebra/spatial.cpp
-  algebra/transform.cpp
-  animate/BaseApplication.cpp
-  animate/WmrAnimation.cpp
-  demo/rockymodel.cpp
-  demo/rockyscene.cpp
-  demo/talonmodel.cpp
-  demo/talonscene.cpp
-  demo/terrains.cpp
-  demo/zoemodel.cpp
-  demo/zoescene.cpp
-  surface/GridSurf.cpp
-  surface/PlaneSurf.cpp
-  surface/Surface.cpp
-  surface/TriMeshSurf.cpp
-  actuator.cpp
-  collision.cpp
-  dynamics.cpp
-  eigensolve.cpp
-  kinematics.cpp
+#  algebra/spatial.cpp
+#  algebra/transform.cpp
+#  animate/BaseApplication.cpp
+#  animate/WmrAnimation.cpp
+#  demo/rockymodel.cpp
+#  demo/rockyscene.cpp
+#  demo/talonmodel.cpp
+#  demo/talonscene.cpp
+#  demo/terrains.cpp
+#  demo/zoemodel.cpp
+#  demo/zoescene.cpp
+#  ode/simulate_ode.cpp
+#  ode/test_ode.cpp
+#  ode/WmrModelODE.cpp
+#  surface/GridSurf.cpp
+#  surface/PlaneSurf.cpp
+#  surface/Surface.cpp
+#  surface/TriMeshSurf.cpp
+#  actuator.cpp
+#  collision.cpp
+#  dynamics.cpp
+#  eigensolve.cpp
+#  kinematics.cpp
   main.cpp
-  state.cpp
+#  state.cpp
   test.cpp
-  wheelgroundcontact.cpp
-  WmrModel.cpp  
+#  wheelgroundcontact.cpp
+#  WmrModel.cpp  
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}") #added by Neal

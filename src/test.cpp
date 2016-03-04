@@ -1,33 +1,26 @@
 #include <wmrde/test.h>
 
-void test_common() {
+#include <sys/time.h> //for timeval, gettimeofday()
 
-	if (1) {
-		//test angle macros in common.h
-		Real a=181;
-		Real b=-181;
-		Real c=b-360;
-		std::cout << "DIFFDEG(" << a << "," << b << ") = " << DIFFDEG(a,b) << std::endl;
-		std::cout << "DIFFDEG(" << a << "," << c << ") = " << DIFFDEG(a,c) << std::endl;
-		std::cout << "WRAPDEG(" << c << "," << 180 << ") = " << WRAPDEG(c,180) << std::endl;
-		std::cout << std::endl;
-	}
+#include <wmrde/algebra/linalg3.h>
+#include <Eigen/Dense>
 
-	if (1) {
-		//test sortIndex()
+//#include <vector>
+//#include <memory> //for unique_ptr, C++11 only
 
-		const int SIZE = 5;
-		Real val[SIZE] = {-1.5, 0, 2.5, -2.5, 1.5};
-		int idx[SIZE];
-		Real val_sort[SIZE];
+//#include <wmrde/demo/terrains.h>
+//#include <wmrde/demo/models.h>
+//#include <wmrde/dynamics.h>
 
-		sortIndex(SIZE, val, idx, val_sort);
 
-		std::cout << "val=\n"; printMatReal(1,SIZE,val,-1,-1);
-		std::cout << "idx=\n"; printMatInt(1,SIZE,idx,-1);
-		std::cout << "val_sort=\n"; printMatReal(1,SIZE,val_sort,-1,-1);
-	}
-
+inline double timeElapsedMs(timeval t0, timeval t1)
+{
+  //cast to signed
+  long sec0 = t0.tv_sec;
+  long sec1 = t1.tv_sec;
+  long usec0 = t0.tv_usec;
+  long usec1 = t1.tv_usec;
+  return (sec1-sec0)*1000.0 + (usec1-usec0)/1000.0;
 }
 
 void test_linalg3() {
@@ -53,8 +46,9 @@ void test_linalg3() {
 	std::cout << "(using linalg3) C=\n";
 	printMat3(C,-1,-1);
 	std::cout << "iterations: " << (Real) n << std::endl;
-	std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
+	std::cout << "clock (ms): " << timeElapsedMs(t0,t1) << std::endl;
 	std::cout << std::endl;
+
 
 
 	if (1) {
@@ -79,13 +73,15 @@ void test_linalg3() {
 
 		std::cout << "(using Eigen) C=\n" << C_ << std::endl;
 		std::cout << "iterations: " << (Real) n << std::endl;
-		std::cout << "clock (sec): " << tosec(t1)-tosec(t0) << std::endl;
+		std::cout << "clock (ms): " << timeElapsedMs(t0,t1) << std::endl;
 		std::cout << std::endl;
 	}
 	
+
 }
 
 
+/*
 void test_transform() {
 
 	VecEuler euler;
@@ -1560,3 +1556,5 @@ void test_simulate() {
 	}
 
 }
+
+*/

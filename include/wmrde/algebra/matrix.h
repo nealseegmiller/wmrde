@@ -323,7 +323,7 @@ void cholSolve(const int n, const Real L[], const Real b[], Real x[]);
 void cholSolveMat(const int n, const Real L[], const int ncols, const Real B[], Real X[]);
 
 void printMatReal(const int nrows, const int ncols, const Real M[], int precision, int width );
-void printMatInt(const int nrows, const int ncols, const int M[], int width);
-void printMatBool(const int nrows, const int ncols, const bool M[], int width);
+//void printMatInt(const int nrows, const int ncols, const int M[], int width);
+//void printMatBool(const int nrows, const int ncols, const bool M[], int width);
 
 #endif  //_WMRDE_MATRIX_H_

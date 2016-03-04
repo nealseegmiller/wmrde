@@ -52,7 +52,8 @@ inline int findMinAbs(const int n, const Type val[]) {
 	Type min_val=val[0];
 	int min_idx=0;
 	for (int i=1; i<n; i++) {
-		val_ = TYPESIGN(val[i],Type)*val[i]; //absolute value
+//		val_ = TYPESIGN(val[i],Type)*val[i]; //absolute value
+	  std::abs(val[i]);
 		if (val_ < min_val) {
 			min_val=val_;
 			min_idx=i;
@@ -67,7 +68,8 @@ inline int findMaxAbs(const int n, const Type val[]) {
 	Type max_val=val[0];
 	int max_idx=0;
 	for (int i=1; i<n; i++) {
-		val_ = TYPESIGN(val[i],Type)*val[i]; //absolute value
+//		val_ = TYPESIGN(val[i],Type)*val[i]; //absolute value
+	  std::abs(val[i]);
 		if (val_ > max_val) {
 			max_val=val_;
 			max_idx=i;
