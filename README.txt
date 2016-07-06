@@ -7,10 +7,13 @@ Neal Seegmiller, Dynamic Model Formulation and Calibration for Wheeled Mobile Ro
 Copyright (c) 2014, Neal Seegmiller
 license info: see LICENSE.txt
 
-If you use this code in your research, please cite my publications.
+If you use this code in your research, please cite my publications. for example:
+Neal Seegmiller and Alonzo Kelly, High fidelity yet fast dynamic models of wheeled mobile robots, 
+IEEE Transactions on Robotics, Volume 32, Number 3, June 2016, pp 614-625
+More at: http://www.ri.cmu.edu/person.html?type=publications&person_id=2285
 
 Directories:
-MATLAB/	        MATLAB code library
-include/        include files for C++ code library
-src/		        source files for C++ code library
+MATLAB/     MATLAB code library
+include/    include files for C++ code library
+src/        source files for C++ code library
 
