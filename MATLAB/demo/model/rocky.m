@@ -146,15 +146,14 @@ state(ispos) = position;
 
 
 %ANIMATION
-cdir = [CADdir() 'Rocky7/'];
-% cdir = [CADdir() 'Rocky7\']; %for windows
-
+cdir = fullfile(CADdir(),'Rocky7');
 
 if nargout > 3
     anim = WmrAnimation();
     
+%     fig_filename = fullfile('test','_autosave','anim_hgt_rocky');
     if 0 %load from .fig file (faster) 
-        loadHgt(anim,'_autosave/anim_hgt_rocky')
+%         loadHgt(anim,fig_filename)
     else
         addHgt(anim,[mdl.frames.parent_ind]);
         
@@ -169,31 +168,31 @@ if nargout > 3
             HT = [];
 
             %Body
-            makeVrmlHgt(anim.h_hgt(1),[cdir 'Rocky7Body.wrl'],HT,0,draw_edges,fix_lighting,alpha_body);
+            makeVrmlHgt(anim.h_hgt(1),fullfile(cdir,'Rocky7Body.wrl'),HT,0,draw_edges,fix_lighting,alpha_body);
 
             %Left Rocker
             i = namesToInds(mdl,'D1');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Rocker.wrl'],HT,0,draw_edges,fix_lighting,alpha);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Rocker.wrl'),HT,0,draw_edges,fix_lighting,alpha);
 
             %Right Rocker
             i = namesToInds(mdl,'D2');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Rocker.wrl'],HT,2,draw_edges,fix_lighting,alpha);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Rocker.wrl'),HT,2,draw_edges,fix_lighting,alpha);
 
             %Left Bogie
             i = namesToInds(mdl,'B1');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Bogie.wrl'],HT,0,draw_edges,fix_lighting,alpha);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Bogie.wrl'),HT,0,draw_edges,fix_lighting,alpha);
 
             %Right Bogie
             i = namesToInds(mdl,'B2');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Bogie.wrl'],HT,2,draw_edges,fix_lighting,alpha);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Bogie.wrl'),HT,2,draw_edges,fix_lighting,alpha);
 
             %Left Steering Bracket
             i = namesToInds(mdl,'S1');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Bracket.wrl'],HT,0,draw_edges,fix_lighting,alpha);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Bracket.wrl'),HT,0,draw_edges,fix_lighting,alpha);
 
             %Left Wheels
             i = namesToInds(mdl,'A1');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Wheel.wrl'],HT,0,draw_edges,fix_lighting,alpha_wheel);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Wheel.wrl'),HT,0,draw_edges,fix_lighting,alpha_wheel);
 
             for j = namesToInds(mdl,{'A3','A5'});
                 copyobj(anim.h_hgt(i),anim.h_hgt(j))
@@ -201,11 +200,11 @@ if nargout > 3
 
             %Right Steering Bracket
             i = namesToInds(mdl,'S2');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Bracket.wrl'],HT,2,draw_edges,fix_lighting,alpha);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Bracket.wrl'),HT,2,draw_edges,fix_lighting,alpha);
 
             %Right Wheels
             i = namesToInds(mdl,'A2');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'Rocky7Wheel.wrl'],HT,2,draw_edges,fix_lighting,alpha_wheel);
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'Rocky7Wheel.wrl'),HT,2,draw_edges,fix_lighting,alpha_wheel);
 
             for j = namesToInds(mdl,{'A4','A6'});
                 copyobj(anim.h_hgt(i),anim.h_hgt(j))
@@ -257,7 +256,7 @@ if nargout > 3
         set(h,'LineWidth',1.5, 'Color','green')
     
         if use_vrml
-            saveHgt(anim,'_autosave/anim_hgt_rocky')
+%             saveHgt(anim,fig_filename)
         end
     
     end

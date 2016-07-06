@@ -12,15 +12,15 @@ To understand this code, start with the following demo script:
 test/test_simulate.m
 
 Before running the demos:
-*enter the command:
-addpath(genpath('/home/neal/Projects/wmrde/MATLAB'))
+*enter the commands:
+addpath(genpath('/home/user/wmrde/MATLAB'))
+cd '/home/user/wmrde/MATLAB'
 but replace the string with the correct path for your machine
 
-*change the strings in the following functions to the correct paths for your machine:
+*check that the strings in the following functions are set to the correct path for your machine:
 CADdir.m
 resourcedir.m 
 datalogdir.m (for calibration only)
-Directories are included in this wmrde repo with files for the demos.
 
 HOW TO MODEL A NEW VEHICLE
 Write a function to construct the vehicle model. Follow one of the examples in /demo/model

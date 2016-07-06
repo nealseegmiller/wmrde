@@ -39,7 +39,7 @@ end
 np = sum([contacts.np]);
 
 %initialize wheel/terrain contact
-if opts.initincontact
+if opts.init_in_contact
     state = initTerrainContact(mdl,surfs,contacts,state);
 end
 

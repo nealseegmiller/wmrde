@@ -118,13 +118,14 @@ state(ispos) = position;
 
 [~,qvel]=feval(mdl.controller_fh,mdl,0,state); %nonzero initial velocity
 
-cdir = [CADdir() 'Talon/'];
+cdir = fullfile(CADdir(),'Talon');
 
 if nargout > 3
     anim = WmrAnimation();
     
+%     fig_filename = fullfile('test','_autosave','anim_hgt_talon');
     if 0 %load from .fig file (faster) 
-        loadHgt(anim,'_autosave/anim_hgt_talon')
+%         loadHgt(anim,fig_filename)
     else
         addHgt(anim,[mdl.frames.parent_ind]);
         
@@ -139,11 +140,11 @@ if nargout > 3
 
             %Body
             i=1;
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'TalonBody.wrl'],[],0,draw_edges,fix_lighting,alpha)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'TalonBody.wrl'),[],0,draw_edges,fix_lighting,alpha)
 
             %wheels
             for i = mdl.sprocketframeinds
-                makeVrmlHgt(anim.h_hgt(i),[cdir 'TalonSprocket.wrl'],[],0,draw_edges,fix_lighting,alpha)
+                makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'TalonSprocket.wrl'),[],0,draw_edges,fix_lighting,alpha)
             end
 
         else %draw manually
@@ -176,7 +177,7 @@ if nargout > 3
 
             %tracks
             if use_vrml
-                makeVrmlHgt(anim.h_hgt(i),[cdir 'TalonTrack.wrl'],[],0,draw_edges,fix_lighting,alpha)
+                makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'TalonTrack.wrl'),[],0,draw_edges,fix_lighting,alpha)
             else
                 makeTrackHgt(anim.h_hgt(i),rad1,rad2,L,Wt,zeros(3,1),true,C)
             end
@@ -195,7 +196,7 @@ if nargout > 3
         
 
         if use_vrml
-            saveHgt(anim,'_autosave/anim_hgt_talon')
+%             saveHgt(anim,fig_filename)
         end
 
 

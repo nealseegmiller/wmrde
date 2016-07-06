@@ -148,14 +148,15 @@ state(ispos) = [0 0 rad+D-.01]';
 
 
 %ANIMATION
-cdir = [CADdir() 'Zoe/'];
+cdir = fullfile(CADdir(),'Zoe');
 % cdir = [CADdir() 'Zoe\']; %for windows
 
 if nargout > 3
     anim = WmrAnimation();
     
+%     fig_filename = fullfile('test','_autosave','anim_hgt_zoe');
     if 0 %load from .fig file (faster) 
-        loadHgt(anim,'_autosave/anim_hgt_zoe')
+%         loadHgt(anim,fig_filename)
     else
         addHgt(anim,[mdl.frames.parent_ind]);
         
@@ -168,19 +169,19 @@ if nargout > 3
 
             %Body
             i=1;
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'ZoeBody.wrl'],[],0,draw_edges,fix_lighting,alpha)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'ZoeBody.wrl'),[],0,draw_edges,fix_lighting,alpha)
 
             %Front axle
             i = namesToInds(mdl,'s1');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'ZoeFrontAxle.wrl'],[],0,draw_edges,fix_lighting,alpha)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'ZoeFrontAxle.wrl'),[],0,draw_edges,fix_lighting,alpha)
 
             %Rear axle
             i = namesToInds(mdl,'s2'); 
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'ZoeRearAxle.wrl'],[],0,draw_edges,fix_lighting,alpha)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'ZoeRearAxle.wrl'),[],0,draw_edges,fix_lighting,alpha)
 
             %wheels
             i = namesToInds(mdl,'FL'); 
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'ZoeWheel.wrl'],[],0,draw_edges,fix_lighting,alpha)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'ZoeWheel.wrl'),[],0,draw_edges,fix_lighting,alpha)
 
             j = namesToInds(mdl,'BL');
             copyobj(anim.h_hgt(i),anim.h_hgt(j))
@@ -238,8 +239,8 @@ if nargout > 3
         end
     
         %total station prism
-        hprism=73*.0254;
-        C = 'none';
+%         hprism=73*.0254;
+%         C = 'none';
 %         C = [1 1 1]/2;
 %         makeCylinderHgt(anim.h_hgt(1),.02,hprism,3,[0 0 hprism/2]',36,true,C)
 
@@ -248,9 +249,9 @@ if nargout > 3
         h = addQuiverZ(anim, mdl.nf+1:mdl.nf+nw, 0.75*rad);
         set(h,'LineWidth',1.5, 'Color','green')
     
-%         if use_vrml
-            saveHgt(anim,'_autosave/anim_hgt_zoe')
-%         end
+        if use_vrml
+%             saveHgt(anim,fig_filename)
+        end
         
     end
     

@@ -7,9 +7,10 @@ function [u,cmd] = ackermanController(mdl, time, state)
 %control like an Ackerman steered car
 
 persistent L wf wr na avi steer_si
+
+wfi = mdl.wheelframeinds; %[fl fr bl br]
 if isempty(L)
     %DIMENSIONS
-    wfi = mdl.wheelframeinds; %[fl fr bl br]
     
     steer_fi = [mdl.frames(wfi(1:2)).parent_ind]; %steering frame indices
     tmp = steer_fi;

@@ -84,12 +84,12 @@ mdl.bsm_p = zeros(6,1);
 %FOR DYNAMIC MODEL
 mdl.wgc_fh = @uniformWgc; %wheel-ground contact model
 
-Kp = TotalMass*mdl.grav./(nw*-mdl.dz_target);
+Kp=TotalMass*mdl.grav/(nw*-mdl.dz_target(1));
 
 [~,~,fh]=feval(mdl.wgc_fh);
 mdl.wgc_p = wgcParams(fh,Kp);
 
-mdl.act_fh = @PI_act;
+mdl.act_fh = @PIact;
 mdl.act_p = [250 0 Inf]';
 
 %FOR BOTH
@@ -112,7 +112,7 @@ ns = mdl.nf+dlen; %number of states
 
 state = zeros(ns,1);
 state(isorient) = orientation;
-state(ispos) = [-5 0 max(rad)]';
+state(ispos) = [0 0 max(rad)]';
 
 %initialize velocity
 % qvel = zeros(mdl.nf+5,1);
@@ -121,38 +121,39 @@ state(ispos) = [-5 0 max(rad)]';
 
 
 
-cdir = [CADdir 'RecBot\'];
+cdir = fullfile(CADdir,'RecBot');
 
 if nargout > 3
     anim = WmrAnimation();
     
+    fig_filename = fullfile('test','_autosave','anim_hgt_recbot');
     if 0 %load from .fig file (faster) 
-        loadHgt(anim,'_autosave/anim_hgt_gator')
+        loadHgt(anim,fig_filename)
     else
-        addHgt(anim,mdl.parent_ind);
+        addHgt(anim,[mdl.frames.parent_ind]);
         
-        use_vrml = 0; %use VRML files
+        use_vrml = 1; %use VRML files
         if use_vrml 
             
             %construct from VRML files
-            showedges = 0;
-            fixlighting = 1;
+            draw_edges = 1;
+            fix_lighting = 1;
             alpha = 1;
             alphaw = 1;
 
             %Body
             i=1;
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'RecBotBody.wrl'],[],0,showedges,fixlighting,alpha)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'RecBotBody.wrl'),[],0,draw_edges,fix_lighting,alpha)
 
             %wheels
             i = namesToInds(mdl,'FL');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'RecBotWheelFront.wrl'],[],0,showedges,fixlighting,alphaw)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'RecBotWheelFront.wrl'),[],0,draw_edges,fix_lighting,alphaw)
 
             j = namesToInds(mdl,'FR');
             copyobj(anim.h_hgt(i),anim.h_hgt(j))
 
             i = namesToInds(mdl,'BL');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'RecBotWheelRear.wrl'],[],0,showedges,fixlighting,alphaw)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'RecBotWheelRear.wrl'),[],0,draw_edges,fix_lighting,alphaw)
 
             j = namesToInds(mdl,'BR');
             copyobj(anim.h_hgt(i),anim.h_hgt(j))
@@ -181,7 +182,7 @@ if nargout > 3
         set(h,'LineWidth',1.5, 'Color','green')
     
         if use_vrml
-            saveHgt(anim,'_autosave/anim_hgt_gator')
+            saveHgt(anim,fig_filename)
         end
         
     end

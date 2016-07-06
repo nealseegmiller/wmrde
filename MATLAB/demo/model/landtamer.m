@@ -103,13 +103,14 @@ state(ispos) = position;
 [~,qvel]=feval(mdl.controller_fh,mdl,0,state); %nonzero initial velocity
 
 %ANIMATION
-cdir = [CADdir() 'LandTamer/'];
+cdir = fullfile(CADdir(),'LandTamer');
 
 if nargout > 3
     anim = WmrAnimation();
     
-    if 1 %load from .fig file (faster) 
-        loadHgt(anim,'_autosave/anim_hgt_landtamer')
+%     fig_filename = fullfile('test','_autosave','anim_hgt_landtamer');
+    if 0 %load from .fig file (faster) 
+%         loadHgt(anim,fig_filename)
     else
         addHgt(anim,[mdl.frames.parent_ind]);
         
@@ -117,7 +118,7 @@ if nargout > 3
         if use_vrml
 
             %construct from VRML files
-            draw_edges = 0;
+            draw_edges = 1;
             fix_lighting = 1;
             
             alpha = 1;
@@ -125,11 +126,11 @@ if nargout > 3
 
             %Body
             i=1;
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'LandTamerBody.wrl'],[],0,draw_edges,fix_lighting,alpha)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'LandTamerBody.wrl'),[],0,draw_edges,fix_lighting,alpha)
 
             %wheels
             i = namesToInds(mdl,'FL');
-            makeVrmlHgt(anim.h_hgt(i),[cdir 'LandTamerWheel.wrl'],[],0,draw_edges,fix_lighting,alpha_wheel)
+            makeVrmlHgt(anim.h_hgt(i),fullfile(cdir,'LandTamerWheel.wrl'),[],0,draw_edges,fix_lighting,alpha_wheel)
 
             j = namesToInds(mdl,'ML');
             copyobj(anim.h_hgt(i),anim.h_hgt(j))
@@ -172,7 +173,7 @@ if nargout > 3
         set(h,'LineWidth',1.5, 'Color','green')
 
         if use_vrml
-            saveHgt(anim,'_autosave/anim_hgt_landtamer')
+%             saveHgt(anim,fig_filename)
         end
 
 
