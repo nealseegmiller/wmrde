@@ -1,4 +1,4 @@
-## WMRDE, Wheeled Mobile Robot Dynamics Engine ##
+### WMRDE, Wheeled Mobile Robot Dynamics Engine ###
 
 This repository contains code for the modeling and simulation of wheeled mobile robots (WMRs) and tracked vehicles
 Written in support of:
@@ -18,6 +18,6 @@ include/    include files for C++ code library
 src/        source files for C++ code library
 
 
-![Rocky rover simulation screenshot](https://github.com/nealseegmiller/wmrde/doc/rocky_sim_screenshot.png)
+![Rocky rover simulation screenshot](./doc/rocky_sim_screenshot.png)
 
 
