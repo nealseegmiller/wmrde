@@ -38,7 +38,7 @@ if(UNIX)
 
 	else ()
 	  message(SEND_ERROR "Failed to find module path.")
-	endif(EXISTS "/usr/local/lib/OGRE")
+	endif(EXISTS "/usr/local/lib/OGRE/cmake")
 endif(UNIX)
  
 if (CMAKE_BUILD_TYPE STREQUAL "")
@@ -94,16 +94,45 @@ if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 endif()
 
-file(GLOB_RECURSE HDRS
-	../include/*.h
-)
+#file(GLOB_RECURSE HDRS
+#	../include/*.h
+#)
  
-file(GLOB_RECURSE SRCS
-	./*.cpp
+#file(GLOB_RECURSE SRCS
+#	./*.cpp
+#)
+
+SET(SRCS
+  algebra/matrix.cpp
+  algebra/spatial.cpp
+  algebra/transform.cpp
+  animate/BaseApplication.cpp
+  animate/WmrAnimation.cpp
+  demo/rockymodel.cpp
+  demo/rockyscene.cpp
+  demo/talonmodel.cpp
+  demo/talonscene.cpp
+  demo/terrains.cpp
+  demo/zoemodel.cpp
+  demo/zoescene.cpp
+  surface/GridSurf.cpp
+  surface/PlaneSurf.cpp
+  surface/Surface.cpp
+  surface/TriMeshSurf.cpp
+  actuator.cpp
+  collision.cpp
+  dynamics.cpp
+  eigensolve.cpp
+  kinematics.cpp
+  main.cpp
+  state.cpp
+  test.cpp
+  wheelgroundcontact.cpp
+  WmrModel.cpp  
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}") #added by Neal
-find_package(Eigen REQUIRED) #added by Neal
+find_package(Eigen3 REQUIRED) #added by Neal
 
 include_directories( 
   ../include #added by Neal
@@ -111,16 +140,18 @@ include_directories(
 	${OGRE_INCLUDE_DIRS}
 	${OGRE_SAMPLES_INCLUDEPATH}
 	${OGRE_Overlay_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS} #added by Neal
-  /usr/local/include #added by Neal, TODO /ode necessary?
+  ${EIGEN3_INCLUDE_DIR} #added by Neal
+#  /usr/local/include #added by Neal, TODO /ode necessary?
 )
  
-add_executable(OgreApp WIN32 ${HDRS} ${SRCS})
+#add_executable(OgreApp WIN32 ${HDRS} ${SRCS})
+add_executable(OgreApp WIN32 ${SRCS})
  
 set_target_properties(OgreApp PROPERTIES DEBUG_POSTFIX _d)
  
 target_link_libraries(OgreApp ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${OGRE_Overlay_LIBRARIES}
-  /usr/local/lib/libode.a) #added by Neal
+#  /usr/local/lib/libode.a #added by Neal
+) 
  
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/bin)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)
