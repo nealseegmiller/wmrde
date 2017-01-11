@@ -1,0 +1,77 @@
+2015-02-22
+
+Building the Ogre sdk
+on Linux Mint 17.3
+
+*when building ogre dependencies with cmake
+where is source:
+/home/neal/Ogre/source/Dependencies/ogredeps
+(not /home/neal/Ogre/source/Dependencies)
+
+*after sudo make install, /usr/local/lib/libOIS.so does not exist. it only exists in ~/Ogre/build/Dependencies/ogredeps/lib
+in cmake-gui, needed to change:
+CMAKE_INSTALL_PREFIX from /home/neal/Ogre/build/Dependencies/ogredeps
+to /usr/local
+
+*when trying to build ogre with cmake-gui, click Configure
+package 'OIS' not found
+Found OIS: optimized;/usr/local/lib/libOIS.so;debug;/usr/local/lib/libOIS.so
+
+set OGRE_DEPENDENCIES_DIR to /home/neal/Ogre/source/ogre/Dependencies/ogredeps, is this necessary?
+
+
+*CMake Error:
+  -- The following REQUIRED packages could NOT be located on your system.
+  + Xaw: X11 Athena widget set <http://www.x.org>
+
+sudo apt-get install xorg-dev, fixed it
+
+
+instead of /home/neal use ~/ in README?
+
+
+Building wmrde
+*CMake Error:
+Could not find a package configuration file profided by "Eigen" with any of 
+EigenConfig.cmake
+eigen-config.cmake
+
+had to change:
+find_package(Eigen REQUIRED)
+to: find_package(Eigen3 REQUIRED)
+
+
+*fixed a warning, make arguments the same:
+if(EXISTS "/usr/local/lib/OGRE/cmake")
+endif(EXISTS "/usr/local/lib/OGRE/cmake")
+
+
+*make error:
+from /home/neal/Projects/wmrde/src/main.cpp:2:
+/home/neal/Projects/wmrde/src/../include/wmrde/ode/WmrModelODE.h:10:21: fatal error: ode/ode.h: No such file or directory
+ #include <ode/ode.h>
+
+eliminate the dependency on ode for now,
+eliminate HDRS
+don't use GLOB_RECURSE for SRCS,
+instead list each explicitly:
+SET(SRCS
+# ode/ comment out for now!
+)
+
+
+*error when running ./OgreApp
+  what():  OGRE EXCEPTION(7:InternalErrorException): Could not load dynamic library /usr/local/lib/OGRE/Plugin_CgProgramManager.  System Error: /usr/local/lib/OGRE/Plugin_CgProgramManager.so.1.9.0: cannot open shared object file: No such file or directory in DynLib::load at /home/neal/Ogre/source/ogre/OgreMain/src/OgreDynLib.cpp (line 109)
+
+
+retry cmake-gui for Ogre source
+Looking for Cg...
+checking for module 'Cg'
+  package 'Cg' not found
+Could not locate Cg
+
+$ sudo apt-get install nvidia-cg-toolkit
+fixed the problem
+
+in wmrde/build/dist/bin/plugins.cfg, comment out the plugin
+# Plugin=Plugin_CgProgramManager
