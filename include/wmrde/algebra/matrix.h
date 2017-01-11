@@ -6,9 +6,15 @@
 //http://msdn.microsoft.com/en-us/library/jj658585.aspx
 
 
-#ifndef _WMRDE_MATRIX_H_
-#define _WMRDE_MATRIX_H_
+#ifndef WMRDE_MATRIX_H_
+#define WMRDE_MATRIX_H_
 
+namespace wmrde
+{
+  int addTwoInts(int a, int b);
+}
+
+/*
 
 //for printMat*
 #include <iostream>
@@ -325,5 +331,6 @@ void cholSolveMat(const int n, const Real L[], const int ncols, const Real B[], 
 void printMatReal(const int nrows, const int ncols, const Real M[], int precision, int width );
 void printMatInt(const int nrows, const int ncols, const int M[], int width);
 void printMatBool(const int nrows, const int ncols, const bool M[], int width);
+*/
 
-#endif  //_WMRDE_MATRIX_H_
+#endif  //WMRDE_MATRIX_H_

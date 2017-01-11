@@ -1,0 +1,5 @@
+to build and run all unit tests:
+$ catkin run_tests
+
+for a summary of the test results check: 
+build/wmrde/test_results

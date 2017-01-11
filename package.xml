@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<package format="2">
+  <name>wmrde</name>
+  <version>1.0.0</version>
+  <description>
+     Wheeled mobile robot dynamics engine
+  </description>
+  <maintainer email="neal.seegmiller@swri.org">Neal Seegmiller</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>cmake_modules</depend>
+  <depend>roscpp</depend>
+  <depend>rosunit</depend>  
+</package>
