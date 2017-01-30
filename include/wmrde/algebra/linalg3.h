@@ -12,7 +12,7 @@
 namespace wmrde
 {
 
-#define LINALG3_SIMD 1
+#define LINALG3_SIMD 0
 
 #if LINALG3_SIMD
 

@@ -7,7 +7,7 @@ namespace wmrde
     return a+b;
   }
 }
-/*
+
 //solve a linear system given the Cholesky decomposition
 //A*x=b
 //A=L*L'	L is lower triangular
@@ -141,4 +141,4 @@ void printMatBool(const int nrows, const int ncols, const bool M[], int width) {
 	}
 
 }
-*/
+

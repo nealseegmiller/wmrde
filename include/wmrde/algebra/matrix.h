@@ -14,14 +14,13 @@ namespace wmrde
   int addTwoInts(int a, int b);
 }
 
-/*
-
 //for printMat*
 #include <iostream>
 #include <iomanip>
 #include <cmath>
 
 //#include <wmrde/options.h>
+#include <wmrde/common.h>
 #include <wmrde/util/index_util.h> //for findMaxAbs() for print functions
 
 //column-major order assumed!
@@ -331,6 +330,6 @@ void cholSolveMat(const int n, const Real L[], const int ncols, const Real B[], 
 void printMatReal(const int nrows, const int ncols, const Real M[], int precision, int width );
 void printMatInt(const int nrows, const int ncols, const int M[], int width);
 void printMatBool(const int nrows, const int ncols, const bool M[], int width);
-*/
+
 
 #endif  //WMRDE_MATRIX_H_

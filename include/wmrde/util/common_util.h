@@ -1,24 +1,27 @@
 //common.h
 //#defines used throughout the project
 
-#ifndef _WMRDE_COMMON_H_
-#define _WMRDE_COMMON_H_
+#ifndef _WMRDE_COMMON_UTIL_H_
+#define _WMRDE_COMMON_UTIL_H_
 
 //#include <iostream>
 #include <cmath>
 #include <limits> //for NaN
 #include <algorithm> //for std::max()
 
+#include <wmrde/common.h>
 #include <wmrde/options.h> //for typedef Real
 
 
 //TODO, move this to options.h?
 //defines based on options
-#if WMRSIM_DOUBLE_PRECISION
-typedef double Real;
-#else
-typedef float Real;
-#endif
+
+//now defined in common.h
+//#if WMRSIM_DOUBLE_PRECISION
+//typedef double Real;
+//#else
+//typedef float Real;
+//#endif
 
 #if WMRSIM_USE_QUATERNION
 #define SIZEORIENT 4
