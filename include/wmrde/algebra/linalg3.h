@@ -35,11 +35,23 @@ typedef Real Mat3[MAT3_SIZE]; //contains three Vec3 arrays
 //2,6,10
 //3,7,11 unused, for 16 byte alignment only
 
-//TODO, undefine these at the end of the header file
-#define MAT3_COL0 0 //first index in column 0 of Mat3
-#define MAT3_COL1 4 //first index in column 1 of Mat3
-#define MAT3_COL2 8 //first index in column 2 of Mat3
+enum Mat3Indices {
+  MAT3_0=0,
+  MAT3_1=1,
+  MAT3_2=2,
+  MAT3_3=4,
+  MAT3_4=5,
+  MAT3_5=6,
+  MAT3_6=8,
+  MAT3_7=9,
+  MAT3_8=10
+};
 
+enum Mat3ColumnIndices {
+  MAT3_COL0=0,
+  MAT3_COL1=4,
+  MAT3_COL2=8
+};
 
 //SET FUNCTIONS
 inline void setVec3(
@@ -65,25 +77,24 @@ inline void setMat3(
     const Real val02, const Real val12, const Real val22, //column 2
     Mat3 dst)
 {
-  dst[0] = val00;
-  dst[1] = val10;
-  dst[2] = val20;
-//  dst[3] = 0.0; //unused
-  dst[4] = val01;
-  dst[5] = val11;
-  dst[6] = val21;
-//  dst[7] = 0.0; //unused
-  dst[8] = val02;
-  dst[9] = val12;
-  dst[10] = val22;
-//  dst[11] = 0.0; //unused
+  dst[MAT3_0] = val00;
+  dst[MAT3_1] = val10;
+  dst[MAT3_2] = val20;
+
+  dst[MAT3_3] = val01;
+  dst[MAT3_4] = val11;
+  dst[MAT3_5] = val21;
+
+  dst[MAT3_6] = val02;
+  dst[MAT3_7] = val12;
+  dst[MAT3_8] = val22;
 }
 
 inline void setMat3(
     const Real val, Mat3 dst)
 {
-	setMat3(val,val,val, val,val,val, val,val,val, dst);
-//  for (size_t i=0; i < MAT3_SIZE; i++) { dst[i] = val; } //TODO, faster?
+  //set a continuous block of memory
+  for (size_t i=0; i < MAT3_SIZE; i++) { dst[i] = val; }
 }
 
 //set to diagonal matrix
@@ -118,36 +129,26 @@ inline void copy3(const Real* src, Real* dst)
 
 inline void copyMat3(const Mat3 src, Mat3 dst)
 {
-  dst[0] = src[0];
-  dst[1] = src[1];
-  dst[2] = src[2];
-
-  dst[4] = src[4];
-  dst[5] = src[5];
-  dst[6] = src[6];
-
-  dst[8] = src[8];
-  dst[9] = src[9];
-  dst[10] = src[10];
-
-//  for (size_t i=0; i < MAT3_SIZE; i++) { dst[i] = src[i]; } //TODO, faster?
+  //copy a contiguous block of memory
+  for (size_t i=0; i < MAT3_SIZE; i++) { dst[i] = src[i]; }
 }
 
 //TRANSPOSE FUNCTIONS
 //src and dst can't be the same (can't transpose in place)
 inline void copyTMat3(const Mat3 src, Mat3 dst)
 {
-  dst[0] = src[0];
-  dst[1] = src[4];
-  dst[2] = src[8];
-
-  dst[4] = src[1];
-  dst[5] = src[5];
-  dst[6] = src[9];
-
-  dst[8] = src[2];
-  dst[9] = src[6];
-  dst[10] = src[10];
+  //row 0 to col 0
+  dst[MAT3_0] = src[MAT3_0];
+  dst[MAT3_1] = src[MAT3_3];
+  dst[MAT3_2] = src[MAT3_6];
+  //row 1 to col 1
+  dst[MAT3_3] = src[MAT3_1];
+  dst[MAT3_4] = src[MAT3_4];
+  dst[MAT3_5] = src[MAT3_7];
+  //row 2 to col 2
+  dst[MAT3_6] = src[MAT3_2];
+  dst[MAT3_7] = src[MAT3_5];
+  dst[MAT3_8] = src[MAT3_8];
 }
 
 //copy a Mat3 row to Vec3
@@ -162,32 +163,32 @@ inline void copyMat3Row(const Mat3 src, const int row_idx, Vec3 dst)
 //useful for converting to/from Eigen matrices
 inline void copyMat3ToArray(const Mat3 src, Real* dst)
 {
-  dst[0] = src[0];
-  dst[1] = src[1];
-  dst[2] = src[2];
+  dst[0] = src[MAT3_0];
+  dst[1] = src[MAT3_1];
+  dst[2] = src[MAT3_2];
 
-  dst[3] = src[4];
-  dst[4] = src[5];
-  dst[5] = src[6];
+  dst[3] = src[MAT3_3];
+  dst[4] = src[MAT3_4];
+  dst[5] = src[MAT3_5];
 
-  dst[6] = src[8];
-  dst[7] = src[9];
-  dst[8] = src[10];
+  dst[6] = src[MAT3_6];
+  dst[7] = src[MAT3_7];
+  dst[8] = src[MAT3_8];
 }
 
 inline void copyArrayToMat3(const Real* src, Mat3 dst)
 {
-  dst[0] = src[0];
-  dst[1] = src[1];
-  dst[2] = src[2];
+  dst[MAT3_0] = src[0];
+  dst[MAT3_1] = src[1];
+  dst[MAT3_2] = src[2];
 
-  dst[4] = src[3];
-  dst[5] = src[4];
-  dst[6] = src[5];
+  dst[MAT3_3] = src[3];
+  dst[MAT3_4] = src[4];
+  dst[MAT3_5] = src[5];
 
-  dst[8] = src[6];
-  dst[9] = src[7];
-  dst[10] = src[8];
+  dst[MAT3_6] = src[6];
+  dst[MAT3_7] = src[7];
+  dst[MAT3_8] = src[8];
 }
 
 
@@ -204,19 +205,10 @@ inline bool Vec3Equal(const Mat3 mat_a, const Mat3 mat_b)
 
 inline bool Mat3Equal(const Mat3 mat_a, const Mat3 mat_b)
 {
-  Real tol = 10.0*std::numeric_limits<Real>::epsilon();
   bool equal = true;
-  equal &= std::abs(mat_a[0] - mat_b[0]) < tol;
-  equal &= std::abs(mat_a[1] - mat_b[1]) < tol;
-  equal &= std::abs(mat_a[2] - mat_b[2]) < tol;
-
-  equal &= std::abs(mat_a[4] - mat_b[4]) < tol;
-  equal &= std::abs(mat_a[5] - mat_b[5]) < tol;
-  equal &= std::abs(mat_a[6] - mat_b[6]) < tol;
-
-  equal &= std::abs(mat_a[8] - mat_b[8]) < tol;
-  equal &= std::abs(mat_a[9] - mat_b[9]) < tol;
-  equal &= std::abs(mat_a[10] - mat_b[10]) < tol;
+  equal &= Vec3Equal(&mat_a[MAT3_COL0], &mat_b[MAT3_COL0]);
+  equal &= Vec3Equal(&mat_a[MAT3_COL1], &mat_b[MAT3_COL1]);
+  equal &= Vec3Equal(&mat_a[MAT3_COL2], &mat_b[MAT3_COL2]);
 
   return equal;
 }
@@ -267,49 +259,49 @@ inline void mulcVec3(const Vec3 vec, const Real coeff, Vec3 out) {
 //add mat_b to mat_a
 inline void addMat3(const Mat3 mat_a, const Mat3 mat_b, Mat3 out)
 {
-	out[0] = mat_a[0] + mat_b[0];
-	out[1] = mat_a[1] + mat_b[1];
-	out[2] = mat_a[2] + mat_b[2];
+	out[MAT3_0] = mat_a[MAT3_0] + mat_b[MAT3_0];
+	out[MAT3_1] = mat_a[MAT3_1] + mat_b[MAT3_1];
+	out[MAT3_2] = mat_a[MAT3_2] + mat_b[MAT3_2];
 
-  out[4] = mat_a[4] + mat_b[4];
-  out[5] = mat_a[5] + mat_b[5];
-  out[6] = mat_a[6] + mat_b[6];
+  out[MAT3_3] = mat_a[MAT3_3] + mat_b[MAT3_3];
+  out[MAT3_4] = mat_a[MAT3_4] + mat_b[MAT3_4];
+  out[MAT3_5] = mat_a[MAT3_5] + mat_b[MAT3_5];
 
-  out[8] = mat_a[8] + mat_b[8];
-  out[9] = mat_a[9] + mat_b[9];
-  out[10] = mat_a[10] + mat_b[10];
+  out[MAT3_6] = mat_a[MAT3_6] + mat_b[MAT3_6];
+  out[MAT3_7] = mat_a[MAT3_7] + mat_b[MAT3_7];
+  out[MAT3_8] = mat_a[MAT3_8] + mat_b[MAT3_8];
 }
 
 //add m*mat_b to mat_a
 //to subtract use addmMat3(mat_a, -1.0, mat_b, out)
 inline void addmMat3(const Mat3 mat_a, const Real m, const Mat3 mat_b, Mat3 out)
 {
-  out[0] = mat_a[0] + m*mat_b[0];
-  out[1] = mat_a[1] + m*mat_b[1];
-  out[2] = mat_a[2] + m*mat_b[2];
+  out[MAT3_0] = mat_a[MAT3_0] + m*mat_b[MAT3_0];
+  out[MAT3_1] = mat_a[MAT3_1] + m*mat_b[MAT3_1];
+  out[MAT3_2] = mat_a[MAT3_2] + m*mat_b[MAT3_2];
 
-  out[4] = mat_a[4] + m*mat_b[4];
-  out[5] = mat_a[5] + m*mat_b[5];
-  out[6] = mat_a[6] + m*mat_b[6];
+  out[MAT3_3] = mat_a[MAT3_3] + m*mat_b[MAT3_3];
+  out[MAT3_4] = mat_a[MAT3_4] + m*mat_b[MAT3_4];
+  out[MAT3_5] = mat_a[MAT3_5] + m*mat_b[MAT3_5];
 
-  out[8] = mat_a[8] + m*mat_b[8];
-  out[9] = mat_a[9] + m*mat_b[9];
-  out[10] = mat_a[10] + m*mat_b[10];
+  out[MAT3_6] = mat_a[MAT3_6] + m*mat_b[MAT3_6];
+  out[MAT3_7] = mat_a[MAT3_7] + m*mat_b[MAT3_7];
+  out[MAT3_8] = mat_a[MAT3_8] + m*mat_b[MAT3_8];
 }
 
-//multiply a matrix by a coefficient
-inline void mulcMat3(const Mat3 mat, const Real coeff, Mat3 out) {
-  out[0] = coeff*mat[0];
-  out[1] = coeff*mat[1];
-  out[2] = coeff*mat[2];
+//multiply a matrix by a scalar constant
+inline void mulcMat3(const Mat3 mat, const Real c, Mat3 out) {
+  out[MAT3_0] = c*mat[MAT3_0];
+  out[MAT3_1] = c*mat[MAT3_1];
+  out[MAT3_2] = c*mat[MAT3_2];
 
-  out[4] = coeff*mat[4];
-  out[5] = coeff*mat[5];
-  out[6] = coeff*mat[6];
+  out[MAT3_3] = c*mat[MAT3_3];
+  out[MAT3_4] = c*mat[MAT3_4];
+  out[MAT3_5] = c*mat[MAT3_5];
 
-  out[8] = coeff*mat[8];
-  out[9] = coeff*mat[9];
-  out[10] = coeff*mat[10];
+  out[MAT3_6] = c*mat[MAT3_6];
+  out[MAT3_7] = c*mat[MAT3_7];
+  out[MAT3_8] = c*mat[MAT3_8];
 }
 
 #endif
@@ -369,17 +361,17 @@ inline void unskewVec3(const Mat3 mat, Vec3 out)
 //TODO, use setVec3 to allow multiply in place?
 inline void multMatVec3(const Mat3 mat, const Vec3 vec, Vec3 out)
 {
-  out[0] = mat[0]*vec[0] + mat[4]*vec[1] + mat[8]*vec[2];
-  out[1] = mat[1]*vec[0] + mat[5]*vec[1] + mat[9]*vec[2];
-	out[2] = mat[2]*vec[0] + mat[6]*vec[1] + mat[10]*vec[2];
+  out[0] = mat[MAT3_0]*vec[0] + mat[MAT3_3]*vec[1] + mat[MAT3_6]*vec[2];
+  out[1] = mat[MAT3_1]*vec[0] + mat[MAT3_4]*vec[1] + mat[MAT3_7]*vec[2];
+	out[2] = mat[MAT3_2]*vec[0] + mat[MAT3_5]*vec[1] + mat[MAT3_8]*vec[2];
 }
 
 //out = (mat^T)*vec
 inline void multMatTVec3(const Mat3 mat, const Vec3 vec, Vec3 out)
 {
-	out[0] = mat[0]*vec[0] + mat[1]*vec[1] + mat[2]*vec[2];
-	out[1] = mat[4]*vec[0] + mat[5]*vec[1] + mat[6]*vec[2];
-	out[2] = mat[8]*vec[0] + mat[9]*vec[1] + mat[10]*vec[2];
+	out[0] = mat[MAT3_0]*vec[0] + mat[MAT3_1]*vec[1] + mat[MAT3_2]*vec[2];
+	out[1] = mat[MAT3_3]*vec[0] + mat[MAT3_4]*vec[1] + mat[MAT3_5]*vec[2];
+	out[2] = mat[MAT3_6]*vec[0] + mat[MAT3_7]*vec[1] + mat[MAT3_8]*vec[2];
 }
 
 //out = mat_a * mat_b
