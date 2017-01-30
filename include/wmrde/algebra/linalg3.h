@@ -6,6 +6,7 @@
 #include <cmath> //for sqrt
 #include <sstream>
 #include <iomanip> //for setprecision
+#include <limits>
 
 #include <wmrde/common.h>
 
@@ -14,7 +15,8 @@ namespace wmrde
 
 #define LINALG3_SIMD 0
 
-#if LINALG3_SIMD
+//#if LINALG3_SIMD
+#if 1
 
 #define VEC3_SIZE 4
 #define MAT3_SIZE 12
@@ -154,6 +156,15 @@ inline void copy3(const Real* src, Real* dst)
   dst[0] = src[0];
   dst[1] = src[1];
   dst[2] = src[2];
+}
+
+//DEBUGGING
+inline void copy3n(const int n, const Real* src, Real* dst)
+{
+  for (int i = 0; i < n; i++)
+  {
+    copy3(src+(i*VEC3_SIZE), dst+(i*3));
+  }
 }
 
 inline void copyMat3(const Mat3 src, Mat3 dst)

@@ -4,15 +4,8 @@
 //auto-vectorized where possible. Visual Studio C++ command line /Qvec-report:2
 //Visual Studio vectorizer messages: 
 //http://msdn.microsoft.com/en-us/library/jj658585.aspx
-
-
 #ifndef WMRDE_MATRIX_H_
 #define WMRDE_MATRIX_H_
-
-namespace wmrde
-{
-  int addTwoInts(int a, int b);
-}
 
 //for printMat*
 #include <iostream>
@@ -22,6 +15,9 @@ namespace wmrde
 //#include <wmrde/options.h>
 #include <wmrde/common.h>
 #include <wmrde/util/index_util.h> //for findMaxAbs() for print functions
+
+namespace wmrde
+{
 
 //column-major order assumed!
 //subscripts to index
@@ -331,5 +327,6 @@ void printMatReal(const int nrows, const int ncols, const Real M[], int precisio
 void printMatInt(const int nrows, const int ncols, const int M[], int width);
 void printMatBool(const int nrows, const int ncols, const bool M[], int width);
 
+} //namespace
 
 #endif  //WMRDE_MATRIX_H_

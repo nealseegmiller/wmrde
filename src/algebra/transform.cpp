@@ -1,4 +1,8 @@
 #include <wmrde/algebra/transform.h>
+#include <wmrde/util/common_util.h>
+
+namespace wmrde
+{
 
 //euler = [rol pit yaw]
 //R = Rotz(yaw)*Roty(pit)*Rotx(rol)
@@ -153,3 +157,5 @@ void quatToEuler(const VecQuat quat, VecEuler euler) {
 	quatToRot(quat,R);
 	rotToEuler(R,euler);
 }
+
+} //namespace

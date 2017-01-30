@@ -9,8 +9,12 @@
 #define _WMRDE_TRANSFORM_H_
 
 #include <wmrde/algebra/linalg3.h>
+#include <wmrde/algebra/matrix.h>
 
-typedef Real HomogeneousTransform[4*SIZEVEC3];
+namespace wmrde
+{
+
+typedef Real HomogeneousTransform[4*VEC3_SIZE];
 
 //HT indices:
 //(column-major order)
@@ -23,6 +27,9 @@ typedef Real HomogeneousTransform[4*SIZEVEC3];
 //r21,r22,r23, t2
 //r31,r32,r33, t3
 
+#define COL0 0
+#define COL1 4
+#define COL2 8
 #define COL3 12
 
 //if HT is pointer to first element of Homogeneous Transform
@@ -145,7 +152,7 @@ inline void applyInvHT(const HomogeneousTransform T, const Vec3 p, Vec3 q) {
 //PRINT FUNCTION
 inline void printHT(const HomogeneousTransform T, int precision, int width) {
 	Real T_[3*4];
-	copyVec3ToArray(4,(const Vec3*) T,T_);
+	copy3n(4,T,T_);
 	printMatReal(3,4,T_,precision,width);
 }
 
@@ -239,6 +246,6 @@ typedef MatEuler MatOrient;
 	copyVec3(T+COL3,t); \
 } while(0)
 
-
+} //namespace
 
 #endif //_WMRDE_TRANSFORM_H_

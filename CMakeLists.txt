@@ -45,7 +45,7 @@ set(CMAKE_CXX_FLAGS "-ftree-vectorizer-verbose=1 ${CMAKE_CXX_FLAGS}") #for tests
 add_library(${PROJECT_NAME} 
   src/algebra/matrix.cpp
 #  src/algebra/spatial.cpp
-#  src/algebra/transform.cpp
+  src/algebra/transform.cpp
 #  src/demo/rockymodel.cpp
 #  src/demo/talonmodel.cpp
 #  src/demo/terrains.cpp

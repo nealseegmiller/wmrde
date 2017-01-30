@@ -2,7 +2,7 @@
 #include <Eigen/Dense>
 
 #include <wmrde/algebra/linalg3.h>
-//#include <wmrde/algebra/transform.h>
+#include <wmrde/algebra/transform.h>
 //#include <wmrde/algebra/spatial.h>
 #include <wmrde/algebra/matrix.h>
 #include <wmrde/util/timer.h>
@@ -147,9 +147,90 @@ TEST(TestSuite, multMatMat3)
   }
 }
 
-TEST(TestSuite, spatial)
+TEST(TestSuite, composeHT)
 {
-  //TODO
+  Timer timer;
+
+  VecEuler euler;
+  Vec3 translation;
+  HomogeneousTransform HT,HT2;
+
+  setEuler(DEGTORAD(0),DEGTORAD(0),DEGTORAD(0.1),euler);
+  Real eps = 1e-6;
+  setVec3(eps,eps,eps,translation);
+  poseToHT(euler,translation,HT);
+
+  HomogeneousTransform HT0; copyHT(HT, HT0); //backup
+
+  std::cout << "HT=\n"; printHT(HT,-1,-1);
+
+  //test compose HT
+  int num_iter = (int) 1e7;
+  {
+    //time it
+    timer.start();
+    for (int i=0; i<num_iter; i++)
+    {
+      composeHT(HT,HT0,HT2);
+      copyHT(HT2,HT);
+    }
+    timer.stop();
+
+    std::cout << "HT*HT=\n"; printHT(HT2,-1,-1);
+
+    std::cout << "iterations: " << (Real) num_iter << std::endl;
+    std::cout << "elapsed time (ms): " << timer.elapsedTimeMs() << std::endl;
+  }
+
+  //validate using Eigen::Matrix<Real,3,3>
+  {
+    Eigen::Matrix<Real,3,3> R0,R;
+    Eigen::Matrix<Real,3,1> t0,t;
+
+    copyMat3ToArray(HT0,R.data());
+    copy3(HT0+COL3,t.data());
+    std::cout << "Eigen HT=\n" << R << "\n" << t << std::endl;
+
+    R0 = R; //backup
+    t0 = t;
+
+    timer.start();
+    for (int i=0; i<num_iter; i++)
+    {
+      t = R*t0 + t;
+      R = R*R0;
+    }
+    timer.stop();
+
+    std::cout << "Eigen HT*HT=\n" << R << "\n" << t << std::endl;
+
+    std::cout << "iterations: " << (Real) num_iter << std::endl;
+    std::cout << "elapsed time (ms): " << timer.elapsedTimeMs() << std::endl;
+  }
+
+  //validate using Eigen::Matrix<Real,4,4>
+  {
+    Eigen::Matrix<Real,4,4> HT_, HT0_;
+    HT_.setZero();
+
+    for (int i=0; i<4; i++) { copy3(HT0+(i*VEC3_SIZE), HT_.data() + (i*4)); }
+    HT_(3,3) = 1.0;
+    std::cout << "Eigen HT=\n" << HT_ << std::endl;
+    HT0_ = HT_; //backup
+
+    timer.start();
+    for (int i=0; i<num_iter; i++)
+    {
+      HT_ = HT_*HT0_;
+    }
+    timer.stop();
+
+    std::cout << "Eigen HT*HT=\n" << HT_ << std::endl;
+
+    std::cout << "iterations: " << (Real) num_iter << std::endl;
+    std::cout << "elapsed time (ms): " << timer.elapsedTimeMs() << std::endl;
+  }
+
 }
 
 TEST(TestSuite, matrix)
