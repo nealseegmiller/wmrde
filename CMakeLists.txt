@@ -12,6 +12,8 @@ set(RUNTIME_DEPS
   roscpp
   rosunit)
 
+include_directories(include)
+
 ### Catkin ###
 find_package(catkin REQUIRED COMPONENTS ${BUILD_DEPS})
 include_directories(${catkin_INCLUDE_DIRS})
@@ -23,8 +25,6 @@ catkin_package(CATKIN_DEPENDS ${RUNTIME_DEPS}
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-include_directories(include)
-
 #############################################################################
 ###                                WARNING                                ###
 ###  Altering CMAKE_CXX_FLAGS violates catkin CMake Style!                ###
@@ -35,6 +35,11 @@ include_directories(include)
 message(WARNING "Altering CMAKE_CXX_FLAGS violates catkin CMake Style! (http://docs.ros.org/hydro/api/catkin/html/user_guide/standards.html).
 ROS Hydro and indigo are targeted at C++03. (http://www.ros.org/reps/rep-0003.html)")
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+
+#enable vectorization
+set(CMAKE_CXX_FLAGS "-ftree-vectorize ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-ftree-vectorizer-verbose=1 ${CMAKE_CXX_FLAGS}") #for tests only
+
 
 ### Build Library ###
 add_library(${PROJECT_NAME} 
