@@ -1,5 +1,8 @@
 #include <wmrde/algebra/spatial.h>
 
+namespace wmrde
+{
+
 //convert to spatial inertia
 //m:	mass
 //c:	center of mass location
@@ -20,7 +23,7 @@ void toSpatialInertia(const Real m, const Vec3 c, const Mat3 I, Mat6b Is) {
 	addmMat3(I,m,Is,Is);
 	mulcMat3(CT,m,Is+BLOCK1); 
 	mulcMat3(C,m,Is+BLOCK2); 
-	setDiagMat3(m,m,m,Is+BLOCK3);
+	setMat3Diagonal(m,m,m,Is+BLOCK3);
 }
 
 //convert from spatial inertia
@@ -259,3 +262,5 @@ void multPluckerTInertiaPlucker(const Mat6b P, const Mat6b I, Mat6b R) {
 	R[42] = t130;
 	R[46] = I4_11*(P1_13*P1_13)+I4_11*(P1_23*P1_23)+I4_11*(P1_33*P1_33);
 }
+
+} //namespace

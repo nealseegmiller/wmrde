@@ -3,7 +3,7 @@
 
 #include <wmrde/algebra/linalg3.h>
 #include <wmrde/algebra/transform.h>
-//#include <wmrde/algebra/spatial.h>
+#include <wmrde/algebra/spatial.h>
 #include <wmrde/algebra/matrix.h>
 #include <wmrde/util/timer.h>
 
@@ -177,7 +177,6 @@ TEST(TestSuite, composeHT)
     timer.stop();
 
     std::cout << "HT*HT=\n"; printHT(HT2,-1,-1);
-
     std::cout << "iterations: " << (Real) num_iter << std::endl;
     std::cout << "elapsed time (ms): " << timer.elapsedTimeMs() << std::endl;
   }
@@ -203,7 +202,6 @@ TEST(TestSuite, composeHT)
     timer.stop();
 
     std::cout << "Eigen HT*HT=\n" << R << "\n" << t << std::endl;
-
     std::cout << "iterations: " << (Real) num_iter << std::endl;
     std::cout << "elapsed time (ms): " << timer.elapsedTimeMs() << std::endl;
   }
@@ -225,12 +223,127 @@ TEST(TestSuite, composeHT)
     }
     timer.stop();
 
-    std::cout << "Eigen HT*HT=\n" << HT_ << std::endl;
-
+    std::cout << "Eigen 4x4 HT*HT=\n" << HT_ << std::endl;
     std::cout << "iterations: " << (Real) num_iter << std::endl;
     std::cout << "elapsed time (ms): " << timer.elapsedTimeMs() << std::endl;
   }
 
+}
+
+TEST(TestSuite, multPluckerVec6b)
+{
+  Timer timer;
+
+  //construct Homogeneous Transform
+  VecEuler euler;
+  Vec3 translation;
+  HomogeneousTransform HT;
+
+  setEuler(DEGTORAD(10),DEGTORAD(20),DEGTORAD(30),euler);
+  setVec3(1,2,3,translation);
+  poseToHT(euler,translation,HT);
+
+
+  std::cout << "HT=\n";
+  printHT(HT,-1,-1);
+
+  //convert to Plucker transform
+  Mat6b P;
+
+  HTToPlucker(HT,P);
+  std::cout << "P=\n"; printMat6b(P,-1,-1);
+
+  //inverse Plucker transform
+  Mat6b P2;
+
+  Vec6b m,f,v,v2;
+  setVec6b(1,2,3,4,5,6,m);
+//  setVec6b(2,3,4,5,6,7,f);
+
+  std::cout << "m=\n"; printVec6b(m,-1,-1);
+//  std::cout << "f=\n"; printVec6b(f,-1,-1);
+
+  Vec6b m0; copyVec6b(m,m0);
+
+  int num_iter = 1e7;
+
+  //multiply vector by Plucker transform
+  {
+    //time it
+
+    timer.start();
+    for (int i=0; i<num_iter; i++)
+    {
+//      multPluckerVec6b(P,m,v);
+//      copyVec6b(v,m);
+      multPluckerTVec6b(P,m,v2);
+      copyVec6b(v2,m);
+    }
+    timer.stop();
+
+    std::cout << "using spatial.h\n";
+//    std::cout << "P*m=\n"; printVec6b(v,-1,-1);
+    std::cout << "P'*m=\n"; printVec6b(v2,-1,-1);
+    std::cout << "iterations: " << (Real) num_iter << std::endl;
+    std::cout << "clock (ms): " << timer.elapsedTimeMs() << std::endl;
+    std::cout << std::endl;
+  }
+
+  {
+    //using Eigen
+    Eigen::Matrix<Real,3,3> B0_, B1_, B3_;
+    Eigen::Matrix<Real,3,1> m0_, m1_, m0_backup_, m1_backup_;
+
+    //copy to Eigen matrices
+    copyMat3ToArray(P,B0_.data());
+    copyMat3ToArray(P+BLOCK1, B1_.data());
+    copyMat3ToArray(P+BLOCK3, B3_.data());
+    copy3(m0,m0_.data());
+    copy3(m0+VEC3_SIZE, m1_.data());
+
+    timer.start();
+    for (int i=0; i<num_iter; i++)
+    {
+//      m0_backup_ = m0_;
+//      m0_ = B0_*m0_;
+//      m1_ = B1_*m0_backup_ + B3_*m1_;
+
+      m1_backup_ = m1_;
+      m1_ = B3_.transpose()*m1_;
+      m0_ = B0_.transpose()*m0_ + B1_.transpose()*m1_backup_;
+    }
+    timer.stop();
+
+    std::cout << "using Eigen 3x3 blocks\n";
+//    std::cout << "P*m=\n" << m0_ << "\n" << m1_ << std::endl;
+    std::cout << "P'*m=\n" << m0_ << "\n" << m1_ << std::endl;
+    std::cout << "iterations: " << (Real) num_iter << std::endl;
+    std::cout << "clock (ms): " << timer.elapsedTimeMs() << std::endl;
+  }
+
+  {
+    //using Eigen
+    Eigen::Matrix<Real,6,6> P_;
+    Eigen::Matrix<Real,6,1> m_;
+
+    //copy to Eigen matrices
+    copyMat6bToArray(P,P_.data());
+    copyVec6bToArray(m0,m_.data());
+
+    timer.start();
+    for (int i=0; i<num_iter; i++)
+    {
+//      m_ = P_*m_;
+      m_ = P_.transpose()*m_;
+    }
+    timer.stop();
+
+    std::cout << "using Eigen\n";
+//    std::cout << "P*m=\n" << m_ << std::endl;
+    std::cout << "P'*m=\n" << m_ << std::endl;
+    std::cout << "iterations: " << (Real) num_iter << std::endl;
+    std::cout << "clock (ms): " << timer.elapsedTimeMs() << std::endl;
+  }
 }
 
 TEST(TestSuite, matrix)
@@ -241,7 +354,7 @@ TEST(TestSuite, matrix)
   int n = (int) 1e6;
   Timer timer;
 
-  const int SIZE = 18;
+  const int SIZE = 16;
 
   //matrix.h matrices
   Real A[SIZE*SIZE];
@@ -260,9 +373,9 @@ TEST(TestSuite, matrix)
   for (int i=0; i<SIZE; i++) { b[i] = 1; }
 
 
-  //std::cout << "A=\n"; printMatReal(SIZE,SIZE,A,-1,-1);
-  //std::cout << "B=\n"; printMatReal(SIZE,SIZE,B,-1,-1);
-  //std::cout << "b=\n"; printMatReal(SIZE,1,b,-1,-1);
+//  std::cout << "A=\n"; printMatReal(SIZE,SIZE,A,-1,-1);
+//  std::cout << "B=\n"; printMatReal(SIZE,SIZE,B,-1,-1);
+//  std::cout << "b=\n"; printMatReal(SIZE,1,b,-1,-1);
 
 
   //matrix.h

@@ -10,8 +10,11 @@
 #include <wmrde/algebra/transform.h>
 //#include <wmrde/algebra/matrix.h>
 
-typedef Real Vec6b[2*SIZEVEC3];
-typedef Real Mat6b[4*SIZEMAT3];
+namespace wmrde
+{
+
+typedef Real Vec6b[2*VEC3_SIZE];
+typedef Real Mat6b[4*MAT3_SIZE];
 
 //spatial vectors are 6x1 (two 3x1 blocks)
 //0
@@ -155,7 +158,7 @@ inline void HTToPlucker(const HomogeneousTransform T, Mat6b P) {
 	multMatMat3(P,T,P+BLOCK1); \
 	copyMat3(T,P); \
 	copyMat3(T,P+BLOCK3); \
-	setcMat3(0,P+BLOCK2); \
+	setMat3(0,P+BLOCK2); \
 } //while(0)
 
 	
@@ -171,7 +174,7 @@ inline void invHTToPlucker(const HomogeneousTransform T, Mat6b P) {
 	mulcMat3(P+BLOCK1,-1,P+BLOCK1); \
 	copyTMat3(T,P); \
 	copyTMat3(T,P+BLOCK3); \
-	setcMat3(0,P+BLOCK2); \
+	setMat3(0,P+BLOCK2); \
 } //while(0)
 
 
@@ -292,16 +295,16 @@ inline void multPluckerTMat6bPlucker( const Mat6b P, const Mat6b M, Mat6b R) {
 
 //copy to/from array without extra elements for alignment
 inline void copyVec6bToArray(const Vec6b Source, Real* Dest) {
-	copyVec3ToArray(2,(const Vec3*) Source, Dest);
+	copy3n(2,(const Real*) Source, Dest);
 }
 
-inline void copyArrayToVec6b(const Real* Source, Vec6b Dest) {
-	copyArrayToVec3(Source,2,(Vec3*) Dest);
-}
+//inline void copyArrayToVec6b(const Real* Source, Vec6b Dest) {
+//	copyArrayToVec3(Source,2,(Vec3*) Dest);
+//}
 
 inline void copyMat6bColToVec6b(const int ci, const Mat6b M, Vec6b Dest) {
 	//ci: column index
-	int j = (ci/3)*BLOCK2+(ci%3)*SIZEVEC3; //index of first element of column
+	int j = (ci/3)*BLOCK2+(ci%3)*VEC3_SIZE; //index of first element of column
 	const Real* p = M+j; //pointer to first element of column
 	setVec6b(	p[0],
 				p[1],
@@ -314,7 +317,7 @@ inline void copyMat6bColToVec6b(const int ci, const Mat6b M, Vec6b Dest) {
 //TODO, eliminate duplication?
 inline void copyMat6bColToArray(const int ci, const Mat6b M, Real* Dest) {
 	//ci: column index
-	int j = (ci/3)*BLOCK2+(ci%3)*SIZEVEC3; //index of first element of column
+	int j = (ci/3)*BLOCK2+(ci%3)*VEC3_SIZE; //index of first element of column
 	const Real* p = M+j; //pointer to first element of column
 	Dest[0]=p[0];
 	Dest[1]=p[1];
@@ -333,7 +336,7 @@ inline void copyMat6bToArray(const Mat6b Source, Real* Dest) {
 //PRINT FUNCTIONS
 inline void printVec6b(const Vec6b V, int precision, int width) {
 	Real V_[6];
-	copyVec3ToArray(2,(const Vec3*) V, V_);
+	copy3n(2, V, V_);
 	printMatReal(6,1,V_,precision,width);
 }
 
@@ -342,7 +345,7 @@ inline void printnVec6b(const int n, const Vec6b V[], int precision, int width) 
 	Real* V_;
 	V_ = new Real[6*n];
 
-	copyVec3ToArray(2*n,(const Vec3*) V, V_);
+	copy3n(2*n,(const Real*) V, V_);
 	printMatReal(6,n,V_,precision,width); 
 
 	delete[] V_;
@@ -358,5 +361,7 @@ void toSpatialInertia(const Real m, const Vec3 c, const Mat3 I, Mat6b Is);
 void fromSpatialInertia(const Mat6b Is, Real m, Vec3 c, Mat3 I);
 
 void multPluckerTInertiaPlucker(const Mat6b P, const Mat6b I, Mat6b R); //faster alternative
+
+} //namespace
 
 #endif //_WMRDE_SPATIAL_H_
