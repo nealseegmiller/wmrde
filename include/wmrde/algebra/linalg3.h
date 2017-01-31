@@ -14,6 +14,7 @@ namespace wmrde
 {
 
 #define LINALG3_SIMD 0
+//TODO, why are the vectorized implementations so much slower?
 
 //#if LINALG3_SIMD
 #if 1
