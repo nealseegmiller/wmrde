@@ -412,14 +412,14 @@ TEST(TestSuite, matrix)
   //    addmMatBlock(SIZE,ri,ci,brows,bcols,A, SIZE,ri,ci,m,B);
 
 //      multMatVec(SIZE,SIZE,A,b,m,r);
-  //    multMatTVec(SIZE,SIZE,A,b,m,B);
-      multMatMat(SIZE,SIZE,A,SIZE,A,m,B);
+      multMatTVec(SIZE,SIZE,A,b,m,B);
+//      multMatMat(SIZE,SIZE,A,SIZE,A,m,B);
   //    multMatTMat(SIZE,SIZE,A,SIZE,A,m,B);
     }
     timer.stop();
 
-    std::cout << "(matrix.h) B=\n"; printMatReal(SIZE,SIZE,B,0,-1);
-//    std::cout << "(matrix.h) r=\n"; printMatReal(SIZE,1,r,0,-1);
+//    std::cout << "(matrix.h) B=\n"; printMatReal(SIZE,SIZE,B,0,-1);
+    std::cout << "(matrix.h) r=\n"; printMatReal(SIZE,1,r,0,-1);
     printf("for %zu iterations using matrix.h, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
   }
 
@@ -472,15 +472,15 @@ TEST(TestSuite, matrix)
       //B_.col(ci) += (A_.col(ci) * m);
       //B_.block(ri,ci,brows,bcols) += (A_.block(ri,ci,brows,bcols) * m);
 
-//      r_ = A_*b_;
-//      r_ = A_.transpose()*b_;
-      B_ = A_*A_;
-//      B_ = A_.transpose()*A_;
+//      r_.noalias() = A_*b_;
+      r_.noalias() = A_.transpose()*b_;
+//      B_.noalias = A_*A_;
+//      B_.noalias() = A_.transpose()*A_;
     }
     timer.stop();
 
-    std::cout << "(Eigen) B=\n" << B_ << std::endl;
-//    std::cout << "(Eigen) r=\n" << r_ << std::endl;
+//    std::cout << "(Eigen) B=\n" << B_ << std::endl;
+    std::cout << "(Eigen) r=\n" << r_ << std::endl;
     printf("for %zu iterations using Eigen, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
   }
 }
