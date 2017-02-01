@@ -1,65 +1,37 @@
 #include <gtest/gtest.h>
 #include <Eigen/Dense>
 
-#include <wmrde/algebra/linalg3.h>
-#include <wmrde/algebra/transform.h>
+#include <wmrde/algebra/rotation.h>
 #include <wmrde/algebra/spatial.h>
-#include <wmrde/algebra/matrix.h>
 #include <wmrde/util/timer.h>
 
 using namespace wmrde;
 
-
-TEST(TestSuite, addVec3)
+TEST(TestSuite, linalg3)
 {
-  printf("benchmark addVec3\n");
-
-  Vec3 a,b,r,r2;
-  Real eps = 1e-6;
-  setVec3(eps, a);
-  setVec3(eps, b);
-
-  Vec3 a0; copyVec3(a,a0); //backup
+  Mat3 A, B, C;
+  A << 1,2,3,4,5,6,7,8,9;
+  B << 2,3,4,5,6,7,8,9,10;
 
   size_t num_iter = 1e7;
   Timer timer;
-  {
-    timer.start();
-    for (size_t iter = 0; iter < num_iter; iter++)
-    {
-      addVec3(a,b,a);
-//      asm(""); //empty assembly to prevent gcc from optimizing out the loop
-    }
-    timer.stop();
-    printf("for %zu iterations of addVec3, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
 
-    copyVec3(a,r); //first result
-  }
+  //benchmark A*B
+  timer.start();
+  for (size_t iter = 0; iter < num_iter; iter++) { C.noalias() = A*B; }
+  timer.stop();
+  printf("%zu iterations of Mat3 A*B took %f ms\n", num_iter, timer.elapsedTimeMs());
 
-  //verify with Eigen library
-  {
-    Eigen::Matrix<Real,3,1> a_, b_;
-    copy3(a0, a_.data());
-    copy3(b, b_.data());
+  //benchmark A'*B
+  timer.start();
+  for (size_t iter = 0; iter < num_iter; iter++) { C.noalias() = A.transpose()*B; }
+  timer.stop();
+  printf("%zu iterations of Mat3 A.transpose()*B took %f ms\n", num_iter, timer.elapsedTimeMs());
 
-    timer.start();
-    for (size_t iter = 0; iter < num_iter; iter++)
-    {
-      a_ = a_ + b_;
-//      asm(""); //empty assembly to prevent gcc from optimizing out the loop
-    }
-    timer.stop();
-    printf("for %zu iterations of Eigen 3x1 vector addition, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-
-    copy3(a_.data(), r2); //second result
-  }
-
-  printf("r = \n%s", Vec3ToString(r).c_str());
-  printf("r2 = \n%s", Vec3ToString(r2).c_str());
-
-  EXPECT_TRUE(Vec3Equal(r,r2));
+  EXPECT_TRUE(true);
 }
 
+/*
 TEST(TestSuite, addMat3)
 {
   printf("benchmark addMat3\n");
@@ -485,6 +457,7 @@ TEST(TestSuite, matrix)
     printf("for %zu iterations using Eigen, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
   }
 }
+*/
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv){

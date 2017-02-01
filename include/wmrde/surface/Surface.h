@@ -5,6 +5,14 @@
 #ifndef _WMRDE_SURFACE_H_
 #define _WMRDE_SURFACE_H_
 
+namespace wmrde
+{
+
+} //namespace
+
+#endif //_WMRDE_SURFACE_H_
+
+/*
 #include <vector>
 #include <memory>
 #include <wmrde/algebra/linalg3.h>
@@ -37,6 +45,6 @@ typedef std::vector<std::unique_ptr<Surface>> SurfaceVector;
 //return surface index (in vector)
 int surfacesHeight(const SurfaceVector& surfaces, const Vec3 pt, Real& height);
 int surfacesDz(const SurfaceVector& surfaces, const Vec3 pt, Real& dz, Vec3 normal);
+*/
 
 
-#endif //_WMRDE_SURFACE_H_

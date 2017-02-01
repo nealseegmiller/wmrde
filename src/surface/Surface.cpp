@@ -1,5 +1,6 @@
 #include <wmrde/surface/Surface.h>
 
+/*
 int surfacesHeight(const SurfaceVector& surfaces, const Vec3 pt, Real& height) {
 	//OUTPUT
 	//height:	height of surface si at point
@@ -61,7 +62,7 @@ int surfacesDz(const SurfaceVector& surfaces, const Vec3 pt, Real& dz, Vec3 norm
 }
 
 
-
+*/
 
 
 
