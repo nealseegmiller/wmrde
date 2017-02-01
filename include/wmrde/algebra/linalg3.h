@@ -168,11 +168,37 @@ inline void copy3n(const int n, const Real* src, Real* dst)
   }
 }
 
+//TODO, this vectorizes but why is it slower?
+//inline void copyMat3(const Mat3 src, Mat3 dst)
+//{
+//  //copy a contiguous block of memory
+//  for (size_t i=0; i<MAT3_SIZE; i++) { dst[i] = src[i]; }
+//}
+
 inline void copyMat3(const Mat3 src, Mat3 dst)
 {
-  //copy a contiguous block of memory
-  for (size_t i=0; i<MAT3_SIZE; i++) { dst[i] = src[i]; }
+  dst[MAT3_0] = src[MAT3_0];
+  dst[MAT3_1] = src[MAT3_1];
+  dst[MAT3_2] = src[MAT3_2];
+  dst[MAT3_3] = src[MAT3_3];
+  dst[MAT3_4] = src[MAT3_4];
+  dst[MAT3_5] = src[MAT3_5];
+  dst[MAT3_6] = src[MAT3_6];
+  dst[MAT3_7] = src[MAT3_7];
+  dst[MAT3_8] = src[MAT3_8];
 }
+
+#define copyMat3macro(src,dst) do { \
+  dst[0] = src[0];\
+  dst[1] = src[1];\
+  dst[2] = src[2];\
+  dst[4] = src[4];\
+  dst[5] = src[5];\
+  dst[6] = src[6];\
+  dst[8] = src[8];\
+  dst[9] = src[9];\
+  dst[10]= src[10];\
+} while(0)
 
 //TRANSPOSE FUNCTIONS
 //src and dst can't be the same (can't transpose in place)
@@ -466,11 +492,22 @@ inline void multMatTVec3(const Mat3 mat, const Vec3 vec, Vec3 out)
 //out = mat*vec
 //out can't be the same as vec (can't multiply in place)
 //TODO, use setVec3 to allow multiply in place?
+//inline void multMatVec3(const Mat3 mat, const Vec3 vec, Vec3 out)
+//{
+#define multMatVec3macro(mat, vec, out) do { \
+  out[0] = mat[0]*vec[0] + mat[4]*vec[1] + mat[8]*vec[2]; \
+  out[1] = mat[1]*vec[0] + mat[5]*vec[1] + mat[9]*vec[2]; \
+	out[2] = mat[2]*vec[0] + mat[6]*vec[1] + mat[10]*vec[2]; \
+} while(0)
+
+//out = mat*vec
+//out can't be the same as vec (can't multiply in place)
+//TODO, use setVec3 to allow multiply in place?
 inline void multMatVec3(const Mat3 mat, const Vec3 vec, Vec3 out)
 {
   out[0] = mat[MAT3_0]*vec[0] + mat[MAT3_3]*vec[1] + mat[MAT3_6]*vec[2];
   out[1] = mat[MAT3_1]*vec[0] + mat[MAT3_4]*vec[1] + mat[MAT3_7]*vec[2];
-	out[2] = mat[MAT3_2]*vec[0] + mat[MAT3_5]*vec[1] + mat[MAT3_8]*vec[2];
+  out[2] = mat[MAT3_2]*vec[0] + mat[MAT3_5]*vec[1] + mat[MAT3_8]*vec[2];
 }
 
 //out = (mat^T)*vec
@@ -490,6 +527,12 @@ inline void multMatMat3(const Mat3 mat_a, const Mat3 mat_b, Mat3 out)
 	multMatVec3(mat_a, &mat_b[MAT3_COL1], &out[MAT3_COL1]);
 	multMatVec3(mat_a, &mat_b[MAT3_COL2], &out[MAT3_COL2]);
 }
+
+#define multMatMat3macro(mat_a, mat_b, out) do { \
+  multMatVec3(mat_a, &mat_b[0], &out[0]); \
+  multMatVec3(mat_a, &mat_b[4], &out[4]); \
+  multMatVec3(mat_a, &mat_b[8], &out[8]); \
+} while(0)
 
 //out = (mat_a^T) * mat_b
 inline void multMatTMat3(const Mat3 mat_a, const Mat3 mat_b, Mat3 out)

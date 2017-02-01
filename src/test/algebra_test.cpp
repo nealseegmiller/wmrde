@@ -123,8 +123,8 @@ TEST(TestSuite, multMatMat3)
     timer.start();
     for (size_t iter = 0; iter < num_iter; iter++)
     {
-//      multMatMat3(A,B,A); //can't multiply in place!
-      multMatMat3(A,B,R);
+//      multMatMat3(A,B,R);
+      multMatTMat3(A,B,R);
       copyMat3(R,A);
 //      asm(""); //empty assembly to prevent gcc from optimizing out the loop
     }
@@ -143,7 +143,8 @@ TEST(TestSuite, multMatMat3)
     timer.start();
     for (size_t iter = 0; iter < num_iter; iter++)
     {
-      A_ = A_*B_;
+//      A_ = A_*B_;
+      A_ = A_.transpose()*B_;
 //      asm(""); //empty assembly to prevent gcc from optimizing out the loop
     }
     timer.stop();
