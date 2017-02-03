@@ -8,6 +8,17 @@
 
 using namespace wmrde;
 
+Timer timer;
+
+//TODO, move this macro to timer.h?
+#define BENCHMARK(num_iter, expr, desc) do { \
+  timer.start(); \
+  for (size_t iter = 0; iter < num_iter; iter++) \
+  { expr ; } \
+  timer.stop(); \
+  printf("%zu iterations of %s took %f ms\n", num_iter, desc, timer.elapsedTimeMs()); \
+} while(0)
+
 Real epsilon = std::numeric_limits<Real>::epsilon()*2;
 inline bool approx(const Real a, const Real b)
 {
@@ -31,19 +42,9 @@ TEST(TestSuite, linalg3)
 //  EXPECT_TRUE(???);
 
   size_t num_iter = 1e7;
-  Timer timer;
 
-  //benchmark A*B
-  timer.start();
-  for (size_t iter = 0; iter < num_iter; iter++) { C.noalias() = A*B; }
-  timer.stop();
-  printf("%zu iterations of Mat3 A*B took %f ms\n", num_iter, timer.elapsedTimeMs());
-
-  //benchmark A'*B
-  timer.start();
-  for (size_t iter = 0; iter < num_iter; iter++) { C.noalias() = A.transpose()*B; }
-  timer.stop();
-  printf("%zu iterations of Mat3 A'*B took %f ms\n", num_iter, timer.elapsedTimeMs());
+  BENCHMARK(num_iter, C.noalias() = A*B, "Mat3 A*B");
+  BENCHMARK(num_iter, C.noalias() = A.transpose()*B, "Mat3 A'*B");
 }
 
 inline Mat3 RotxTest(const Real angle) { return AngleAxis(angle, Vec3::UnitX()).toRotationMatrix(); }
@@ -96,25 +97,11 @@ TEST(TestSuite, rotation)
 
   //benchmark computation time of rotation.h functions vs. using AngleAxis
   size_t num_iter = 1e7;
-  Timer timer;
 
-  timer.start();
-  for (size_t iter = 0; iter < num_iter; iter++)
-  {
-    R = eulerToRot(roll,pitch,yaw);
-//    Rx = Rotx(roll);
-  }
-  timer.stop();
-  printf("%zu iterations of euler to Rotation took %f ms\n", num_iter, timer.elapsedTimeMs());
-
-  timer.start();
-  for (size_t iter = 0; iter < num_iter; iter++)
-  {
-    R2 = RotTest(roll,pitch,yaw);
-//    Rx2 = RotxTest(roll);
-  }
-  timer.stop();
-  printf("%zu iterations of euler to Rotation using AngleAxis took %f ms\n", num_iter, timer.elapsedTimeMs());
+  BENCHMARK(num_iter, Rx = Rotx(roll), "Rotx()");
+  BENCHMARK(num_iter, Rx2 = RotxTest(roll), "Rotx() equivalent using AngleAxis");
+  BENCHMARK(num_iter, R = eulerToRot(roll,pitch,yaw), "eulerToRot()");
+  BENCHMARK(num_iter, R2 = RotTest(roll,pitch,yaw), "eulerToRot() equivalent using AngleAxis");
 }
 
 TEST(TestSuite, transform)
@@ -141,219 +128,22 @@ TEST(TestSuite, transform)
   EXPECT_TRUE( T.applyTo(T.t).isApprox(TT.t) );
   EXPECT_TRUE( T.applyInvTo(T.t).isApprox(Vec3::Zero()) );
 
-  //benchmark composeWith() agains 4x4 matrix multiplication
+  //benchmark composeWith() against 4x4 matrix multiplication
   size_t num_iter = 1e7;
-  Timer timer;
 
-  //TODO, write a benchmarking macro?
-  timer.start();
-  for (size_t iter = 0; iter < num_iter; iter++)
-  {
-    TT = T.composeWith(T);
-  }
-  timer.stop();
-  printf("%zu iterations of composeWith() took %f ms\n", num_iter, timer.elapsedTimeMs());
-
-  timer.start();
-  for (size_t iter = 0; iter < num_iter; iter++)
-  {
-    Tid = T.composeInvWith(T);
-  }
-  timer.stop();
-  printf("%zu iterations of composeInvWith() took %f ms\n", num_iter, timer.elapsedTimeMs());
-
+  BENCHMARK(num_iter, TT = T.composeWith(T), "composeWith()");
+  BENCHMARK(num_iter, Tid = T.composeInvWith(T), "composeInvWith()");
   Eigen::Matrix<Real,4,4> Mat4x4;
-  timer.start();
-  for (size_t iter = 0; iter < num_iter; iter++)
-  {
-    Mat4x4.noalias() = T4x4 * T4x4;
-  }
-  timer.stop();
-  printf("%zu iterations of 4x4 matrix multiplication took %f ms\n", num_iter, timer.elapsedTimeMs());
+  BENCHMARK(num_iter, Mat4x4.noalias() = T4x4 * T4x4, "4x4 matrix multiplication");
+}
+
+TEST(TestSuite, spatial)
+{
+  //try Mat6b::getColumn()
+  //try crossVec6bMotion()
 }
 
 /*
-TEST(TestSuite, addMat3)
-{
-  printf("benchmark addMat3\n");
-  Mat3 A,B,R,R2;
-  Real eps = 1e-6;
-  setMat3Diagonal(eps, eps, eps, A);
-  setMat3Diagonal(eps, eps, eps, B);
-
-  Mat3 A0; copyMat3(A,A0); //backup
-
-  size_t num_iter = 1e7;
-  Timer timer;
-  {
-    timer.start();
-    for (size_t iter = 0; iter < num_iter; iter++)
-    {
-      addMat3(A,B,A);
-//      asm(""); //empty assembly to prevent gcc from optimizing out the loop
-    }
-    timer.stop();
-    printf("for %zu iterations of addMat3, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-    copyMat3(A,R); //first result
-  }
-
-  //verify with Eigen library
-  {
-    Eigen::Matrix<Real,3,3> A_, B_;
-    copyMat3ToArray(A0, A_.data());
-    copyMat3ToArray(B, B_.data());
-
-    timer.start();
-    for (size_t iter = 0; iter < num_iter; iter++)
-    {
-      A_ = A_ + B_;
-//      asm(""); //empty assembly to prevent gcc from optimizing out the loop
-    }
-    timer.stop();
-    printf("for %zu iterations of Eigen 3x3 matrix addition, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-
-    copyArrayToMat3(A_.data(), R2);
-  }
-
-  printf("R = \n%s", Mat3ToString(R).c_str());
-  printf("R2 = \n%s", Mat3ToString(R2).c_str());
-
-  EXPECT_TRUE(Mat3Equal(R,R2)); //second result
-}
-
-TEST(TestSuite, multMatMat3)
-{
-  Mat3 A,B,R,R2;
-  Real eps = 1e-6;
-  setMat3Diagonal(1+eps, 1+eps, 1+eps, A);
-  setMat3Diagonal(1+eps, 1+eps, 1+eps, B); B[1] = eps;
-
-  Mat3 A0; copyMat3(A,A0);
-
-  size_t num_iter = 1e7;
-  Timer timer;
-  {
-    timer.start();
-    for (size_t iter = 0; iter < num_iter; iter++)
-    {
-//      multMatMat3(A,B,R);
-      multMatTMat3(A,B,R);
-      copyMat3(R,A);
-//      asm(""); //empty assembly to prevent gcc from optimizing out the loop
-    }
-    timer.stop();
-    printf("for %zu iterations of multMatMat3, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-  }
-
-  //verify with Eigen library
-  {
-    copyMat3(A0,A);
-
-    Eigen::Matrix<Real,3,3> A_, B_;
-    copyMat3ToArray(A, A_.data());
-    copyMat3ToArray(B, B_.data());
-
-    timer.start();
-    for (size_t iter = 0; iter < num_iter; iter++)
-    {
-//      A_ = A_*B_;
-      A_ = A_.transpose()*B_;
-//      asm(""); //empty assembly to prevent gcc from optimizing out the loop
-    }
-    timer.stop();
-    printf("for %zu iterations of Eigen 3x3 matrix multiplication, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-
-    copyArrayToMat3(A_.data(), R2);
-  }
-
-  printf("R = \n%s", Mat3ToString(R).c_str());
-  printf("R2 = \n%s", Mat3ToString(R2).c_str());
-
-  EXPECT_TRUE(Mat3Equal(R,R2));
-}
-
-TEST(TestSuite, composeHT)
-{
-  printf("benchmark composeHT\n");
-  VecEuler euler;
-  Vec3 translation;
-  HomogeneousTransform HT,HTR;
-
-  setEuler(DEGTORAD(0),DEGTORAD(0),DEGTORAD(0.1),euler);
-  Real eps = 1e-6;
-  setVec3(eps,eps,eps,translation);
-  poseToHT(euler,translation,HT);
-
-  HomogeneousTransform HT0; copyHT(HT, HT0); //backup
-
-  std::cout << "HT=\n"; printHT(HT,-1,-1);
-
-  //test compose HT
-  int num_iter = (int) 1e7;
-  Timer timer;
-  {
-    //time it
-    timer.start();
-    for (int i=0; i<num_iter; i++)
-    {
-      composeHT(HT,HT0,HTR);
-      copyHT(HTR,HT);
-    }
-    timer.stop();
-
-    printf("HT*HT = \n");
-    printHT(HTR,-1,-1);
-
-    printf("for %zu iterations using composeHT, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-  }
-
-  //validate using Eigen::Matrix<Real,3,3>
-  {
-    Eigen::Matrix<Real,3,3> R0_,R_; //rotation
-    Eigen::Matrix<Real,3,1> t0_,t_; //translation
-
-    copyMat3ToArray(HT0,R_.data());
-    copy3(HT0+COL3,t_.data());
-    std::cout << "Eigen HT=\n" << R_ << "\n" << t_ << std::endl;
-
-    R0_ = R_; //backup
-    t0_ = t_;
-
-    timer.start();
-    for (int i=0; i<num_iter; i++)
-    {
-      t_ = R_*t0_ + t_;
-      R_ = R_*R0_;
-    }
-    timer.stop();
-
-    std::cout << "Eigen HT*HT=\n" << R_ << "\n" << t_ << std::endl;
-    printf("for %zu iterations using Eigen 3x3, 3x1 blocks, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-  }
-
-  //validate using Eigen::Matrix<Real,4,4>
-  {
-    Eigen::Matrix<Real,4,4> HT_, HT0_;
-    HT_.setZero();
-
-    for (int i=0; i<4; i++) { copy3(HT0+(i*VEC3_SIZE), HT_.data() + (i*4)); }
-    HT_(3,3) = 1.0;
-    std::cout << "Eigen HT=\n" << HT_ << std::endl;
-    HT0_ = HT_; //backup
-
-    timer.start();
-    for (int i=0; i<num_iter; i++)
-    {
-      HT_ = HT_*HT0_;
-    }
-    timer.stop();
-
-    std::cout << "Eigen HT*HT=\n" << HT_ << std::endl;
-    printf("for %zu iterations using Eigen 4x4 matrices, elapsed time = %f ms\n", num_iter, timer.elapsedTimeMs());
-  }
-
-}
-
 TEST(TestSuite, multPluckerVec6b)
 {
   printf("benchmark multPluckerVec6b");
