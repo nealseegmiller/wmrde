@@ -114,13 +114,13 @@ TEST(TestSuite, transform)
   std::cout << "T*T = \n" << TT << std::endl;
 
   //validate using 4x4 matrix multiplication
-  Eigen::Matrix<Real,4,4> T4x4 = T.to4x4();
-  EXPECT_TRUE( TT.to4x4().isApprox(T4x4*T4x4) );
+  Eigen::Matrix<Real,4,4> T_nb = T.to4x4(); //non-block
+  EXPECT_TRUE( TT.to4x4().isApprox(T_nb*T_nb) );
 
   //validate composeInvWith()
   HTransform Tid = T.composeInvWith(T);
   HTransform Tid2; Tid2.setIdentity();
-  std::cout << "inv(T)*T = \n" << Tid << std::endl;
+  std::cout << "inverse(T)*T = \n" << Tid << std::endl;
   EXPECT_TRUE( Tid.isApprox(Tid2, epsilon) );
   EXPECT_TRUE( Tid.isApprox(T.inverse().composeWith(T)) );
 
@@ -134,13 +134,62 @@ TEST(TestSuite, transform)
   BENCHMARK(num_iter, TT = T.composeWith(T), "composeWith()");
   BENCHMARK(num_iter, Tid = T.composeInvWith(T), "composeInvWith()");
   Eigen::Matrix<Real,4,4> Mat4x4;
-  BENCHMARK(num_iter, Mat4x4.noalias() = T4x4 * T4x4, "4x4 matrix multiplication");
+  BENCHMARK(num_iter, Mat4x4.noalias() = T_nb * T_nb, "4x4 matrix multiplication");
 }
+
+typedef Eigen::Matrix<Real,6,6> Mat6;
+typedef Eigen::Matrix<Real,6,1> Vec6;
 
 TEST(TestSuite, spatial)
 {
-  //try Mat6b::getColumn()
-  //try crossVec6bMotion()
+  //validate functions to construct Plucker transform
+  //from homogeneous transform
+  HTransform HT( eulerToRot(0,0,degToRad(10.0)), Vec3(1.0,2.0,3.0) );
+  Mat6b P = HTToPlucker(HT);
+  Mat6b Pinv = invHTToPlucker(HT);
+  HTransform HT_ = PluckerToHT(P);
+
+  std::cout << "HT = \n" << HT << std::endl;
+  std::cout << "P(HT) = \n" << P << std::endl;
+  std::cout << "P(inverse HT) = \n" << Pinv << std::endl;
+  std::cout << "HT(P) = \n" << HT_ << std::endl;
+
+  Mat6 Id = Pinv.to6x6()*P.to6x6(); //expect identity
+  std::cout << "inverse(P)*P = \n" << Id << std::endl;
+  EXPECT_TRUE( Id.isApprox(Mat6::Identity()) );
+  EXPECT_TRUE( HT_.isApprox(HT) );
+
+  //validate getColumn
+  Mat6 P_nb = P.to6x6(); //non-block
+  for (size_t i = 0; i < 6; i++)
+  {
+    Vec6b col = P.getColumn(i);
+//    std::cout << "P(:," << i << ") = \n" << col << std::endl;
+    EXPECT_TRUE(P_nb.col(i).isApprox(col.to6x1()));
+  }
+
+  //validate Plucker-vector multiplication
+  Vec6b v( Vec3(1.0,2.0,3.0), Vec3(4.0,5.0,6.0) );
+  Vec6b Pv = multPluckerVec6b(P,v);
+  Vec6b PTv = multPluckerTVec6b(P,v);
+
+  std::cout << "v = \n" << v << std::endl;
+  std::cout << "P*v = \n" << Pv << std::endl;
+  std::cout << "P'*v = \n" << PTv << std::endl;
+
+  Vec6 v_nb = v.to6x1(); //non-block
+  EXPECT_TRUE(Pv.to6x1().isApprox( P_nb*v_nb ));
+  EXPECT_TRUE(PTv.to6x1().isApprox( P_nb.transpose()*v_nb ));
+
+  size_t num_iter = 1e7;
+  Vec6 tmp;
+  BENCHMARK(num_iter, Pv = multPluckerVec6b(P,v), "P*v using block multiplication");
+  BENCHMARK(num_iter, tmp.noalias() = P_nb*v_nb, "P*v using non-block");
+
+  BENCHMARK(num_iter, Pv = multPluckerTVec6b(P,v), "P'*v using block multiplication");
+  BENCHMARK(num_iter, tmp.noalias() = P_nb.transpose()*v_nb, "P'*v using non-block");
+
+  //validate Plucker-matrix multiplication
 }
 
 /*

@@ -55,7 +55,7 @@ public:
     return R.transpose()*(vec - t);
   }
 
-  //DEBUGGING
+  //FOR DEBUGGING
   inline Eigen::Matrix<Real,3,4> to3x4() const
   {
     Eigen::Matrix<Real,3,4> out;
@@ -74,7 +74,6 @@ public:
     return out;
   }
 
-  //FOR DEBUGGING
   friend std::ostream &operator<<( std::ostream &output, const HTransform &T)
   {
     output << T.to3x4();
@@ -83,7 +82,7 @@ public:
 
   inline bool isApprox(const HTransform& other, const Real prec = 0) const
   {
-    return R.isApprox(other.R, prec) && t.isApprox(other.t, prec);
+    return this->to3x4().isApprox(other.to3x4(), prec);
   }
 };
 

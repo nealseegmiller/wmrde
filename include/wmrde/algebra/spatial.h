@@ -14,13 +14,6 @@ class Vec6b //block representation of 6x1 vector
 {
 public:
   Vec3 b0, b1;
-  inline Eigen::Matrix<Real,6,1> to6x1()
-  {
-    Eigen::Matrix<Real,6,1> out;
-    out.block(0,0,3,1) = b0;
-    out.block(3,0,3,1) = b1;
-    return out;
-  }
 
   Vec6b() {}
   Vec6b(
@@ -29,11 +22,31 @@ public:
         b0(block0),
         b1(block1) {}
 
-  Vec6b operator+(const Vec6b& other)
+  Vec6b operator+(const Vec6b& other) const
   {
     return Vec6b(
         b0 + other.b0,
         b1 + other.b1);
+  }
+
+  //FOR DEBUGGING
+  inline Eigen::Matrix<Real,6,1> to6x1() const
+  {
+    Eigen::Matrix<Real,6,1> out;
+    out.block(0,0,3,1) = b0;
+    out.block(3,0,3,1) = b1;
+    return out;
+  }
+
+  friend std::ostream &operator<<( std::ostream &output, const Vec6b &v)
+  {
+    output << v.to6x1();
+    return output;
+  }
+
+  inline bool isApprox(const Vec6b& other, const Real prec = 0) const
+  {
+    return this->to6x1().isApprox(other.to6x1(), prec);
   }
 };
 
@@ -46,16 +59,6 @@ public:
 
   Mat3 B0, B1, B2, B3;
 
-  inline Eigen::Matrix<Real,6,6> to6x6()
-  {
-    Eigen::Matrix<Real,6,6> out;
-    out.block(0,0,3,3) = B0;
-    out.block(3,0,3,3) = B1;
-    out.block(0,3,3,3) = B2;
-    out.block(3,3,3,3) = B3;
-    return out;
-  }
-
   Mat6b() {}
   Mat6b(
       const Mat3& block0,
@@ -67,7 +70,7 @@ public:
         B2(block2),
         B3(block3) {}
 
-  Mat6b operator+(const Mat6b& other)
+  Mat6b operator+(const Mat6b& other) const
   {
     return Mat6b(
         B0 + other.B0,
@@ -76,25 +79,47 @@ public:
         B3 + other.B3);
   }
 
-  inline Vec6b getColumn(const int idx)
+  inline Vec6b getColumn(const int idx) const
   {
     Vec6b out;
     if (idx < 3)
     {
-      out.b0 << B0(idx,0), B0(idx,1), B0(idx,2);
-      out.b1 << B1(idx,0), B1(idx,1), B1(idx,2);
+      out.b0 << B0(0,idx), B0(1,idx), B0(2,idx);
+      out.b1 << B1(0,idx), B1(1,idx), B1(2,idx);
     }
     else if (idx >= 3)
     {
       int idx_ = idx-3;
-      out.b0 << B2(idx_,0), B2(idx_,1), B2(idx_,2);
-      out.b1 << B3(idx_,0), B3(idx_,1), B3(idx_,2);
+      out.b0 << B2(0,idx_), B2(1,idx_), B2(2,idx_);
+      out.b1 << B3(0,idx_), B3(1,idx_), B3(2,idx_);
     }
     else
     {
       //TODO, handle out of bounds
     }
     return out;
+  }
+
+  //FOR DEBUGGING
+  inline Eigen::Matrix<Real,6,6> to6x6() const
+  {
+    Eigen::Matrix<Real,6,6> out;
+    out.block(0,0,3,3) = B0;
+    out.block(3,0,3,3) = B1;
+    out.block(0,3,3,3) = B2;
+    out.block(3,3,3,3) = B3;
+    return out;
+  }
+
+  friend std::ostream &operator<<( std::ostream &output, const Mat6b &M)
+  {
+    output << M.to6x6();
+    return output;
+  }
+
+  inline bool isApprox(const Mat6b& other, const Real prec = 0) const
+  {
+    return this->to6x6().isApprox(other.to6x6(), prec);
   }
 };
 
@@ -134,7 +159,7 @@ inline Vec6b crossVec6bForce(
 //[skew(t)*R R]
 inline Mat6b HTToPlucker(const HTransform& HT)
 {
-  return Mat6b(HT.R, Mat3::Zero(), skew(HT.t)*HT.R, HT.R);
+  return Mat6b(HT.R, skew(HT.t)*HT.R, Mat3::Zero(), HT.R);
 }
 
 //convert inverse of homogeneous transform to Plucker transform
@@ -145,7 +170,13 @@ inline Mat6b HTToPlucker(const HTransform& HT)
 inline Mat6b invHTToPlucker(const HTransform& HT)
 {
   Mat3 Rt = HT.R.transpose();
-  return Mat6b(Rt, Mat3::Zero(), -Rt*skew(HT.t), Rt);
+  return Mat6b(Rt, -Rt*skew(HT.t), Mat3::Zero(), Rt);
+}
+
+//FOR DEBUGGING
+inline HTransform PluckerToHT(const Mat6b& P)
+{
+  return HTransform(P.B0, unskew(P.B1*P.B0.transpose()));
 }
 
 //functions for multiplication with Plucker transforms
