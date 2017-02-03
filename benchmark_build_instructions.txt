@@ -1,0 +1,28 @@
+Build instructions for google benchmark
+
+1. clone the library from github:
+$ git clone https://github.com/google/benchmark
+This will create a /benchmark directory
+
+2. make a /benchmark/build directory in the top-level directory
+
+3. cmake-gui
+set the source directory to the top level /benchmark directory
+set the build directory to /benchmark/build
+set CMAKE_BUILD_TYPE to Release or RelWithDebInfo
+set CMAKE_INSTALL_PREFIX to /usr/local
+Configure
+Generate
+
+4. cd build
+make
+sudo make install
+
+verify that that the following exist:
+/usr/local/lib/libbenchmark.a exists
+/usr/local/include/benchmark
+
+
+Instructions to include it in the CMakeLists.txt for a catkin package:
+https://github.com/google/benchmark/issues/188
+

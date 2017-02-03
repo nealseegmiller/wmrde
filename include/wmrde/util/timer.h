@@ -8,8 +8,7 @@
 namespace wmrde
 {
 
-#include <time.h>
-
+//TODO, remove this?
 class TimedWait
 {
 public:
@@ -50,15 +49,6 @@ public:
         (stop_time_.tv_usec - start_time_.tv_usec)/1000.0;
   }
 };
-
-#define BENCHMARK(num_iter, expr, desc) do { \
-  Timer timer; \
-  timer.start(); \
-  for (size_t iter = 0; iter < num_iter; iter++) \
-  { expr ; } \
-  timer.stop(); \
-  printf("%zu iterations of %s took %f ms\n", num_iter, desc, timer.elapsedTimeMs()); \
-} while(0)
 
 } //namespace
 

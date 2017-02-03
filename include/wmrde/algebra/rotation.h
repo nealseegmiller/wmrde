@@ -78,6 +78,22 @@ void rotToEuler(const Mat3 R,
   pitch = atan2(-R(2,0), cP); //pit
 }
 
+//TODO, move these?
+//An alternative Euler angle to rotation implementation using AngleAxis
+//is suggested in the Eigen documentation:
+//https://eigen.tuxfamily.org/dox/classEigen_1_1AngleAxis.html
+//use this implementation for unit testing and benchmarking
+inline Mat3 RotxTest(const Real angle) { return AngleAxis(angle, Vec3::UnitX()).toRotationMatrix(); }
+inline Mat3 RotyTest(const Real angle) { return AngleAxis(angle, Vec3::UnitY()).toRotationMatrix(); }
+inline Mat3 RotzTest(const Real angle) { return AngleAxis(angle, Vec3::UnitZ()).toRotationMatrix(); }
+inline Mat3 eulerToRotTest(const Real roll, const Real pitch, const Real yaw)
+{
+  return (
+      AngleAxis(yaw, Vec3::UnitZ())*
+      AngleAxis(pitch, Vec3::UnitY())*
+      AngleAxis(roll, Vec3::UnitX()) ).toRotationMatrix();
+}
+
 //TODO, check this
 //returns a differential quaternion from angular velocity and time step
 inline Quaternion diffQuatFromAngularVel(

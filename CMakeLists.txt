@@ -66,8 +66,14 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
+#gtest
 catkin_add_gtest(algebra_test src/test/algebra_test.cpp)
 target_link_libraries(algebra_test ${PROJECT_NAME})
+
+#benchmark
+#depends on: https://github.com/google/benchmark
+add_executable(algebra_benchmark src/test/algebra_benchmark.cpp)
+target_link_libraries(algebra_benchmark ${PROJECT_NAME} benchmark)
 
 ### Build Nodes ###
 #add_executable(joysim_demo_node src/nodes/joysim_demo_node.cpp)
