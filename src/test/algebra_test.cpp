@@ -43,8 +43,8 @@ TEST(TestSuite, linalg3)
 
   size_t num_iter = 1e7;
 
-  BENCHMARK(num_iter, C.noalias() = A*B, "Mat3 A*B");
-  BENCHMARK(num_iter, C.noalias() = A.transpose()*B, "Mat3 A'*B");
+  BENCHMARK(num_iter, C.noalias() = A*B, "Mat3 A*B"); //2.7 ms
+  BENCHMARK(num_iter, C.noalias() = A.transpose()*B, "Mat3 A'*B"); //2.7 ms
 }
 
 inline Mat3 RotxTest(const Real angle) { return AngleAxis(angle, Vec3::UnitX()).toRotationMatrix(); }
@@ -98,10 +98,10 @@ TEST(TestSuite, rotation)
   //benchmark computation time of rotation.h functions vs. using AngleAxis
   size_t num_iter = 1e7;
 
-  BENCHMARK(num_iter, Rx = Rotx(roll), "Rotx()");
-  BENCHMARK(num_iter, Rx2 = RotxTest(roll), "Rotx() equivalent using AngleAxis");
-  BENCHMARK(num_iter, R = eulerToRot(roll,pitch,yaw), "eulerToRot()");
-  BENCHMARK(num_iter, R2 = RotTest(roll,pitch,yaw), "eulerToRot() equivalent using AngleAxis");
+  BENCHMARK(num_iter, Rx = Rotx(roll), "Rotx()"); //24 ms
+  BENCHMARK(num_iter, Rx2 = RotxTest(roll), "Rotx() equivalent using AngleAxis"); //303 ms
+  BENCHMARK(num_iter, R = eulerToRot(roll,pitch,yaw), "eulerToRot()"); //24 ms
+  BENCHMARK(num_iter, R2 = RotTest(roll,pitch,yaw), "eulerToRot() equivalent using AngleAxis"); //275 ms
 }
 
 TEST(TestSuite, transform)
@@ -131,11 +131,15 @@ TEST(TestSuite, transform)
   //benchmark composeWith() against 4x4 matrix multiplication
   size_t num_iter = 1e7;
 
-  BENCHMARK(num_iter, TT = T.composeWith(T), "composeWith()");
-  BENCHMARK(num_iter, Tid = T.composeInvWith(T), "composeInvWith()");
+  BENCHMARK(num_iter, TT = T.composeWith(T), "composeWith()"); //32 ms
+  BENCHMARK(num_iter, Tid = T.composeInvWith(T), "composeInvWith()"); //32 ms
   Eigen::Matrix<Real,4,4> Mat4x4;
-  BENCHMARK(num_iter, Mat4x4.noalias() = T_nb * T_nb, "4x4 matrix multiplication");
+  BENCHMARK(num_iter, Mat4x4.noalias() = T_nb * T_nb, "4x4 matrix multiplication"); //97 ms
 }
+
+//TODO, why does uncommenting the spatial test suite cause some benchmark times to increase in previous test suites?!
+//TODO, multMat6bPlucker is just 6 3x3 matrix multiplications. why are 1e7 multMat6bPlucker operations so much slower
+// than 6* the the speed of 1e7 3x3 Matrix multiplications?
 
 typedef Eigen::Matrix<Real,6,6> Mat6;
 typedef Eigen::Matrix<Real,6,1> Vec6;
@@ -154,18 +158,18 @@ TEST(TestSuite, spatial)
   std::cout << "P(inverse HT) = \n" << Pinv << std::endl;
   std::cout << "HT(P) = \n" << HT_ << std::endl;
 
-  Mat6 Id = Pinv.to6x6()*P.to6x6(); //expect identity
+  Mat6 P_nb = P.to6x6(); //non-block
+  Mat6 Id = Pinv.to6x6()*P_nb; //expect identity
   std::cout << "inverse(P)*P = \n" << Id << std::endl;
   EXPECT_TRUE( Id.isApprox(Mat6::Identity()) );
   EXPECT_TRUE( HT_.isApprox(HT) );
 
   //validate getColumn
-  Mat6 P_nb = P.to6x6(); //non-block
   for (size_t i = 0; i < 6; i++)
   {
     Vec6b col = P.getColumn(i);
-//    std::cout << "P(:," << i << ") = \n" << col << std::endl;
     EXPECT_TRUE(P_nb.col(i).isApprox(col.to6x1()));
+//    std::cout << "P(:," << i << ") = \n" << col << std::endl;
   }
 
   //validate Plucker-vector multiplication
@@ -190,6 +194,30 @@ TEST(TestSuite, spatial)
   BENCHMARK(num_iter, tmp.noalias() = P_nb.transpose()*v_nb, "P'*v using non-block");
 
   //validate Plucker-matrix multiplication
+  Real mass = 10.0;
+  Mat6b I = toSpatialInertia(mass, Vec3(1.0, 2.0, 3.0), Mat3::Identity());
+
+  Mat6b PTI = multPluckerTMat6b(P,I);
+  Mat6b IP = multMat6bPlucker(I,P);
+
+  std::cout << "I = \n" << I << std::endl;
+  std::cout << "P'*I = \n" << PTI << std::endl;
+  std::cout << "I*P = \n" << IP << std::endl;
+
+  Mat6 I_nb = I.to6x6();
+  EXPECT_TRUE(PTI.to6x6().isApprox(P_nb.transpose()*I_nb));
+  EXPECT_TRUE(IP.to6x6().isApprox(I_nb*P_nb));
+
+  Mat6 Tmp;
+  BENCHMARK(num_iter, PTI = multMat6bPlucker(I,P), "I*P using block multiplication, return by value");
+  BENCHMARK(num_iter, multMat6bPlucker(I,P,PTI), "I*P using block multiplication, return by ref");
+  BENCHMARK(num_iter, Tmp.noalias() = I_nb*P_nb, "I*P using non-block");
+
+  BENCHMARK(num_iter, PTI = multPluckerTMat6b(P,I), "P'*I using block multiplication");
+  BENCHMARK(num_iter, Tmp.noalias() = P_nb.transpose()*I_nb, "P'*I using non-block");
+
+  BENCHMARK(num_iter, PTI = Mat6b(), "allocate Mat6b");
+  BENCHMARK(num_iter, Tmp = Mat6(), "allocate non-block 6x6 matrix");
 }
 
 /*

@@ -236,6 +236,14 @@ inline Mat6b multPluckerTMat6b(const Mat6b& P, const Mat6b& M)
       P.B3.transpose()*M.B1,
       P.B0.transpose()*M.B2 + P.B1.transpose()*M.B3,
       P.B3.transpose()*M.B3);
+
+  //TODO, is this faster?
+//  Mat6b out;
+//  out.B0.noalias() = P.B0.transpose()*M.B0 + P.B1.transpose()*M.B1;
+//  out.B1.noalias() = P.B3.transpose()*M.B1;
+//  out.B2.noalias() = P.B0.transpose()*M.B2 + P.B1.transpose()*M.B3;
+//  out.B3.noalias() = P.B3.transpose()*M.B3;
+//  return out;
 }
 
 
@@ -255,13 +263,22 @@ inline Mat6b multMat6bPlucker(const Mat6b& M, const Mat6b& P)
       M.B2*P.B3,
       M.B3*P.B3);
 
-  //TODO, is this faster? if so use .noalias() for other functions as well
+  //TODO, is this faster?
 //  Mat6b out;
 //  out.B0.noalias() = M.B0*P.B0 + M.B2*P.B1;
 //  out.B1.noalias() = M.B1*P.B0 + M.B3*P.B1;
 //  out.B2.noalias() = M.B2*P.B3;
 //  out.B3.noalias() = M.B3*P.B3;
 //  return out;
+}
+
+//TODO, is this faster?
+inline void multMat6bPlucker(const Mat6b& M, const Mat6b& P, Mat6b& R)
+{
+  R.B0.noalias() = M.B0*P.B0 + M.B2*P.B1;
+  R.B1.noalias() = M.B1*P.B0 + M.B3*P.B1;
+  R.B2.noalias() = M.B2*P.B3;
+  R.B3.noalias() = M.B3*P.B3;
 }
 
 //m is the mass
