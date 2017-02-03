@@ -1,10 +1,33 @@
 #ifndef _WMRDE_TIMER_H_
 #define _WMRDE_TIMER_H_
 
-#include <sys/time.h> //Linux only
+//Linux only includes:
+#include <sys/time.h> //for gettimeofday
+#include <time.h> //for nanosleep
 
 namespace wmrde
 {
+
+#include <time.h>
+
+class TimedWait
+{
+public:
+  TimedWait(const double sec)
+  {
+    struct timespec tim, tim2;
+    double floor_sec = floor(sec);
+    tim.tv_sec = floor_sec;
+    tim.tv_nsec = (sec - floor_sec)*1e9;
+    if(nanosleep(&tim , &tim2) < 0 )
+    {
+       printf("nanosleep system call failed!\n");
+       return;
+    }
+    printf("Waited for %f sec.\n", sec);
+  }
+};
+
 class Timer
 {
 private:
@@ -27,6 +50,15 @@ public:
         (stop_time_.tv_usec - start_time_.tv_usec)/1000.0;
   }
 };
+
+#define BENCHMARK(num_iter, expr, desc) do { \
+  Timer timer; \
+  timer.start(); \
+  for (size_t iter = 0; iter < num_iter; iter++) \
+  { expr ; } \
+  timer.stop(); \
+  printf("%zu iterations of %s took %f ms\n", num_iter, desc, timer.elapsedTimeMs()); \
+} while(0)
 
 } //namespace
 

@@ -1,23 +1,16 @@
 #include <gtest/gtest.h>
-#include <Eigen/Dense>
 
 #include <wmrde/algebra/rotation.h>
+//#include <wmrde/algebra/transform.h>
 #include <wmrde/algebra/spatial.h>
 #include <wmrde/util/string_format.h>
-#include <wmrde/util/timer.h>
+#include <wmrde/util/timer.h> //for BENCHMARK macro
 
 using namespace wmrde;
 
-Timer timer;
-
-//TODO, move this macro to timer.h?
-#define BENCHMARK(num_iter, expr, desc) do { \
-  timer.start(); \
-  for (size_t iter = 0; iter < num_iter; iter++) \
-  { expr ; } \
-  timer.stop(); \
-  printf("%zu iterations of %s took %f ms\n", num_iter, desc, timer.elapsedTimeMs()); \
-} while(0)
+//use this to disable benchmarking
+//#undef BENCHMARK
+//#define BENCHMARK(num_iter,expr,desc) do { } while(0)
 
 Real epsilon = std::numeric_limits<Real>::epsilon()*2;
 inline bool approx(const Real a, const Real b)
@@ -41,10 +34,10 @@ TEST(TestSuite, linalg3)
 
 //  EXPECT_TRUE(???);
 
+  //benchmark
   size_t num_iter = 1e7;
-
-  BENCHMARK(num_iter, C.noalias() = A*B, "Mat3 A*B"); //2.7 ms
-  BENCHMARK(num_iter, C.noalias() = A.transpose()*B, "Mat3 A'*B"); //2.7 ms
+  BENCHMARK(num_iter, C.noalias() = A*B, "Mat3 A*B"); //3 ms for 1e7 iterations
+  BENCHMARK(num_iter, C.noalias() = A.transpose()*B, "Mat3 A'*B"); //3 ms
 }
 
 inline Mat3 RotxTest(const Real angle) { return AngleAxis(angle, Vec3::UnitX()).toRotationMatrix(); }
@@ -97,8 +90,7 @@ TEST(TestSuite, rotation)
 
   //benchmark computation time of rotation.h functions vs. using AngleAxis
   size_t num_iter = 1e7;
-
-  BENCHMARK(num_iter, Rx = Rotx(roll), "Rotx()"); //24 ms
+  BENCHMARK(num_iter, Rx = Rotx(roll), "Rotx()"); //24 ms for 1e7 iterations
   BENCHMARK(num_iter, Rx2 = RotxTest(roll), "Rotx() equivalent using AngleAxis"); //303 ms
   BENCHMARK(num_iter, R = eulerToRot(roll,pitch,yaw), "eulerToRot()"); //24 ms
   BENCHMARK(num_iter, R2 = RotTest(roll,pitch,yaw), "eulerToRot() equivalent using AngleAxis"); //275 ms
@@ -130,21 +122,22 @@ TEST(TestSuite, transform)
 
   //benchmark composeWith() against 4x4 matrix multiplication
   size_t num_iter = 1e7;
-
-  BENCHMARK(num_iter, TT = T.composeWith(T), "composeWith()"); //32 ms
+  BENCHMARK(num_iter, TT = T.composeWith(T), "composeWith()"); //32 ms for 1e7 iterations
   BENCHMARK(num_iter, Tid = T.composeInvWith(T), "composeInvWith()"); //32 ms
   Eigen::Matrix<Real,4,4> Mat4x4;
   BENCHMARK(num_iter, Mat4x4.noalias() = T_nb * T_nb, "4x4 matrix multiplication"); //97 ms
 }
 
-//TODO, why does uncommenting the spatial test suite cause some benchmark times to increase in previous test suites?!
-//TODO, multMat6bPlucker is just 6 3x3 matrix multiplications. why are 1e7 multMat6bPlucker operations so much slower
-// than 6* the the speed of 1e7 3x3 Matrix multiplications?
+//TODO, why does including the spatial test suite cause
+// some benchmark times to increase in previous test suites?!
+// affects benchmarks even if DISABLED_. need to comment it out!
+#define RUN_SPATIAL_TEST 1
+#if RUN_SPATIAL_TEST
 
 typedef Eigen::Matrix<Real,6,6> Mat6;
 typedef Eigen::Matrix<Real,6,1> Vec6;
 
-TEST(TestSuite, spatial)
+TEST(TestSuite, spatial) //prepend DISABLED_ to name to disable
 {
   //validate functions to construct Plucker transform
   //from homogeneous transform
@@ -172,53 +165,62 @@ TEST(TestSuite, spatial)
 //    std::cout << "P(:," << i << ") = \n" << col << std::endl;
   }
 
-  //validate Plucker-vector multiplication
-  Vec6b v( Vec3(1.0,2.0,3.0), Vec3(4.0,5.0,6.0) );
-  Vec6b Pv = multPluckerVec6b(P,v);
-  Vec6b PTv = multPluckerTVec6b(P,v);
+  if (true)
+  {
+    //validate Plucker-vector multiplication
+    Vec6b v( Vec3(1.0,2.0,3.0), Vec3(4.0,5.0,6.0) );
+    Vec6b Pv = multPluckerVec6b(P,v);
+    Vec6b PTv = multPluckerTVec6b(P,v);
 
-  std::cout << "v = \n" << v << std::endl;
-  std::cout << "P*v = \n" << Pv << std::endl;
-  std::cout << "P'*v = \n" << PTv << std::endl;
+    std::cout << "v = \n" << v << std::endl;
+    std::cout << "P*v = \n" << Pv << std::endl;
+    std::cout << "P'*v = \n" << PTv << std::endl;
 
-  Vec6 v_nb = v.to6x1(); //non-block
-  EXPECT_TRUE(Pv.to6x1().isApprox( P_nb*v_nb ));
-  EXPECT_TRUE(PTv.to6x1().isApprox( P_nb.transpose()*v_nb ));
+    Vec6 v_nb = v.to6x1(); //non-block
+    EXPECT_TRUE(Pv.to6x1().isApprox( P_nb*v_nb ));
+    EXPECT_TRUE(PTv.to6x1().isApprox( P_nb.transpose()*v_nb ));
 
-  size_t num_iter = 1e7;
-  Vec6 tmp;
-  BENCHMARK(num_iter, Pv = multPluckerVec6b(P,v), "P*v using block multiplication");
-  BENCHMARK(num_iter, tmp.noalias() = P_nb*v_nb, "P*v using non-block");
+    //benchmark
+    size_t num_iter = 1e7;
+    Vec6 tmp;
+    BENCHMARK(num_iter, Pv = multPluckerVec6b(P,v), "P*v using block multiplication"); //17 ms for 1e7 iterations
+    BENCHMARK(num_iter, tmp.noalias() = P_nb*v_nb, "P*v using non-block"); //8 ms
+    BENCHMARK(num_iter, Pv = multPluckerTVec6b(P,v), "P'*v using block multiplication"); //16 ms
+    BENCHMARK(num_iter, tmp.noalias() = P_nb.transpose()*v_nb, "P'*v using non-block"); //78 ms
+  }
 
-  BENCHMARK(num_iter, Pv = multPluckerTVec6b(P,v), "P'*v using block multiplication");
-  BENCHMARK(num_iter, tmp.noalias() = P_nb.transpose()*v_nb, "P'*v using non-block");
+  if (true)
+  {
+    //validate Plucker-matrix multiplication
+    Real mass = 10.0;
+    Mat6b I = toSpatialInertia(mass, Vec3(1.0, 2.0, 3.0), Mat3::Identity());
 
-  //validate Plucker-matrix multiplication
-  Real mass = 10.0;
-  Mat6b I = toSpatialInertia(mass, Vec3(1.0, 2.0, 3.0), Mat3::Identity());
+    Mat6b PTI = multPluckerTMat6b(P,I);
+    Mat6b IP = multMat6bPlucker(I,P);
 
-  Mat6b PTI = multPluckerTMat6b(P,I);
-  Mat6b IP = multMat6bPlucker(I,P);
+    std::cout << "I = \n" << I << std::endl;
+    std::cout << "P'*I = \n" << PTI << std::endl;
+    std::cout << "I*P = \n" << IP << std::endl;
 
-  std::cout << "I = \n" << I << std::endl;
-  std::cout << "P'*I = \n" << PTI << std::endl;
-  std::cout << "I*P = \n" << IP << std::endl;
+    Mat6 I_nb = I.to6x6();
+    EXPECT_TRUE(PTI.to6x6().isApprox(P_nb.transpose()*I_nb));
+    EXPECT_TRUE(IP.to6x6().isApprox(I_nb*P_nb));
 
-  Mat6 I_nb = I.to6x6();
-  EXPECT_TRUE(PTI.to6x6().isApprox(P_nb.transpose()*I_nb));
-  EXPECT_TRUE(IP.to6x6().isApprox(I_nb*P_nb));
-
-  Mat6 Tmp;
-  BENCHMARK(num_iter, PTI = multMat6bPlucker(I,P), "I*P using block multiplication, return by value");
-  BENCHMARK(num_iter, multMat6bPlucker(I,P,PTI), "I*P using block multiplication, return by ref");
-  BENCHMARK(num_iter, Tmp.noalias() = I_nb*P_nb, "I*P using non-block");
-
-  BENCHMARK(num_iter, PTI = multPluckerTMat6b(P,I), "P'*I using block multiplication");
-  BENCHMARK(num_iter, Tmp.noalias() = P_nb.transpose()*I_nb, "P'*I using non-block");
-
-  BENCHMARK(num_iter, PTI = Mat6b(), "allocate Mat6b");
-  BENCHMARK(num_iter, Tmp = Mat6(), "allocate non-block 6x6 matrix");
+    //benchmark
+    //TODO, multMat6bPlucker contains just 6 3x3 matrix multiplications, so why
+    // are n multMat6bPlucker operations so much slower than 6* n 3x3 Matrix multiplications?
+    size_t num_iter = 1e7;
+    Mat6 Tmp;
+    BENCHMARK(num_iter, PTI = multMat6bPlucker(I,P), "I*P using block multiplication, return by value"); //894 ms for 1e7 iterations
+//    BENCHMARK(num_iter, multMat6bPlucker(I,P,PTI), "I*P using block multiplication, return by ref"); //850 ms
+    BENCHMARK(num_iter, Tmp.noalias() = I_nb*P_nb, "I*P using non-block"); //298 ms
+    BENCHMARK(num_iter, PTI = multPluckerTMat6b(P,I), "P'*I using block multiplication"); //618 ms
+    BENCHMARK(num_iter, Tmp.noalias() = P_nb.transpose()*I_nb, "P'*I using non-block"); //477 ms
+//    BENCHMARK(num_iter, PTI = Mat6b(), "allocate Mat6b");
+//    BENCHMARK(num_iter, Tmp = Mat6(), "allocate non-block 6x6 matrix");
+  }
 }
+#endif //RUN_SPATIAL_TEST
 
 /*
 TEST(TestSuite, multPluckerVec6b)
@@ -468,7 +470,8 @@ TEST(TestSuite, matrix)
 */
 
 // Run all the tests that were declared with TEST()
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
