@@ -11,9 +11,11 @@ namespace wmrde
 typedef Eigen::Quaternion<Real> Quaternion;
 typedef Eigen::AngleAxis<Real> AngleAxis;
 
-//Rotation functions
-//TODO, verify return value optimization
-//TODO, possible to set all value in constructor?
+inline Real radToDeg(Real rad) { return rad*180.0/M_PI; }
+inline Real degToRad(Real deg) { return deg*M_PI/180.0; }
+
+//functions to compute rotation matrices from Euler angles
+
 inline Mat3 Rotx(const Real angle)
 {
   Real ca = cos(angle);
@@ -31,7 +33,7 @@ inline Mat3 Roty(const Real angle)
   Real sa = sin(angle);
   Mat3 out;
   out << ca, 0, sa,
-         0,  1, 0
+         0,  1, 0,
         -sa, 0, ca;
   return out;
 }
@@ -47,6 +49,7 @@ inline Mat3 Rotz(const Real angle)
   return out;
 }
 
+//R = Rotz(yaw)*Roty(pitch)*Rotx(roll)
 inline Mat3 eulerToRot(const Real roll, const Real pitch, const Real yaw)
 {
   Real sR=sin(roll);  Real cR=cos(roll);
@@ -54,7 +57,7 @@ inline Mat3 eulerToRot(const Real roll, const Real pitch, const Real yaw)
   Real sY=sin(yaw);   Real cY=cos(yaw);
   Mat3 out;
   out << cP*cY, cY*sP*sR - cR*sY, sR*sY + cR*cY*sP,
-         cP*sY, cR*cY + sP*sR*sY, cR*sP*sY - cY*sR;
+         cP*sY, cR*cY + sP*sR*sY, cR*sP*sY - cY*sR,
         -sP,    cP*sR,            cP*cR;
   return out;
 }

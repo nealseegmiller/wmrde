@@ -3,6 +3,7 @@
 
 #include <wmrde/algebra/rotation.h>
 #include <wmrde/algebra/spatial.h>
+#include <wmrde/util/string_format.h>
 #include <wmrde/util/timer.h>
 
 using namespace wmrde;
@@ -10,8 +11,18 @@ using namespace wmrde;
 TEST(TestSuite, linalg3)
 {
   Mat3 A, B, C;
-  A << 1,2,3,4,5,6,7,8,9;
-  B << 2,3,4,5,6,7,8,9,10;
+  for (int i = 0; i < A.size(); i++)
+  {
+    A.data()[i] = i;
+    B.data()[i] = i+1;
+  }
+
+  std::cout << "A = \n" << A << std::endl;
+  std::cout << "B = \n" << B << std::endl;
+  std::cout << "A*B = \n" << A*B << std::endl;
+  std::cout << "A'*B = \n" << A.transpose()*B << std::endl;
+
+//  EXPECT_TRUE(???);
 
   size_t num_iter = 1e7;
   Timer timer;
@@ -26,9 +37,83 @@ TEST(TestSuite, linalg3)
   timer.start();
   for (size_t iter = 0; iter < num_iter; iter++) { C.noalias() = A.transpose()*B; }
   timer.stop();
-  printf("%zu iterations of Mat3 A.transpose()*B took %f ms\n", num_iter, timer.elapsedTimeMs());
+  printf("%zu iterations of Mat3 A'*B took %f ms\n", num_iter, timer.elapsedTimeMs());
+}
 
-  EXPECT_TRUE(true);
+inline Mat3 RotxTest(const Real angle) { return AngleAxis(angle, Vec3::UnitX()).toRotationMatrix(); }
+inline Mat3 RotyTest(const Real angle) { return AngleAxis(angle, Vec3::UnitY()).toRotationMatrix(); }
+inline Mat3 RotzTest(const Real angle) { return AngleAxis(angle, Vec3::UnitZ()).toRotationMatrix(); }
+inline Mat3 RotTest(const Real roll, const Real pitch, const Real yaw)
+{
+  return (
+      AngleAxis(yaw, Vec3::UnitZ())*
+      AngleAxis(pitch, Vec3::UnitY())*
+      AngleAxis(roll, Vec3::UnitX()) ).toRotationMatrix();
+}
+inline bool isApprox(const Real a, const Real b)
+{
+  Real tol = std::numeric_limits<Real>::epsilon()*10.0;
+  return std::abs(a-b) < tol;
+}
+
+TEST(TestSuite, rotation)
+{
+  Mat3 Rx,Ry,Rz,R;
+  Real roll = degToRad(10.0);
+  Real pitch = degToRad(20.0);
+  Real yaw = degToRad(30.0);
+
+  //calculate rotation matrices from Euler angles
+  Rx = Rotx(roll);
+  Ry = Roty(pitch);
+  Rz = Rotz(yaw);
+  R = eulerToRot(roll,pitch,yaw);
+
+  std::cout << string_format("Rotx(%f) = \n", roll) << Rx << std::endl;
+  std::cout << string_format("Roty(%f) = \n", pitch) << Ry << std::endl;
+  std::cout << string_format("Rotz(%f) = \n", yaw) << Rz << std::endl;
+  std::cout << string_format("eulerToRot(%f,%f,%f) = \n", roll, pitch, yaw) << R << std::endl;
+
+  //to validate, calculate rotation matrices from Euler angles using AngleAxis as suggested
+  //in the Eigen documentation:
+  //https://eigen.tuxfamily.org/dox/classEigen_1_1AngleAxis.html
+  Mat3 Rx2 = RotxTest(roll);
+  Mat3 Ry2 = RotyTest(pitch);
+  Mat3 Rz2 = RotzTest(yaw);
+  Mat3 R2 = RotTest(roll,pitch,yaw);
+
+  EXPECT_TRUE( Rx.isApprox(Rx2) ) << "Rotx() failed, expected:\n" << Rx;
+  EXPECT_TRUE( Ry.isApprox(Ry2) ) << "Roty() failed, expected:\n" << Ry;
+  EXPECT_TRUE( Rz.isApprox(Rz2) ) << "Rotz() failed, expected:\n" << Rz;
+  EXPECT_TRUE( R.isApprox(R2) ) << "eulerToRot() failed, expected:\n" << R2;
+
+  //validate rotToEuler()
+  Real roll_, pitch_, yaw_;
+  rotToEuler(R2, roll_, pitch_, yaw_);
+  printf("rotToEuler() roll = %f, pitch = %f, yaw = %f\n", roll_, pitch_, yaw_);
+  EXPECT_TRUE(isApprox(roll,roll_) && isApprox(pitch,pitch_) && isApprox(yaw,yaw_)) << "rotToEuler() failed.\n";
+
+  //benchmark computation time of rotation.h functions vs. using AngleAxis
+  size_t num_iter = 1e7;
+  Timer timer;
+
+  timer.start();
+  for (size_t iter = 0; iter < num_iter; iter++)
+  {
+    R = eulerToRot(roll,pitch,yaw);
+//    Rx = Rotx(roll);
+  }
+  timer.stop();
+  printf("%zu iterations of euler to Rotation took %f ms\n", num_iter, timer.elapsedTimeMs());
+
+  timer.start();
+  for (size_t iter = 0; iter < num_iter; iter++)
+  {
+    R2 = RotTest(roll,pitch,yaw);
+//    Rx2 = RotxTest(roll);
+  }
+  timer.stop();
+  printf("%zu iterations of euler to Rotation using AngleAxis took %f ms\n", num_iter, timer.elapsedTimeMs());
 }
 
 /*

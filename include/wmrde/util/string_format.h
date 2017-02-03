@@ -1,6 +1,8 @@
 #ifndef _WMRDE_STRING_FORMAT_H_
 #define _WMRDE_STRING_FORMAT_H_
 
+#include <memory> //for unique_ptr
+
 namespace wmrde
 {
 
