@@ -8,6 +8,12 @@
 
 using namespace wmrde;
 
+Real epsilon = std::numeric_limits<Real>::epsilon()*2;
+inline bool approx(const Real a, const Real b)
+{
+  return std::abs(a-b) < epsilon;
+}
+
 TEST(TestSuite, linalg3)
 {
   Mat3 A, B, C;
@@ -50,11 +56,6 @@ inline Mat3 RotTest(const Real roll, const Real pitch, const Real yaw)
       AngleAxis(pitch, Vec3::UnitY())*
       AngleAxis(roll, Vec3::UnitX()) ).toRotationMatrix();
 }
-inline bool isApprox(const Real a, const Real b)
-{
-  Real tol = std::numeric_limits<Real>::epsilon()*10.0;
-  return std::abs(a-b) < tol;
-}
 
 TEST(TestSuite, rotation)
 {
@@ -74,8 +75,8 @@ TEST(TestSuite, rotation)
   std::cout << string_format("Rotz(%f) = \n", yaw) << Rz << std::endl;
   std::cout << string_format("eulerToRot(%f,%f,%f) = \n", roll, pitch, yaw) << R << std::endl;
 
-  //to validate, calculate rotation matrices from Euler angles using AngleAxis as suggested
-  //in the Eigen documentation:
+  //to validate, calculate rotation matrices from Euler angles using AngleAxis
+  //as suggested in the Eigen documentation:
   //https://eigen.tuxfamily.org/dox/classEigen_1_1AngleAxis.html
   Mat3 Rx2 = RotxTest(roll);
   Mat3 Ry2 = RotyTest(pitch);
@@ -91,7 +92,7 @@ TEST(TestSuite, rotation)
   Real roll_, pitch_, yaw_;
   rotToEuler(R2, roll_, pitch_, yaw_);
   printf("rotToEuler() roll = %f, pitch = %f, yaw = %f\n", roll_, pitch_, yaw_);
-  EXPECT_TRUE(isApprox(roll,roll_) && isApprox(pitch,pitch_) && isApprox(yaw,yaw_)) << "rotToEuler() failed.\n";
+  EXPECT_TRUE(approx(roll,roll_) && approx(pitch,pitch_) && approx(yaw,yaw_)) << "rotToEuler() failed.\n";
 
   //benchmark computation time of rotation.h functions vs. using AngleAxis
   size_t num_iter = 1e7;
@@ -114,6 +115,61 @@ TEST(TestSuite, rotation)
   }
   timer.stop();
   printf("%zu iterations of euler to Rotation using AngleAxis took %f ms\n", num_iter, timer.elapsedTimeMs());
+}
+
+TEST(TestSuite, transform)
+{
+  //validate composeWith()
+  HTransform T( eulerToRot(0.0,0.0,degToRad(10.0)), Vec3(1.0,2.0,3.0) );
+  HTransform TT = T.composeWith(T);
+
+  std::cout << "T = \n" << T << std::endl;
+  std::cout << "T*T = \n" << TT << std::endl;
+
+  //validate using 4x4 matrix multiplication
+  Eigen::Matrix<Real,4,4> T4x4 = T.to4x4();
+  EXPECT_TRUE( TT.to4x4().isApprox(T4x4*T4x4) );
+
+  //validate composeInvWith()
+  HTransform Tid = T.composeInvWith(T);
+  HTransform Tid2; Tid2.setIdentity();
+  std::cout << "inv(T)*T = \n" << Tid << std::endl;
+  EXPECT_TRUE( Tid.isApprox(Tid2, epsilon) );
+  EXPECT_TRUE( Tid.isApprox(T.inverse().composeWith(T)) );
+
+  //validate applyTo() and applyInvTo()
+  EXPECT_TRUE( T.applyTo(T.t).isApprox(TT.t) );
+  EXPECT_TRUE( T.applyInvTo(T.t).isApprox(Vec3::Zero()) );
+
+  //benchmark composeWith() agains 4x4 matrix multiplication
+  size_t num_iter = 1e7;
+  Timer timer;
+
+  //TODO, write a benchmarking macro?
+  timer.start();
+  for (size_t iter = 0; iter < num_iter; iter++)
+  {
+    TT = T.composeWith(T);
+  }
+  timer.stop();
+  printf("%zu iterations of composeWith() took %f ms\n", num_iter, timer.elapsedTimeMs());
+
+  timer.start();
+  for (size_t iter = 0; iter < num_iter; iter++)
+  {
+    Tid = T.composeInvWith(T);
+  }
+  timer.stop();
+  printf("%zu iterations of composeInvWith() took %f ms\n", num_iter, timer.elapsedTimeMs());
+
+  Eigen::Matrix<Real,4,4> Mat4x4;
+  timer.start();
+  for (size_t iter = 0; iter < num_iter; iter++)
+  {
+    Mat4x4.noalias() = T4x4 * T4x4;
+  }
+  timer.stop();
+  printf("%zu iterations of 4x4 matrix multiplication took %f ms\n", num_iter, timer.elapsedTimeMs());
 }
 
 /*

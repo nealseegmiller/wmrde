@@ -3,6 +3,7 @@
 #ifndef _WMRDE_TRANSFORM_H_
 #define _WMRDE_TRANSFORM_H_
 
+#include <iostream>
 #include <wmrde/algebra/linalg3.h>
 
 namespace wmrde
@@ -21,35 +22,41 @@ public:
   {}
 
   inline void setIdentity() { R.setIdentity(); t.setZero(); }
-  inline void invert() //invert in place
+  inline HTransform inverse() const
   {
-    R.transposeInPlace();
-    t = -R*t; //here R is transpose of original R
+    return HTransform(R.transpose(), -R.transpose()*t);
   }
 
-  inline HTransform compose(const HTransform& other)
+  inline HTransform composeWith(const HTransform& other) const
   {
     //return (*this) * other
     return HTransform( R*other.R, R*other.t + t);
+
+    //TODO, is copy elision performed?
+    //TODO, is this faster?
+//    HTransform out;
+//    out.R.noalias() = R*other.R;
+//    out.t.noalias() = R*other.t + t;
+//    return out;
   }
 
-  inline HTransform composeInv(const HTransform& other)
+  inline HTransform composeInvWith(const HTransform& other) const
   {
     //return (*this.inverse()) * other
     return HTransform( R.transpose()*other.R, R.transpose()*(other.t - t));
   }
 
-  inline Vec3 apply(const Vec3& vec)
+  inline Vec3 applyTo(const Vec3& vec) const
   {
     return R*vec + t;
   }
-  inline Vec3 applyInv(const Vec3& vec)
+  inline Vec3 applyInvTo(const Vec3& vec) const
   {
     return R.transpose()*(vec - t);
   }
 
   //DEBUGGING
-  inline Eigen::Matrix<Real,3,4> to3x4()
+  inline Eigen::Matrix<Real,3,4> to3x4() const
   {
     Eigen::Matrix<Real,3,4> out;
     out.block(0,0,3,3) = R;
@@ -57,7 +64,7 @@ public:
     return out;
   }
 
-  inline Eigen::Matrix<Real,4,4> to4x4()
+  inline Eigen::Matrix<Real,4,4> to4x4() const
   {
     Eigen::Matrix<Real,4,4> out;
     out.setZero();
@@ -65,6 +72,18 @@ public:
     out.block(0,3,3,1) = t;
     out(3,3) = 1.0;
     return out;
+  }
+
+  //FOR DEBUGGING
+  friend std::ostream &operator<<( std::ostream &output, const HTransform &T)
+  {
+    output << T.to3x4();
+    return output;
+  }
+
+  inline bool isApprox(const HTransform& other, const Real prec = 0) const
+  {
+    return R.isApprox(other.R, prec) && t.isApprox(other.t, prec);
   }
 };
 
