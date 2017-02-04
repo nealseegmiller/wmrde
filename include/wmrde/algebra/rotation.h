@@ -55,10 +55,24 @@ inline Mat3 eulerToRot(const Real roll, const Real pitch, const Real yaw)
   Real sR=sin(roll);  Real cR=cos(roll);
   Real sP=sin(pitch); Real cP=cos(pitch);
   Real sY=sin(yaw);   Real cY=cos(yaw);
+
   Mat3 out;
-  out << cP*cY, cY*sP*sR - cR*sY, sR*sY + cR*cY*sP,
-         cP*sY, cR*cY + sP*sR*sY, cR*sP*sY - cY*sR,
-        -sP,    cP*sR,            cP*cR;
+
+  out(0,0) = cP*cY;
+  out(0,1) = cY*sP*sR - cR*sY;
+  out(0,2) = sR*sY + cR*cY*sP;
+  out(1,0) = cP*sY;
+  out(1,1) = cR*cY + sP*sR*sY;
+  out(1,2) = cR*sP*sY - cY*sR;
+  out(2,0) =-sP;
+  out(2,1) = cP*sR;
+  out(2,2) = cP*cR;
+
+  //TODO, why is this slow?
+//  out << cP*cY, cY*sP*sR - cR*sY, sR*sY + cR*cY*sP,
+//         cP*sY, cR*cY + sP*sR*sY, cR*sP*sY - cY*sR,
+//        -sP,    cP*sR,            cP*cR;
+
   return out;
 }
 
