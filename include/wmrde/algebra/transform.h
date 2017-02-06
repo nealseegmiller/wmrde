@@ -31,13 +31,6 @@ public:
   {
     //return (*this) * other
     return HTransform( R*other.R, R*other.t + t);
-
-    //TODO, is copy elision performed?
-    //TODO, is this faster?
-//    HTransform out;
-//    out.R.noalias() = R*other.R;
-//    out.t.noalias() = R*other.t + t;
-//    return out;
   }
 
   inline HTransform composeInvWith(const HTransform& other) const

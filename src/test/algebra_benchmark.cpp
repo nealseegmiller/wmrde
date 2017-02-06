@@ -3,41 +3,12 @@
 #include <iostream>
 #include <wmrde/algebra/rotation.h>
 #include <wmrde/algebra/spatial.h>
+#include <wmrde/algebra/spatial_block.h>
+#include <wmrde/algebra/random.h>
 
 using namespace wmrde;
 
-typedef Eigen::Matrix<Real,6,6> Mat6;
-typedef Eigen::Matrix<Real,6,1> Vec6;
-
-// ------------------------------ 3x3 matrix multiplication ------------------------------
-static void BM_MatMatMult3x3(benchmark::State& state) {
-  Mat3 A, B, C;
-  A.setRandom();
-  B.setRandom();
-//  std::cout << "A = \n" << A << std::endl;
-//  std::cout << "B = \n" << B << std::endl;
-  while (state.KeepRunning())
-  {
-    C.noalias() = A*B;
-  }
-}
-BENCHMARK(BM_MatMatMult3x3); //2 ns
-
-static void BM_MatTMatMult3x3(benchmark::State& state) {
-  Mat3 A, B, C;
-  A.setRandom();
-  B.setRandom();
-  while (state.KeepRunning())
-  {
-    C.noalias() = A*B;
-  }
-}
-BENCHMARK(BM_MatTMatMult3x3); //2 ns
-
 //------------------------------ rotation.h functions ------------------------------
-inline double rand01() { return rand()/static_cast<double>(RAND_MAX); }
-inline Real randAngle() { return 2.0*M_PI*(rand01() - 0.5); }
-
 static void BM_Rotx(benchmark::State& state) {
   Mat3 Rx;
   Real angle = randAngle();
@@ -60,7 +31,7 @@ static void BM_EulerToRot(benchmark::State& state) {
     R = eulerToRot(roll,pitch,yaw);
   }
 }
-BENCHMARK(BM_EulerToRot); //100 ns, why so slow?
+BENCHMARK(BM_EulerToRot); //2 ns
 
 static void BM_RotxUsingAngleAxis(benchmark::State& state) {
   Mat3 Rx;
@@ -85,9 +56,6 @@ static void BM_EulerToRotUsingAngleAxis(benchmark::State& state) {
 BENCHMARK(BM_EulerToRotUsingAngleAxis); //2 ns
 
 // ------------------------------ transform.h functions ------------------------------
-inline Mat3 randomRotation() { return eulerToRot(randAngle(),randAngle(),randAngle()); }
-inline HTransform randomHTransform() { return HTransform(randomRotation(), Vec3::Random()); }
-
 static void BM_HTcomposeWith(benchmark::State& state) {
   HTransform T = randomHTransform();
   HTransform TT;
@@ -118,38 +86,55 @@ static void BM_HTcomposeWithUsing4x4(benchmark::State& state) {
 }
 BENCHMARK(BM_HTcomposeWithUsing4x4); //10 ns
 
-// ------------------------------ spatial.h matrix-vector multiplication ------------------------------
-inline Mat6b randomPlucker() { return HTToPlucker(randomHTransform()); }
-inline Vec6b randomVec6b() { return Vec6b(Vec3::Random(), Vec3::Random()); }
+// ------------------------------ spatial.h convert HT to Plucker ------------------------------
 
-static void BM_multPluckerVec6b(benchmark::State& state) {
-  Mat6b P = randomPlucker();
-  Vec6b v = randomVec6b();
-  Vec6b w; //result
+static void BM_HTToPlucker(benchmark::State& state) {
+  HTransform HT = randomHTransform();
+  Mat6 P;
 
-  HTransform TT;
   while (state.KeepRunning())
   {
-    w = multPluckerVec6b(P,v);
+    P = HTToPlucker(HT);
   }
 }
-BENCHMARK(BM_multPluckerVec6b); //2 ns
+BENCHMARK(BM_HTToPlucker); // 2 ns
 
-static void BM_multPluckerTVec6b(benchmark::State& state) {
-  Mat6b P = randomPlucker();
-  Vec6b v = randomVec6b();
-  Vec6b w; //result
+static void BM_invHTToPlucker(benchmark::State& state) {
+  HTransform HT = randomHTransform();
+  Mat6 P;
 
-  HTransform TT;
   while (state.KeepRunning())
   {
-    w = multPluckerTVec6b(P,v);
+    P = invHTToPlucker(HT);
   }
 }
-BENCHMARK(BM_multPluckerTVec6b); //2 ns
+BENCHMARK(BM_invHTToPlucker); // 2 ns
 
-static void BM_multPluckerVecUsing6x6(benchmark::State& state) {
-  Mat6 P = randomPlucker().to6x6();
+// ------------------------------ spatial.h Plucker-vector multiplication ------------------------------
+static void BM_multPluckerVec(benchmark::State& state) {
+  Mat6 P = randomPlucker();
+  Vec6 v = Vec6::Random();
+  Vec6 w; //result
+  while (state.KeepRunning())
+  {
+    w.noalias() = multPluckerVec(P,v); //2 ns
+  }
+}
+BENCHMARK(BM_multPluckerVec);
+
+static void BM_multPluckerTVec(benchmark::State& state) {
+  Mat6 P = randomPlucker();
+  Vec6 v = Vec6::Random();
+  Vec6 w; //result
+  while (state.KeepRunning())
+  {
+    w.noalias() = multPluckerTVec(P,v);
+  }
+}
+BENCHMARK(BM_multPluckerTVec); //2 ns
+
+static void BM_multPluckerVecNonBlock(benchmark::State& state) {
+  Mat6 P = randomPlucker();
   Vec6 v = Vec6::Random();
   Vec6 w; //result
   while (state.KeepRunning())
@@ -157,10 +142,10 @@ static void BM_multPluckerVecUsing6x6(benchmark::State& state) {
     w.noalias() = P*v;
   }
 }
-BENCHMARK(BM_multPluckerVecUsing6x6); //2 ns
+BENCHMARK(BM_multPluckerVecNonBlock); //2 ns
 
-static void BM_multPluckerTVecUsing6x6(benchmark::State& state) {
-  Mat6 P = randomPlucker().to6x6();
+static void BM_multPluckerTVecNonBlock(benchmark::State& state) {
+  Mat6 P = randomPlucker();
   Vec6 v = Vec6::Random();
   Vec6 w; //result
   while (state.KeepRunning())
@@ -168,65 +153,52 @@ static void BM_multPluckerTVecUsing6x6(benchmark::State& state) {
     w.noalias() = P.transpose()*v;
   }
 }
-BENCHMARK(BM_multPluckerTVecUsing6x6); //8 ns
+BENCHMARK(BM_multPluckerTVecNonBlock); //8 ns
 
-// ------------------------------ spatial.h matrix-matrix multiplication ------------------------------
-inline Mat6b randomInertia() { return toSpatialInertia(rand01(), Vec3::Random(), Mat3::Random()); }
-
-static void BM_multPluckerTMat6b(benchmark::State& state) {
-  Mat6b P = randomPlucker();
-  Mat6b I = randomInertia();
-  Mat6b M; //result
-
-  HTransform TT;
-  while (state.KeepRunning())
-  {
-    M = multPluckerTMat6b(P,I);
-  }
-}
-BENCHMARK(BM_multPluckerTMat6b); //49 ns
-
-static void BM_multMat6bPlucker(benchmark::State& state) {
-  Mat6b P = randomPlucker();
-  Mat6b I = randomInertia();
-  Mat6b M; //result
-
-  HTransform TT;
-  while (state.KeepRunning())
-  {
-    M = multMat6bPlucker(I,P);
-  }
-}
-BENCHMARK(BM_multMat6bPlucker); //65 ns
-
-static void BM_multPluckerTMatUsing6x6(benchmark::State& state) {
-  Mat6 P = randomPlucker().to6x6();
-  Mat6 I = randomInertia().to6x6();
+// ------------------------------ spatial.h Plucker-inertia multiplication ------------------------------
+static void BM_multPluckerTInertiaPlucker(benchmark::State& state) {
+  Mat6 P = randomPlucker();
+  Mat6 I = randomInertia();
   Mat6 M; //result
 
   HTransform TT;
   while (state.KeepRunning())
   {
-    M.noalias() = P.transpose()*I;
+    M.noalias() = multPluckerTInertiaPlucker(P,I);
   }
 }
-BENCHMARK(BM_multPluckerTMatUsing6x6); //51 ns
+BENCHMARK(BM_multPluckerTInertiaPlucker); //81 ns
 
-static void BM_multMatPluckerUsing6x6(benchmark::State& state) {
-  Mat6 P = randomPlucker().to6x6();
-  Mat6 I = randomInertia().to6x6();
+static void BM_multPluckerTInertiaPluckerEigen(benchmark::State& state) {
+  Mat6 P = randomPlucker();
+  Mat6 I = randomInertia();
   Mat6 M; //result
 
   HTransform TT;
   while (state.KeepRunning())
   {
-    M.noalias() = I*P;
+    M.noalias() = P.transpose()*I*P;
   }
 }
-BENCHMARK(BM_multMatPluckerUsing6x6); //33 ns
+BENCHMARK(BM_multPluckerTInertiaPluckerEigen); //85 ns
+
+//benchmark using deprecated Mat6b, requires spatial_block.h
+static void BM_multPluckerTInertiaPlucker6b(benchmark::State& state) {
+  Mat6b P; P.from6x6(randomPlucker());
+  Mat6b I; I.from6x6(randomInertia());
+  Mat6b M; //result
+
+  HTransform TT;
+  while (state.KeepRunning())
+  {
+    M = multMatPlucker6b(I,P);
+    M = multPluckerTMat6b(P,M);
+  }
+}
+BENCHMARK(BM_multPluckerTInertiaPlucker6b); //164 ns
+
 
 // ------------------------------ dynamic vs. fixed matrix operations ------------------------------
-
 template<int T, int N>
 static void BM_MatOp(benchmark::State& state) {
   Eigen::Matrix <Real,T,T> A, B, C;
@@ -242,14 +214,23 @@ static void BM_MatOp(benchmark::State& state) {
 
   while (state.KeepRunning())
   {
-//    C.noalias() = A*B;
+    C.noalias() = A*B;
 //    C.noalias() = A.transpose()*B;
 
-    Eigen::LLT< Eigen::Matrix<Real,T,T> > A_llt(A);
-    C = A_llt.matrixL();
+//    Eigen::LLT< Eigen::Matrix<Real,T,T> > A_llt(A);
+//    C = A_llt.matrixL();
   }
 }
-BENCHMARK_TEMPLATE(BM_MatOp, 12, 12); //24 ns
-BENCHMARK_TEMPLATE(BM_MatOp, Eigen::Dynamic, 12); //226 ns
+//time for matrix multiplication, time for cholesky decomposition
+//BENCHMARK_TEMPLATE(BM_MatOp, 8, 8); //199 ns,
+BENCHMARK_TEMPLATE(BM_MatOp, 12, 12); //500 ns, 24 ns
+//BENCHMARK_TEMPLATE(BM_MatOp, 16, 16); //1014 ns,
+//BENCHMARK_TEMPLATE(BM_MatOp, Eigen::Dynamic, 8); //274 ns,
+BENCHMARK_TEMPLATE(BM_MatOp, Eigen::Dynamic, 12); //583 ns, 226 ns
+//BENCHMARK_TEMPLATE(BM_MatOp, Eigen::Dynamic, 16); //1144 ns
 
+
+// ------------------------------ main ------------------------------
 BENCHMARK_MAIN();
+
+

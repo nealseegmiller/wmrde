@@ -43,6 +43,7 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 ### Build Library ###
 add_library(${PROJECT_NAME} 
+  src/algebra/spatial.cpp
 #  src/demo/rockymodel.cpp
 #  src/demo/talonmodel.cpp
 #  src/demo/terrains.cpp
