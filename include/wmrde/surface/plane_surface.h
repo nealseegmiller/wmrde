@@ -62,9 +62,9 @@ class PlaneSurface : public Surface
   }
 
   //override virtual functions in Surface class
-	bool getHeight(const Real pt[3], Real& height) const override;
-	bool getNormal(const Real pt[3], Real normal[3]) const override;
-	bool getDistance(const Real pt[3], Real& distance, Real normal[3]) const override;
+	bool getHeight(const Vec3& pt, Real& height) const override;
+	bool getNormal(const Vec3& pt, Vec3& normal) const override;
+	bool getDistance(const Vec3& pt, Real& distance, Vec3& normal) const override;
 	
  private:
 	bool initialized_;
@@ -75,7 +75,7 @@ class PlaneSurface : public Surface
 	std::array<Real,4> plane_eq; //plane equation coefficients: a*x + b*y + c*z + d = 0
 
 	//return true if point is inOrOn bounding box
-	bool inBounds(const Real pt[3]) const ;
+	bool inBounds(const Vec3& pt) const ;
 };
 
 } //namespace

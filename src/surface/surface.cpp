@@ -1,27 +1,20 @@
 #include <limits>
 #include <wmrde/surface/surface.h>
 
-inline void copy3(const Real src[3], Real dst[3])
-{
-  dst[0] = src[0];
-  dst[1] = src[1];
-  dst[2] = src[2];
-}
-
 namespace wmrde
 {
 
-int Surfaces::getHeight(const Real pt[3], Real& height) const
+int Surfaces::getHeight(const Vec3& pt, Real& height) const
 {
 	height = -std::numeric_limits<Real>::infinity();
 	int surf_idx = -1; //init to invalid
 	for (size_t i=0; i < data_.size(); i++)
 	{
-		Real height_;
-		if (data_[i]->getHeight(pt, height_) && //valid
-		    height_ > height) //tallest
+		Real this_height;
+		if (data_[i]->getHeight(pt, this_height) && //valid
+		    this_height > height) //tallest
 		{
-		  height = height_;
+		  height = this_height;
 		  surf_idx = i;
 		}
 	}
@@ -29,19 +22,19 @@ int Surfaces::getHeight(const Real pt[3], Real& height) const
 }
 
 
-int Surfaces::getDistance(const Real pt[3], Real& distance, Real normal[3]) const
+int Surfaces::getDistance(const Vec3& pt, Real& distance, Vec3& normal) const
 {
   distance = std::numeric_limits<Real>::infinity();
   int surf_idx = -1;
 	for (size_t i=0; i < data_.size(); i++)
 	{
-	  Real distance_;
-	  Real normal_[3];
-	  if (data_[i]->getDistance(pt, distance_, normal_) &&
-	      distance_ < distance)
+	  Real this_distance;
+	  Vec3 this_normal;
+	  if (data_[i]->getDistance(pt, this_distance, this_normal) &&
+	      this_distance < distance)
 	  {
-	    distance = distance_;
-	    copy3(normal_, normal);
+	    distance = this_distance;
+	    normal = this_normal;
 	    surf_idx = i;
 	  }
 	}

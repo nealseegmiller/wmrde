@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory> //for unique_ptr
 #include <wmrde/common.h> //for Real
+#include <wmrde/algebra/linalg3.h> //for Vec3
 
 namespace wmrde
 {
@@ -31,7 +32,7 @@ class Surface
    * \param height The surface height at the location.
    * \return true if valid
    */
-  virtual bool getHeight(const Real pt[3], Real& height) const = 0;
+  virtual bool getHeight(const Vec3& pt, Real& height) const = 0;
 
   /*!
    * Calculate the surface normal at an x,y location
@@ -39,7 +40,7 @@ class Surface
    * \param normal The surface normal vector.
    * \return true if valid
    */
-  virtual bool getNormal(const Real pt[3], Real normal[3]) const = 0;
+  virtual bool getNormal(const Vec3& pt, Vec3& normal) const = 0;
 
   /*!
    * Calculate the distance of a point from the surface
@@ -49,7 +50,7 @@ class Surface
    * \param normal The surface normal vector
    * \return true if valid
    */
-  virtual bool getDistance(const Real pt[3], Real& distance, Real normal[3]) const = 0;
+  virtual bool getDistance(const Vec3& pt, Real& distance, Vec3& normal) const = 0;
 };
 
 class Surfaces
@@ -82,14 +83,14 @@ class Surfaces
    * Calls getHeight on all Surface objects and returns the max value
    * \return The index of the Surface object that corresponds to height value. -1 if invalid
    */
-  int getHeight(const Real pt[3], Real& height) const ;
+  int getHeight(const Vec3& pt, Real& height) const ;
 
   /*!
    * Calls getDistance on all Surface objects and returns the min value,
    * as well as the corresponding surface normal for that min distance value
    * \return The index of Surface object that corresponds to the distance value. -1 if invalid
    */
-  int getDistance(const Real pt[3], Real& distance, Real normal[3]) const ;
+  int getDistance(const Vec3& pt, Real& distance, Vec3& normal) const ;
 
  private:
   std::vector<std::unique_ptr<Surface> > data_; //! A vector of Surface objects to iterate over in function calls
