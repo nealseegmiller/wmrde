@@ -49,8 +49,8 @@ add_library(${PROJECT_NAME}
 #  src/demo/terrains.cpp
 #  src/demo/zoemodel.cpp
 #  src/surface/GridSurf.cpp
-#  src/surface/PlaneSurf.cpp
-  src/surface/Surface.cpp
+  src/surface/plane_surface.cpp
+  src/surface/surface.cpp
 #  src/surface/TriMeshSurf.cpp
 #  src/actuator.cpp
 #  src/collision.cpp
