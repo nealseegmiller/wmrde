@@ -68,8 +68,11 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 #gtest
-catkin_add_gtest(algebra_test src/test/algebra_test.cpp)
-target_link_libraries(algebra_test ${PROJECT_NAME})
+#catkin_add_gtest(algebra_test src/test/algebra_test.cpp)
+#target_link_libraries(algebra_test ${PROJECT_NAME})
+
+catkin_add_gtest(gridded_interpolant_test src/test/gridded_interpolant_test.cpp)
+target_link_libraries(gridded_interpolant_test ${PROJECT_NAME})
 
 #benchmark
 #depends on: https://github.com/google/benchmark
