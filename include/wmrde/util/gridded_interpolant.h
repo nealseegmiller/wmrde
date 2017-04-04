@@ -1,7 +1,12 @@
-#ifndef _WMRDE_INTERP_H_
-#define _WMRDE_INTERP_H_
+#ifndef _WMRDE_GRIDDED_INTERPOLANT_H_
+#define _WMRDE_GRIDDED_INTERPOLANT_H_
 
-#include <wmrde/util/common_util.h>
+
+#include <array>
+#include <iostream>
+#include <assert.h>
+
+#include <wmrde/common.h>
 #include <wmrde/util/xs_Float.h> //cast float to int
 
 namespace wmrde
@@ -90,23 +95,37 @@ class GriddedInterpolant
     V_ = V;
     invalid_value_ = invalid_value;
 
-    //compute grid size for each dimension
-    grid_size_[0] = X[0].numel;
-    for (int dim = 1; dim < N; dim++) //loop over dimension
-    {
-      grid_size_[dim] = grid_size_[dim-1]*X[dim].numel;
-    }
+    initGridSize();
+    assert(V.size() == grid_size_[N-1]); //check the size of value array
+  }
 
-    //check size of Value array
-    size_t min_size = grid_size_[N-1]; //cast to unsigned
-    if (V.size() < min_size)
-    {
-      printf("Value array is smaller than grid. Resizing from %zu to %zu.\n", V.size(), min_size);
-      V_.resize(min_size);
-    }
+  GriddedInterpolant(
+      const std::array<GridVector,N>& X,
+      const ValueType invalid_value)
+  {
+    //copy to member variables
+    X_ = X;
+    invalid_value_ = invalid_value;
+
+    initGridSize();
+
+    //initialize the value array
+    //values may be set later using the [] operator
+    V_.clear();
+    V_.resize(grid_size_[N-1]);
   }
 
   ~GriddedInterpolant() {}
+
+  void initGridSize()
+  {
+    //compute grid size for each dimension
+    grid_size_[0] = X_[0].numel;
+    for (int dim = 1; dim < N; dim++) //loop over dimension
+    {
+      grid_size_[dim] = grid_size_[dim-1]*X_[dim].numel;
+    }
+  }
 
   /*!
    * Convert subscripts (indices in each grid vector) to index in value vector V
@@ -124,7 +143,7 @@ class GriddedInterpolant
    * Get a mutable reference to value in V
    * Compute index using sub2ind(). Will segfault if idx is out of bounds.
    */
-  inline ValueType& getV(int idx) { return V_[idx]; }
+  inline ValueType& operator[](int idx) { return V_[idx]; }
 
   /*!
    * Interpolate on the grid at a query point
@@ -178,6 +197,22 @@ class GriddedInterpolant
       const int dim) const //dimension to interpolate on (decrements with each recursion)
   {
     const GridVectorIndex& idx = inds[dim];
+
+#if 1
+    //TODO, faster?
+    if (dim == 0)
+    {
+      return interp1d(idx.fraction, V_ptr[idx.floor], V_ptr[idx.floor+1]);
+    }
+    else
+    {
+      int offset = grid_size_[dim-1];
+      return interp1d(idx.fraction,
+          recursiveinterp(inds, V_ptr + idx.floor*offset, dim-1),
+          recursiveinterp(inds, V_ptr + (idx.floor+1)*offset, dim-1));
+    }
+#else
+    //DEBUGGING
     ValueType v0, v1;
     if (dim == 0)
     {
@@ -190,11 +225,11 @@ class GriddedInterpolant
       v0 = recursiveinterp(inds, V_ptr + idx.floor*offset, dim-1);
       v1 = recursiveinterp(inds, V_ptr + (idx.floor+1)*offset, dim-1);
     }
-//    ValueType v = interp1d(idx.fraction, v0, v1);
-//    std::cout << std::string(2*(N-dim),' ') << "v0 = " << v0 << ", v1 = " << v1 << ", fraction = " << idx.fraction << ", v = " << v << std::endl;
-//    return v;
+    ValueType v = interp1d(idx.fraction, v0, v1);
+    std::cout << std::string(2*(N-dim),' ') << "v0 = " << v0 << ", v1 = " << v1 << ", fraction = " << idx.fraction << ", v = " << v << std::endl;
+    return v;
+#endif
 
-    return interp1d(idx.fraction, v0, v1);
   }
 };
 

@@ -41,8 +41,8 @@ TEST(TestSuite, linear_interp)
   const int N = 1;
   const int n0 = 5;
   std::array<GridVector,N> X = { GridVector(1.0, 1.0, n0) };
-  std::vector<Real> V(n0);
 
+  std::vector<Real> V(n0);
   for (int i = 0; i < n0; i++)
   {
     V[i] = 2.0*i;
@@ -67,20 +67,18 @@ TEST(TestSuite, bilinear_interp)
       GridVector(1.0, 1.0, n0),
       GridVector(2.0, 2.0, n1)};
 
-  GriddedInterpolant<Real,N> G(X, std::vector<Real>() ,nan());
-
-  std::vector<Real> V(n0 * n1);
+  GriddedInterpolant<Real,N> G(X, nan());
   for (int i = 0; i < n0; i++)
   {
     for (int j = 0; j < n1; j++)
     {
-      G.getV(G.sub2ind(i,j)) = 2.0*i + 3.0*j;
+      G[G.sub2ind(i,j)] = 2.0*i + 3.0*j;
     }
   }
 
   DEBUG_INFO("X[0] = \n" << GridVectorToMat(X[0]));
   DEBUG_INFO("X[1] = \n" << GridVectorToMat(X[1]));
-  DEBUG_INFO("V = \n" << ArrayToMat(&G.getV(0),n0,n1));
+  DEBUG_INFO("V = \n" << ArrayToMat(&G[0],n0,n1));
 
   std::array<Real,N> xq = {2.5, 5.0};
   EXPECT_EQ(7.5,G.interpolate(xq));
@@ -97,16 +95,14 @@ TEST(TestSuite, trilinear_interp)
       GridVector(2.0, 2.0, n1),
       GridVector(3.0, 3.0, n2)};
 
-  GriddedInterpolant<Real,N> G(X, std::vector<Real>() ,nan());
-
-  std::vector<Real> V(n0 * n1 * n2);
+  GriddedInterpolant<Real,N> G(X, nan());
   for (int i = 0; i < n0; i++)
   {
     for (int j = 0; j < n1; j++)
     {
       for (int k = 0; k < n2; k++)
       {
-        G.getV(G.sub2ind(i,j,k)) = 2.0*i + 3.0*j + 4.0*k;
+        G[G.sub2ind(i,j,k)] = 2.0*i + 3.0*j + 4.0*k;
       }
     }
   }
@@ -118,7 +114,7 @@ TEST(TestSuite, trilinear_interp)
   }
   for (int k = 0; k < n2; k++)
   {
-    Real* V_ptr = &G.getV(G.sub2ind(0,0,k));
+    Real* V_ptr = &G[G.sub2ind(0,0,k)];
     DEBUG_INFO("V[k=" << k << "] = \n" << ArrayToMat(V_ptr,n0,n1));
   }
 
