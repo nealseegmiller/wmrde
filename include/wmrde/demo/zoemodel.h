@@ -1,11 +1,27 @@
 #ifndef _WMRDE_ZOEMODEL_H_
 #define _WMRDE_ZOEMODEL_H_
 
-#include <wmrde/state.h>
-#include <wmrde/algebra/matrix.h>
-#include <wmrde/wheelgroundcontact.h>
-#include <wmrde/actuator.h>
+#include <wmrde/wmrmodel.h>
+#include <visualization_msgs/MarkerArray.h>
 
+namespace wmrde
+{
+
+/*!
+ * Initialize WmrModel to Zoe rover design.
+ * \param mdl the WmrModel object to initialize
+ * \param ma marker array containing mesh resource markers for visualization in rviz.
+ */
+void makeZoeModel(WmrModel& mdl);
+
+//TODO, move this to its own file to separate out ros dependency?
+void makeZoeModelMarkers(
+    const WmrModel& mdl,
+    visualization_msgs::MarkerArray& markers);
+
+} //namespace
+
+/*
 //& to pass object by reference
 void zoe(WmrModel& mdl, Real state[], Real qvel[]);
 
@@ -27,5 +43,6 @@ inline void zoeAct( const Real params[], const Real ucmd[], const Real u[], cons
 
 void zoeConstraints( const WmrModel& mdl, const Real jd[], const Real jr[], //inputs
 		Real c[], Real Jc[], Real f[], Real df_djd[], Real df_djr[]); //outputs
+*/
 
 #endif

@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Stock ROS joystick driver. -->
+  <node name="joystick" pkg="joy" type="joy_node">
+    <param name="dev" value="/dev/input/js0"/>
+    <remap from="joy" to="/joy/source"/>
+    <rosparam>
+      deadzone: 0.15
+    </rosparam>
+  </node>
+
+  <!-- joytf subscribes to joystick msgs and publishes a twist command.
+       Can also broadcast a tf that moves according to twist command. -->
+
+  <node name="joy_teleop"
+        pkg="wmrde"
+        type="joy_teleop">
+
+    <remap from="joy" to="/joy/source"/>
+    <rosparam>
+      enable_tf: true
+      parent_frame: /world
+      child_frame: /wheel
+      init_x: 0.0
+      init_y: 0.0
+      init_z: 0.5
+    </rosparam>
+  </node>
+
+  <node name="collision_joy_demo"
+        pkg="wmrde"
+        type="collision_joy_demo">
+
+    <rosparam subst_value="true">
+      world_frame: /world
+      wheel_frame: /wheel
+      contact_frame: /contact
+      wheel_contact_frames_coincident: false
+      wheel_radius: 0.3
+      enable_plane: true
+      enable_grid: true
+      grid_surface_filename: $(find wmrde)/resource/gridsurfdata1.txt
+    </rosparam>
+  </node>
+
+  <node pkg="rviz" 
+        type="rviz" 
+        output="screen" 
+        name="rviz" 
+        args="-d $(find wmrde)/launch/collision_joy_demo.rviz"/>
+</launch>

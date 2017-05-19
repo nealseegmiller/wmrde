@@ -70,6 +70,7 @@ class Surfaces
     data_.emplace_back(new SurfaceType(surf)); //copy constructor
   }
   int numSurfaces() const { return data_.size(); }
+  void clear() { data_.clear(); }
 
   /*!
    * Get Surface pointer by index. will Segmentation fault if index is invalid!

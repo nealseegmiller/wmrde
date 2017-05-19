@@ -135,7 +135,7 @@ inline Mat6 toSpatialInertia(const Real m, const Vec3& c, const Mat3& I)
   return out;
 }
 
-void fromSpatialInertia(const Mat6& Is, Real& m, Vec3& c, Mat3& I)
+inline void fromSpatialInertia(const Mat6& Is, Real& m, Vec3& c, Mat3& I)
 {
   m = Is(3,3);
   Mat3 C = Is.topRightCorner<3,3>()/m;

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Stock ROS joystick driver. -->
+  <node name="joystick" pkg="joy" type="joy_node">
+    <param name="dev" value="/dev/input/js0"/>
+    <remap from="joy" to="/joy/source"/>
+    <rosparam>
+      deadzone: 0.15
+    </rosparam>
+  </node>
+<!-- launch-prefix="xterm -e gdb - -args" -->
+  <node name="wmrmodel_joy_demo"
+        pkg="wmrde"
+        type="wmrmodel_joy_demo">
+
+    <remap from="joy" to="/joy/source"/>
+    <rosparam subst_value="true">
+      update_rate_hz: 10.0
+    </rosparam>
+  </node>
+
+  <node pkg="rviz" 
+        type="rviz" 
+        output="screen" 
+        name="rviz"
+        args="-d $(find wmrde)/launch/wmrmodel_joy_demo.rviz"
+        if="true"/>
+</launch>

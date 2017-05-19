@@ -1,7 +1,145 @@
 #include <wmrde/demo/zoemodel.h>
-//& to pass object by reference
+#include <wmrde/wmrde_ros_interface.h> //for makeColorRGBA
 
+namespace vm = visualization_msgs; //abbreviate
 
+//TODO, move this to wmrde_ros_interface?
+vm::Marker makeMeshMarker(
+    const wmrde::WmrModel& mdl,
+    const int frame_idx,
+    const std::string& resource,
+    const std_msgs::ColorRGBA color,
+    const double scale)
+{
+  vm::Marker marker;
+  marker.type = vm::Marker::MESH_RESOURCE;
+  marker.id = frame_idx;
+  marker.header.frame_id = mdl.getFrame(frame_idx).name;
+  marker.mesh_resource = resource;
+  marker.color = color;
+  marker.scale.x = scale;
+  marker.scale.y = scale;
+  marker.scale.z = scale;
+  return marker;
+}
+
+namespace wmrde
+{
+
+void makeZoeModel(WmrModel& mdl)
+{
+  //Zoe rover model
+
+  //dimensions for kinematics (meters)
+  const Real length = 1.91; //distance from front to rear axle
+  const Real width = 1.64; //distance from left to right wheel
+  const Real axle_drop = 0.119; //vertical offset between axle and wheel joints
+  const Real wheel_rad = 0.325; //wheel radius
+
+  const int num_wheels = 4; //number of wheels
+
+  //masses (kg)
+  const Real total_mass = 198.0; //kg
+  const Real mass_body = 0.8*total_mass;
+  const Real mass_axle = 0.1*total_mass;
+  const Real mass_wheel = 0.1*total_mass/Real(num_wheels);
+
+  //compute mass properties
+  Vec3 cm_body = (Vec3() << 0, 0, 0.25).finished(); //body center of mass
+
+  //approximate moments of inertia
+  Mat3 I_body = calcMomentOfInertiaBox(mass_body, length, 1.0, 0.5);
+  Mat3 I_axle = calcMomentOfInertiaBox(mass_axle, 0.1, width, 0.1);
+  Mat3 I_wheel = calcMomentOfInertiaCylinder(mass_wheel, wheel_rad, 0.07, 1);
+
+  MassProperties mp_body(mass_body, cm_body, I_body);
+  MassProperties mp_axle(mass_axle, Vec3::Zero(), I_axle);
+  MassProperties mp_wheel(mass_wheel, Vec3::Zero(), I_wheel);
+
+  mdl = WmrModel();
+  //add the body frame
+  {
+    mdl.addBodyFrame("body");
+    mdl.setFrameMass(0, mp_body);
+  }
+
+  //add the front axle steer frame
+  {
+    //lock front axle roll
+    HTransform HT_parent_jd0(Mat3::Identity(), (Vec3() << length/2.0, 0, 0).finished());
+    Frame frame("front_steer", Frame::REV_Z, mdl.frameNameToIndex("body"), HT_parent_jd0, false, false, nullptr, mp_axle);
+    mdl.addFrame(frame);
+  }
+
+  //add the rear axle roll frame
+  {
+    HTransform HT_parent_jd0(Mat3::Identity(), (Vec3() << -length/2.0, 0, 0).finished());
+    Frame frame("rear_roll", Frame::REV_X, mdl.frameNameToIndex("body"), HT_parent_jd0, false, false, nullptr);
+    mdl.addFrame(frame); //no mass
+  }
+
+  //add the rear axle steer frame
+  {
+    Frame frame("rear_steer", Frame::REV_Z, mdl.frameNameToIndex("rear_roll"), HTransform::Identity(), false, false, nullptr, mp_axle);
+    mdl.addFrame(frame);
+  }
+
+  //add the wheel frames
+  {
+    //front wheels
+    Vec3 t_left = (Vec3() << 0, width/2.0, -axle_drop).finished();
+    Vec3 t_right = (Vec3() << 0, -width/2.0, -axle_drop).finished();
+
+    HTransform HT_parent_jd0(Mat3::Identity(), t_left);
+    Frame frame("front_left_wheel", Frame::REV_Y, mdl.frameNameToIndex("front_steer"), HT_parent_jd0, true, true, new WheelGeom(), mp_wheel);
+    frame.wheel_geom->radius = wheel_rad;
+    mdl.addFrame(frame);
+
+    frame.name = "front_right_wheel";
+    frame.HT_parent_jd0.t = t_right;
+    mdl.addFrame(frame);
+
+    //rear wheels
+    frame.name = "rear_left_wheel";
+    frame.parent_idx = mdl.frameNameToIndex("rear_steer");
+    frame.HT_parent_jd0.t = t_left;
+    mdl.addFrame(frame);
+
+    frame.name = "rear_right_wheel";
+    frame.HT_parent_jd0.t = t_right;
+    mdl.addFrame(frame);
+  }
+}
+
+void makeZoeModelMarkers(
+    const WmrModel& mdl, //model set using makeZoeModel
+    vm::MarkerArray& markers)
+{
+  markers = vm::MarkerArray();
+
+  std::string prefix = "package://wmrde/CAD/Zoe/"; //url to mesh resources
+  //colors
+  std_msgs::ColorRGBA body_color = makeColorRGBA(0.5, 0, 0.5);
+  std_msgs::ColorRGBA axle_color = makeColorRGBA(0.5, 0.5, 0.5);
+  std_msgs::ColorRGBA wheel_color = makeColorRGBA(0.25, 0.25, 0.25);
+  double scale = 1.0; //.stl files in meters
+
+  markers.markers.push_back(makeMeshMarker(
+      mdl, mdl.frameNameToIndex("body"), prefix + "ZoeBody.stl", makeColorRGBA(0.5, 0, 0.5), scale));
+  markers.markers.push_back(makeMeshMarker(
+      mdl, mdl.frameNameToIndex("front_steer"), prefix + "ZoeFrontAxle.stl", axle_color, scale));
+  markers.markers.push_back(makeMeshMarker(
+      mdl, mdl.frameNameToIndex("rear_steer"), prefix + "ZoeRearAxle.stl", axle_color, scale));
+  for (int frame_idx : mdl.getWheelFrameIndices())
+  {
+    markers.markers.push_back(makeMeshMarker(
+        mdl, frame_idx, prefix + "ZoeWheel.stl", wheel_color, scale));
+  }
+}
+
+} //namespace
+
+/*
 void zoe(WmrModel& mdl, Real state[], Real qvel[]) {
 	//Zoe rover model
 
@@ -355,3 +493,4 @@ void zoeConstraints( const WmrModel& mdl, const Real jd[], const Real jr[], //in
 		}
 	}
 }
+*/

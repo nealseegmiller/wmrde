@@ -14,6 +14,19 @@ struct BoundingBox
   Real y_min;
   Real y_max;
 
+  BoundingBox() {}
+  BoundingBox(
+      Real _x_min,
+      Real _x_max,
+      Real _y_min,
+      Real _y_max)
+    :
+      x_min(_x_min),
+      x_max(_x_max),
+      y_min(_y_min),
+      y_max(_y_max)
+  {}
+
   bool in(Real x, Real y) const
   {
     return x > x_min && x < x_max &&
@@ -28,7 +41,6 @@ struct BoundingBox
 
 class PlaneSurface : public Surface
 {
-	
  public:
 	//overload constructor
   PlaneSurface() : initialized_(false), bounded_(false) {}
@@ -38,6 +50,9 @@ class PlaneSurface : public Surface
     setTransform(T);
     setBoundingBox(bb);
   }
+
+  bool initialized() const { return initialized_; }
+  bool bounded() const { return bounded_; }
 
   /*!
    * Set the plane transform.
@@ -76,6 +91,8 @@ class PlaneSurface : public Surface
 
 	//return true if point is inOrOn bounding box
 	bool inBounds(const Vec3& pt) const ;
+
+	friend class WmrdeRosInterface;
 };
 
 } //namespace

@@ -76,7 +76,7 @@ inline Mat3 eulerToRot(const Real roll, const Real pitch, const Real yaw)
   return out;
 }
 
-void rotToEuler(const Mat3 R,
+inline void rotToEuler(const Mat3 R,
     Real& roll, Real& pitch, Real& yaw) //output
 {
   yaw = atan2(R(1,0), R(0,0));
@@ -108,15 +108,26 @@ inline Mat3 eulerToRotTest(const Real roll, const Real pitch, const Real yaw)
       AngleAxis(roll, Vec3::UnitX()) ).toRotationMatrix();
 }
 
-//TODO, check this
-//returns a differential quaternion from angular velocity and time step
-inline Quaternion diffQuatFromAngularVel(
+/*!
+ * Step the rotation of an object wrt world (represented as quaternion)
+ * given angular velocity and time step.
+ * \param q rotation quaternion before step
+ * \param angular_vel angular velocity *in world coords*
+ * \param dt time step size
+ * \return rotation quaternion after step
+ */
+inline Quaternion stepRotationQuat(
+    const Quaternion q,
     const Vec3& angular_vel,
     const Real dt)
 {
-  Vec3 dr = angular_vel*dt; //differential rotation about each axis
-  Real angle = dr.norm();
-  return Quaternion(AngleAxis(angle, dr/angle));
+  Real norm = angular_vel.norm();
+  if (norm > 0)
+  {
+    Quaternion dq(AngleAxis(norm*dt, angular_vel/norm));
+    return (dq*q).normalized();
+  }
+  return q;
 }
 
 } //namespace

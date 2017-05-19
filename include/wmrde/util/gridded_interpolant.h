@@ -131,19 +131,24 @@ class GriddedInterpolant
    * Convert subscripts (indices in each grid vector) to index in value vector V
    * Overloaded for 2, 3, and N dimensions
    */
-  inline int sub2ind(int i, int j) { return i + j*grid_size_[0]; }
-  inline int sub2ind(int i, int j, int k) { return i + j*grid_size_[0] + k*grid_size_[1]; }
-  inline int sub2ind(const int sub[N])
+  inline int sub2ind(int i, int j) const { return i + j*grid_size_[0]; }
+  inline int sub2ind(int i, int j, int k) const { return i + j*grid_size_[0] + k*grid_size_[1]; }
+  inline int sub2ind(const int sub[N]) const
   {
     int idx = sub[0];
     for (int i = 1; i < N; i++) { idx += sub[i]*grid_size_[i-1]; }
     return idx;
   }
+
+  //access functions
+  const GridVector& getX(const int dim) const { return X_[dim]; }
+
   /*!
    * Get a mutable reference to value in V
    * Compute index using sub2ind(). Will segfault if idx is out of bounds.
    */
   inline ValueType& operator[](int idx) { return V_[idx]; }
+  inline ValueType operator[](int idx) const { return V_[idx]; } //const overload
 
   /*!
    * Interpolate on the grid at a query point

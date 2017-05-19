@@ -1,46 +1,70 @@
-//collision.h
-//functions for collision detection between wheels/tracks and terrain
-
 #ifndef _WMRDE_COLLISION_H_
 #define _WMRDE_COLLISION_H_
 
-#include <assert.h>
-
-#include <wmrde/surface/Surface.h>
+#include <wmrde/surface/surface.h>
 #include <wmrde/contactgeom.h>
-#include <wmrde/linesearch.h>
 
-void updateWheelContactGeomDiscretize(const SurfaceVector& surfaces, const HomogeneousTransform HT_wheel_to_world, const Real radius,  //input
-	WheelContactGeom& contact); //output
+namespace wmrde
+{
 
-void updateWheelContactGeomRoot(const SurfaceVector& surfaces, const HomogeneousTransform HT_wheel_to_world, const Real radius, 
-	WheelContactGeom& contact);
-
-inline void updateWheelContactGeom(const SurfaceVector& surfaces, const HomogeneousTransform HT_wheel_to_world, const Real radius, 
-	WheelContactGeom& contact) {
-	//uncomment one of the following:
-	updateWheelContactGeomDiscretize(surfaces, HT_wheel_to_world, radius, contact); //matches MATLAB
-//	updateWheelContactGeomRoot(surfaces, HT_wheel_to_world, radius, contact); //faster!
+/*!
+ * Convert contact angle to point. Convention: angle 0 corresponds
+ * to point [0,0,-radius] and positive angle is ccw about y axis.
+ * \param radius The wheel radius
+ * \param angle The contact angle
+ * \return The contact point in wheel coords
+ */
+inline Vec3 contactAngleToPoint(const Real radius, const Real angle)
+{
+  Vec3 pt;
+  pt << -sin(angle)*radius, 0.0, -cos(angle)*radius;
+  return pt;
 }
 
-//convert contact angle to point in wheel coordinates
-//convention:
-//contact angle=0 corresponds to cp=[0,0,-rad]'
-//ccw about y axis is positive
-inline void contactAngleToPoint(const Real radius, const Real angle, Vec3 point_wheel) {
-	setVec3(-sin(angle)*radius, 0, -cos(angle)*radius, point_wheel);
+void setWheelGeomPoints(
+    const double min_angle,
+    const double max_angle,
+    const int num_points,
+    WheelGeom& wheel_geom) //angle must be set
+{
+  Real angle_step = (max_angle - min_angle)/(num_points-1);
+  wheel_geom.points.resize(num_points);
+  for (int i = 0; i < num_points; i++)
+  {
+    Real angle = min_angle + i*angle_step;
+    wheel_geom.points[i] = contactAngleToPoint(wheel_geom.radius, angle);
+  }
 }
 
-void HTContactToWheel(const Vec3 pt, const Vec3 N, HomogeneousTransform HT_contact_to_wheel);
+/*!
+ * Determine the contact point between wheel and surface geometries
+ * using discretization.
+ * \param surfs The surfaces
+ * \param wheel_goem The wheel geometry, requires that points be set
+ * \param HT_wheel_to_world The transform from wheel to world coords
+ * \param contact The contact geometry output.
+ * \return index of wheel_geom point that was selected as contact point
+*/
+int calcContactGeomDiscretization(
+    const Surfaces& surfs,
+    const WheelGeom& wheel_geom,
+    const HTransform& HT_wheel_to_world,
+    ContactGeom& contact);
 
-void whichPointsInContactWheel(const int min_npic, const int nw, WheelContactGeom* contacts);
-void whichPointsInContactTrack(const int min_npic, const int nt, TrackContactGeom* contacts);
-void whichPointsInContact(const int min_npic, const int np, const Vec3 pts_world[], const Real dz[], int incontact[]);
+/*!
+ * Determine the contact point between wheel and surface geometries
+ * using rootfinding.
+ * \param surfs The surfaces
+ * \param wheel_goem The wheel geometry, requires radius be set
+ * \param HT_wheel_to_world The transform from wheel to world coords
+ * \param contact The contact geometry output.
+*/
+void calcContactGeomRootfinding(
+    const Surfaces& surfs,
+    const WheelGeom& wheel_geom,
+    const HTransform& HT_wheel_to_world,
+    ContactGeom& contact);
 
-//for tracks
-void initTrackContactGeom(const Real rad, const Real rad2, const Real L, TrackContactGeom& contact);
-int HTContactToTrack(const Real rad, const Real rad2, const Real L, const int npflat, const bool sides[], HomogeneousTransform HT_track[]);
-void updateTrackContactGeom(const SurfaceVector& surfaces, const HomogeneousTransform HT_track_to_world, //input
-	TrackContactGeom& contact); //output
+} //namespace
 
 #endif //_WMRDE_COLLISION_H_

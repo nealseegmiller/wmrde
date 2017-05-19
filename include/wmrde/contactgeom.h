@@ -1,12 +1,29 @@
-//contactgeom.h
-//WheelContactGeom and TrackContactGeom classes
-//required inputs to kinematics and dynamics functions for contact constraints
-
 #ifndef _WMRDE_CONTACTGEOM_H_
 #define _WMRDE_CONTACTGEOM_H_
 
 #include <wmrde/algebra/transform.h>
 
+namespace wmrde
+{
+
+struct WheelGeom
+{
+  Real radius; //!< wheel radius
+  std::vector<Vec3> points; /*!< Potential contact points between wheel & ground in wheel coords.
+  Set by discretizing wheel (or track) surface. */
+};
+
+struct ContactGeom
+{
+  Real dz; //!< contact height error. < 0 if below surface
+  Real angle;
+  HTransform HT_wheel; //!< transform from contact to wheel coords
+  HTransform HT_world; //!< transform from contact to world coords
+};
+
+} //namespace
+
+/*
 //base class
 //avoid conflict with Open Dynamics Engine dContactGeom
 class ContactGeom {
@@ -43,8 +60,8 @@ public:
 	void set_np(int number_of_points) { np = number_of_points; }
 
 	int get_np() const { return np; }
-
 	
 };
+*/
 
 #endif //_WMRDE_CONTACTGEOM_H_

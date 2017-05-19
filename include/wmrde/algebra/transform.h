@@ -22,6 +22,14 @@ public:
   {}
 
   inline void setIdentity() { R.setIdentity(); t.setZero(); }
+
+  static HTransform Identity()
+  {
+    HTransform out;
+    out.setIdentity();
+    return out;
+  }
+
   inline HTransform inverse() const
   {
     return HTransform(R.transpose(), -R.transpose()*t);

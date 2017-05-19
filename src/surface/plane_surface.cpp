@@ -26,7 +26,7 @@ bool PlaneSurface::getHeight(const Vec3& pt, Real& height) const
 bool PlaneSurface::getNormal(const Vec3& pt, Vec3& normal) const
 {
   if (!initialized_) { return false; }
-  for (size_t i = 0; i < 2; i++) { normal[i] = T_.R(i,2); }
+  normal = T_.R.col(2);
   return inBounds(pt);
 }
 
@@ -35,7 +35,7 @@ bool PlaneSurface::getDistance(const Vec3& pt, Real& distance, Vec3& normal) con
   if (!initialized_) { return false; }
 
   distance = plane_eq[0]*pt[0] + plane_eq[1]*pt[1] + plane_eq[2]*pt[2] + plane_eq[3];
-  for (size_t i = 0; i < 2; i++) { normal[i] = T_.R(i,2); }
+  normal = T_.R.col(2);
 	return inBounds(pt);
 }
 
