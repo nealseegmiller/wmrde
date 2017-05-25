@@ -3,7 +3,7 @@
 #ifndef _WMRDE_LINALG3_H_
 #define _WMRDE_LINALG3_H_
 
-#include <wmrde/common.h>
+#include <wmrde/util/real.h>
 #include <Eigen/Dense>
 
 namespace wmrde

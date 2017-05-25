@@ -13,31 +13,21 @@
   <!-- joytf subscribes to joystick msgs and publishes a twist command.
        Can also broadcast a tf that moves according to twist command. -->
 
-  <node name="joy_teleop"
+  <node name="joy_to_twist"
         pkg="wmrde"
-        type="joy_teleop">
+        type="joy_to_twist">
 
     <remap from="joy" to="/joy/source"/>
-    <rosparam>
-      enable_tf: true
-      parent_frame: /world
-      child_frame: /wheel
-      init_x: 0.0
-      init_y: 0.0
-      init_z: 0.5
-    </rosparam>
   </node>
 
-  <node name="collision_joy_demo"
+  <node name="collision_demo"
         pkg="wmrde"
-        type="collision_joy_demo">
+        type="collision_demo">
 
     <rosparam subst_value="true">
-      world_frame: /world
-      wheel_frame: /wheel
-      contact_frame: /contact
-      wheel_contact_frames_coincident: false
+      teleop_contact_frame_directly: false
       wheel_radius: 0.3
+      init_roll_deg: 10.0
       enable_plane: true
       enable_grid: true
       grid_surface_filename: $(find wmrde)/resource/gridsurfdata1.txt
@@ -48,5 +38,5 @@
         type="rviz" 
         output="screen" 
         name="rviz" 
-        args="-d $(find wmrde)/launch/collision_joy_demo.rviz"/>
+        args="-d $(find wmrde)/launch/collision_demo.rviz"/>
 </launch>

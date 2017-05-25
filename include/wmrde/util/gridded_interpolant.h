@@ -6,7 +6,7 @@
 #include <iostream>
 #include <assert.h>
 
-#include <wmrde/common.h>
+#include <wmrde/util/real.h>
 #include <wmrde/util/xs_Float.h> //cast float to int
 
 namespace wmrde

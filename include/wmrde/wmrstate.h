@@ -1,17 +1,14 @@
-#ifndef _WMRDE_STATE_H_
-#define _WMRDE_STATE_H_
+#ifndef _WMRDE_WMRSTATE_H_
+#define _WMRDE_WMRSTATE_H_
 
 #include <iostream>
 #include <wmrde/wmrmodel.h>
 #include <wmrde/algebra/transform.h>
 #include <wmrde/algebra/rotation.h>
+#include <wmrde/algebra/dynamic_matrix.h>
 
 namespace wmrde
 {
-
-//TODO, move these typedefs?
-typedef Eigen::Matrix<Real,Eigen::Dynamic,1> Vecd;
-typedef Eigen::Matrix<Real,Eigen::Dynamic,Eigen::Dynamic> Matd;
 
 class WmrState
 {
@@ -31,6 +28,13 @@ class WmrState
     joint_disp(joint_displacements)
   {}
 
+  void setIdentity()
+  {
+    position = Vec3::Zero();
+    orientation = Quaternion::Identity();
+    joint_disp.setZero();
+  }
+
   /*!
    * concatenate state into an Eigen Dynamic vector =
    * [position (3x1),
@@ -44,16 +48,50 @@ class WmrState
     out << position, orientation.coeffs(), joint_disp;
     return out;
   }
+  void fromVecd(const Vecd& in)
+  {
+    position = in.topRows(3); //the first 3 rows
+    Eigen::Matrix<Real,4,1> tmp = in.block(3,0,4,1);
+    orientation = Quaternion(tmp); //the next 4 rows
+    int nj = in.rows()-7;
+    joint_disp.resize(nj);
+    joint_disp = in.bottomRows(nj); //the remaining rows
+  }
+
+  /*!
+   * convert to state vector in which orientation is represented by
+   * Euler angles instead of a quaternion. Prefer to use the quaternion
+   * representation because it is less susceptible to singularities.
+   */
+  Vecd toVecdEuler() const
+  {
+    Vec3 euler;
+    rotToEuler(orientation.matrix(), euler[0], euler[1], euler[2]);
+    Vecd out;
+    out.resize(6+joint_disp.rows());
+    out << position, euler, joint_disp;
+    return out;
+  }
+  void fromVecdEuler(const Vecd& in)
+  {
+    position = in.topRows(3); //the first 3 rows
+    Vec3 euler = in.block(3,0,3,1); //the next 3 rows
+    orientation = Quaternion(eulerToRot(euler[0], euler[1], euler[2]));
+    int nj = in.rows()-6;
+    joint_disp.resize(nj);
+    joint_disp = in.bottomRows(nj); //the remaining rows
+  }
+
   friend std::ostream &operator<<( std::ostream &output, const WmrState &state)
   {
-    output << state.toVecd();
+    output << state.toVecdEuler();
     return output;
   }
 };
 
 /*!
- * Convert WmrState to vector of homogeneous transforms which
- * represent the pose of each frame with respect to its parent frame
+ * Convert WmrState to vector of homogeneous transforms that represent the pose
+ * of each frame with respect to its parent frame.
  * \param HT_parent the pose of every frame in the wmr model wrt its parent
  */
 void stateToHTparent(
@@ -62,10 +100,10 @@ void stateToHTparent(
     std::vector<HTransform>& HT_parent);
 
 /*!
- * Convert vector of transforms with respect to parent frame
- * to transforms with respect to world frame
- * \param HT_parent transform to parent frame coords for every frame
- * \param HT_world transform to world frame coords
+ * Given a vector of transforms for each WmrModel frame that convert to
+ * parent frame coordinates, compute transforms that convert to world coordinates.
+ * \param HT_parent transforms to parent frame coords
+ * \param HT_world transforms to world frame coords
  */
 void HTparentToHTworld(
     const WmrModel& mdl,
@@ -73,17 +111,24 @@ void HTparentToHTworld(
     std::vector<HTransform>& HT_world);
 
 /*!
+ * 'joint space velocity' is a vector that comprises spatial velocity
+ * of the body frame (in body coords) and joint rates:
+ * [[wx, wy, wz, vx, vy, vz], joint_rates]
+ * The total size is 6 + num joints, equal to number of degrees of freedom
+ */
+typedef Vecd JointSpaceVel;
+typedef Vecd JointSpaceAccel; //!< the time derivative of JointSpaceVel
+
+/*!
  * Step WmrState forward in time given joint space velocity
  * \param state the WmrState before step
- * \param joint_space_vel. 'joint space velocity' comprises spatial velocity
- *        of the body frame (in body coords) and joint rates:
- *        [wx wy wz vx vy vz joint_rate[0] ... joint_rate[num joints-1]]
+ * \param joint_space_vel. 'joint space velocity'
  * \param dt the time step size
  * \return the WmrState after step
  */
 WmrState stepWmrState(
     const WmrState& state,
-    const Vecd& joint_space_vel,
+    const JointSpaceVel& joint_space_vel,
     const Real dt);
 
 } //namespace

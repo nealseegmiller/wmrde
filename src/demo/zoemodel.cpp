@@ -67,7 +67,7 @@ void makeZoeModel(WmrModel& mdl)
   {
     //lock front axle roll
     HTransform HT_parent_jd0(Mat3::Identity(), (Vec3() << length/2.0, 0, 0).finished());
-    Frame frame("front_steer", Frame::REV_Z, mdl.frameNameToIndex("body"), HT_parent_jd0, false, false, nullptr, mp_axle);
+    Frame frame("front_steer", Frame::REV_Z, mdl.frameNameToIndex("body"), HT_parent_jd0, false, true, nullptr, mp_axle);
     mdl.addFrame(frame);
   }
 
@@ -80,7 +80,7 @@ void makeZoeModel(WmrModel& mdl)
 
   //add the rear axle steer frame
   {
-    Frame frame("rear_steer", Frame::REV_Z, mdl.frameNameToIndex("rear_roll"), HTransform::Identity(), false, false, nullptr, mp_axle);
+    Frame frame("rear_steer", Frame::REV_Z, mdl.frameNameToIndex("rear_roll"), HTransform::Identity(), false, true, nullptr, mp_axle);
     mdl.addFrame(frame);
   }
 
@@ -130,7 +130,7 @@ void makeZoeModelMarkers(
       mdl, mdl.frameNameToIndex("front_steer"), prefix + "ZoeFrontAxle.stl", axle_color, scale));
   markers.markers.push_back(makeMeshMarker(
       mdl, mdl.frameNameToIndex("rear_steer"), prefix + "ZoeRearAxle.stl", axle_color, scale));
-  for (int frame_idx : mdl.getWheelFrameIndices())
+  for (int frame_idx : mdl.wheelFrameIndices())
   {
     markers.markers.push_back(makeMeshMarker(
         mdl, frame_idx, prefix + "ZoeWheel.stl", wheel_color, scale));

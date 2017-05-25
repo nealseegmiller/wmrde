@@ -9,14 +9,31 @@ void tfBroadcastWmrModelTransforms(
     tf::TransformBroadcaster& tf_broadcaster, //can't be const
     const WmrModel& mdl,
     const std::vector<HTransform>& HT_parent,
-    const ros::Time& stamp)
+    const ros::Time& stamp,
+    const std::string& world_frame)
 {
   for (size_t i = 0; i < HT_parent.size(); i++)
   {
     tf::Transform tf_parent = HTransformToTfTransform(HT_parent[i]);
     int parent_idx = mdl.getFrame(i).parent_idx;
-    std::string parent_frame = parent_idx >= 0 ? mdl.getFrame(parent_idx).name : "world";
+    std::string parent_frame = parent_idx >= 0 ? mdl.getFrame(parent_idx).name : world_frame;
     std::string child_frame = mdl.getFrame(i).name;
+    tf_broadcaster.sendTransform(tf::StampedTransform(tf_parent, stamp, parent_frame, child_frame));
+  }
+}
+
+void tfBroadcastContactTransforms(
+    tf::TransformBroadcaster& tf_broadcaster,
+    const WmrModel& mdl,
+    const std::vector<ContactFrame>& contacts,
+    const ros::Time& stamp)
+{
+  for (const ContactFrame& contact : contacts)
+  {
+    tf::Transform tf_parent = HTransformToTfTransform(contact.HT_wheel);
+    int parent_idx = contact.parent_idx;
+    std::string parent_frame = mdl.getFrame(contact.parent_idx).name;
+    std::string child_frame = parent_frame + "_contact";
     tf_broadcaster.sendTransform(tf::StampedTransform(tf_parent, stamp, parent_frame, child_frame));
   }
 }

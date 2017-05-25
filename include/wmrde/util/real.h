@@ -1,7 +1,7 @@
 //common.h
 
-#ifndef _WMRDE_COMMON_H_
-#define _WMRDE_COMMON_H_
+#ifndef _WMRDE_REAL_H_
+#define _WMRDE_REAL_H_
 
 #include <limits>
 
@@ -11,5 +11,6 @@ typedef double Real;
 
 inline Real RealNan() { return std::numeric_limits<Real>::quiet_NaN(); }
 inline Real RealInf() { return std::numeric_limits<Real>::infinity(); }
+inline Real RealRand() { return static_cast<Real>(rand())/RAND_MAX; }
 
 #endif

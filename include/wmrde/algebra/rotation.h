@@ -14,8 +14,9 @@ typedef Eigen::AngleAxis<Real> AngleAxis;
 inline Real radToDeg(Real rad) { return rad*180.0/M_PI; }
 inline Real degToRad(Real deg) { return deg*M_PI/180.0; }
 
-//functions to compute rotation matrices from Euler angles
-
+/*!
+ * compute 3D rotation matrix about x-axis
+ */
 inline Mat3 Rotx(const Real angle)
 {
   Real ca = cos(angle);
@@ -27,6 +28,9 @@ inline Mat3 Rotx(const Real angle)
   return out;
 }
 
+/*!
+ * compute 3D rotation matrix about y-axis
+ */
 inline Mat3 Roty(const Real angle)
 {
   Real ca = cos(angle);
@@ -38,6 +42,9 @@ inline Mat3 Roty(const Real angle)
   return out;
 }
 
+/*!
+ * compute 3D rotation matrix about z-axis
+ */
 inline Mat3 Rotz(const Real angle)
 {
   Real ca = cos(angle);
@@ -49,7 +56,11 @@ inline Mat3 Rotz(const Real angle)
   return out;
 }
 
-//R = Rotz(yaw)*Roty(pitch)*Rotx(roll)
+/*!
+ * convert Euler angles (in radians) to rotation matrix. return value is equivalent to:
+ * R = Rotz(yaw)*Roty(pitch)*Rotx(roll)
+ * but is computed more efficiently
+ */
 inline Mat3 eulerToRot(const Real roll, const Real pitch, const Real yaw)
 {
   Real sR=sin(roll);  Real cR=cos(roll);
@@ -76,6 +87,9 @@ inline Mat3 eulerToRot(const Real roll, const Real pitch, const Real yaw)
   return out;
 }
 
+/*!
+ * convert rotation matrix to Euler angles
+ */
 inline void rotToEuler(const Mat3 R,
     Real& roll, Real& pitch, Real& yaw) //output
 {
@@ -92,11 +106,13 @@ inline void rotToEuler(const Mat3 R,
   pitch = atan2(-R(2,0), cP); //pit
 }
 
-//TODO, move these?
-//An alternative Euler angle to rotation implementation using AngleAxis
-//is suggested in the Eigen documentation:
-//https://eigen.tuxfamily.org/dox/classEigen_1_1AngleAxis.html
-//use this implementation for unit testing and benchmarking
+
+/*
+ * An alternative Euler angle to rotation implementation using AngleAxis
+ * is suggested in the Eigen documentation:
+ * https://eigen.tuxfamily.org/dox/classEigen_1_1AngleAxis.html
+ * use this implementation for unit testing and benchmarking
+ */
 inline Mat3 RotxTest(const Real angle) { return AngleAxis(angle, Vec3::UnitX()).toRotationMatrix(); }
 inline Mat3 RotyTest(const Real angle) { return AngleAxis(angle, Vec3::UnitY()).toRotationMatrix(); }
 inline Mat3 RotzTest(const Real angle) { return AngleAxis(angle, Vec3::UnitZ()).toRotationMatrix(); }
@@ -106,6 +122,46 @@ inline Mat3 eulerToRotTest(const Real roll, const Real pitch, const Real yaw)
       AngleAxis(yaw, Vec3::UnitZ())*
       AngleAxis(pitch, Vec3::UnitY())*
       AngleAxis(roll, Vec3::UnitX()) ).toRotationMatrix();
+}
+
+/*!
+ * transform from angular velocity (in body coords) to Euler angle rates
+ * \param roll roll angle
+ * \param pitch pitch angle
+ * \return transform T such that (euler angle rates) = T*(angular velocity)
+ */
+inline Mat3 velToEulerrateTransform(const Real roll, const Real pitch)
+{
+  Real sR = sin(roll);
+  Real cR = cos(roll);
+  Real cP = cos(pitch);
+  Real tP = tan(pitch);
+
+  Mat3 T;
+  T << 1, sR*tP, cR*tP,
+       0, cR,   -sR,
+       0, sR/cP, cR/cP;
+  return T;
+}
+
+/*!
+ * transform from Euler angle rates to angular velocity (in body coords)
+ * \param roll roll angle
+ * \param pitch pitch angle
+ * \return transform T such that (angular velocity) = T*(euler angle rates)
+ */
+inline Mat3 eulerrateToVelTransform(const Real roll, const Real pitch)
+{
+  Real sR = sin(roll);
+  Real cR = cos(roll);
+  Real sP = sin(pitch);
+  Real cP = cos(pitch);
+
+  Mat3 T;
+  T << 1, 0, -sP,
+       0, cR, sR*cP,
+       0,-sR, cR*cP;
+  return T;
 }
 
 /*!

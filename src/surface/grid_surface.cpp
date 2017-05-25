@@ -1,6 +1,5 @@
 #include <wmrde/surface/grid_surface.h>
-
-#include <wmrde/rosout.h>
+#include <wmrde/util/rosout.h>
 
 //to read in data from csv file
 #include <iostream>
@@ -26,7 +25,7 @@ GridSurface::GridSurface(
     const std::vector<Real>& Z) //elevations
   : initialized_(false)
 {
-  assert(Z.size() == X.numel*Y.numel);
+  ROS_ASSERT(Z.size() == X.numel*Y.numel);
 
   std::array<GridVector,2> XY = {X, Y};
   Vec3 invalid_value = Vec3::Constant(RealNan());
@@ -85,15 +84,14 @@ GridSurface::GridSurface(const std::string& filename)
     size_t idx = 0;
     while ( file.good() )
     {
-      assert( idx < Z.size() ); //check if too many elevation values in file
+      ROS_ASSERT( idx < Z.size() ); //check if too many elevation values in file
       std::getline ( file, value, ',' );
       Z[idx] = (Real) atof(value.c_str());
-//      ROS_DEBUG("Z[%zu] = %f", idx, Z[idx]); //DEBUGGING
       idx++;
     }
     file.close();
 
-    assert(idx == Z.size()); //check if all elevation values have been set
+    ROS_ASSERT(idx == Z.size()); //check if all elevation values have been set
 
     *this = GridSurface(X,Y,Z);
     initialized_ = true;

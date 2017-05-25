@@ -6,7 +6,7 @@
 #include <tf/transform_broadcaster.h>
 #include <wmrde/surface/plane_surface.h>
 #include <wmrde/surface/grid_surface.h>
-#include <wmrde/contactgeom.h>
+#include <wmrde/contactframe.h>
 #include <wmrde/wmrmodel.h>
 #include <visualization_msgs/Marker.h>
 
@@ -62,6 +62,13 @@ void tfBroadcastWmrModelTransforms(
     tf::TransformBroadcaster& tf_broadcaster,
     const WmrModel& mdl,
     const std::vector<HTransform>& HT_parent,
+    const ros::Time& stamp = ros::Time::now(),
+    const std::string& world_frame = "world");
+
+void tfBroadcastContactTransforms(
+    tf::TransformBroadcaster& tf_broadcaster,
+    const WmrModel& mdl,
+    const std::vector<ContactFrame>& contacts,
     const ros::Time& stamp = ros::Time::now());
 
 inline geometry_msgs::Point geomPoint(const double x, const double y, const double z)

@@ -10,9 +10,9 @@
     </rosparam>
   </node>
 <!-- launch-prefix="xterm -e gdb - -args" -->
-  <node name="wmrmodel_joy_demo"
+  <node name="wmrmodel_demo"
         pkg="wmrde"
-        type="wmrmodel_joy_demo">
+        type="wmrmodel_demo">
 
     <remap from="joy" to="/joy/source"/>
     <rosparam subst_value="true">
@@ -24,6 +24,6 @@
         type="rviz" 
         output="screen" 
         name="rviz"
-        args="-d $(find wmrde)/launch/wmrmodel_joy_demo.rviz"
+        args="-d $(find wmrde)/launch/wmrmodel_demo.rviz"
         if="true"/>
 </launch>

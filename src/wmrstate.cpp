@@ -1,5 +1,4 @@
 #include <wmrde/wmrstate.h>
-#include <wmrde/rosout.h>
 
 namespace wmrde
 {
@@ -17,7 +16,7 @@ void stateToHTparent(
     const WmrState& state,
     std::vector<HTransform>& HT_parent)
 {
-  assert(mdl.numFrames()-1 == state.joint_disp.rows());
+  assert(mdl.numJoints() == state.joint_disp.rows());
   HT_parent.resize(mdl.numFrames());
 
   //get transform from body to world coords

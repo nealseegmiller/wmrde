@@ -7,7 +7,6 @@
 
 #include <vector>
 #include <memory> //for unique_ptr
-#include <wmrde/common.h> //for Real
 #include <wmrde/algebra/linalg3.h> //for Vec3
 
 namespace wmrde

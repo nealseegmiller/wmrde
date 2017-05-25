@@ -5,9 +5,6 @@
 #ifndef _WMRDE_GRID_SURFACE_H_
 #define _WMRDE_GRID_SURFACE_H_
 
-#include <string>
-#include <assert.h>
-
 #include <wmrde/surface/surface.h>
 #include <wmrde/util/gridded_interpolant.h>
 

@@ -1,9 +1,71 @@
-//index.h
-//implements built-in MATLAB functionality for indexing arrays
+#ifndef _WMRDE_INDEX_UTIL_H_
+#define _WMRDE_INDEX_UTIL_H_
 
-#ifndef _WMRDE_INDEX_H_
-#define _WMRDE_INDEX_H_
+#include <wmrde/algebra/dynamic_matrix.h>
 
+namespace wmrde
+{
+
+//functions for logical indexing of Eigen matrices
+typedef std::vector<uint8_t> Logical;
+
+inline Logical inverse(const Logical& src)
+{
+  Logical dst(src.size());
+  for (size_t i = 0; i < src.size(); i++) { dst[i] = src[i] ? 0 : 1; }
+  return dst;
+}
+
+inline int countTrue(const Logical& logical)
+{
+  int count = 0;
+  for (size_t i = 0; i < logical.size(); i++)
+  {
+    if (logical[i]) { count++; }
+  }
+  return count;
+}
+
+inline void logicalIndexSrc(
+    const Vecd& src,
+    const Logical& logical,
+    Vecd& dst)
+{
+  dst.resize(countTrue(logical));
+  int count = 0;
+  for (size_t i = 0; i < logical.size(); i++)
+  {
+    if (logical[i]) { dst[count++] = src[i]; }
+  }
+}
+
+inline void logicalIndexDst(
+    const Vecd& src,
+    const Logical& logical,
+    Vecd& dst)
+{
+  int count = 0;
+  for (size_t i = 0; i < logical.size(); i++)
+  {
+    if (logical[i]) { dst[i] = src[count++]; }
+  }
+}
+
+inline void logicalIndexSrcCols(
+    const Matd& src,
+    const Logical& logical,
+    Matd& dst)
+{
+  int count = 0;
+  for (size_t i = 0; i < logical.size(); i++)
+  {
+    if (logical[i]) { dst.col(count++) = src.col(i); }
+  }
+}
+
+}
+
+/*
 #include <algorithm>
 #include <wmrde/util/common_util.h>
 
@@ -138,6 +200,6 @@ inline void sortIndex(const int n, const Type val[], int idx[], Type val_sort[])
 			val_sort[i] = val[idx[i]];
 	}
 }
+*/
 
-
-#endif //_WMRDE_INDEX_H_
+#endif

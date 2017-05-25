@@ -2,7 +2,8 @@
 #define _WMRDE_COLLISION_H_
 
 #include <wmrde/surface/surface.h>
-#include <wmrde/contactgeom.h>
+#include <wmrde/contactframe.h>
+#include <wmrde/wheelgeom.h>
 
 namespace wmrde
 {
@@ -14,25 +15,26 @@ namespace wmrde
  * \param angle The contact angle
  * \return The contact point in wheel coords
  */
-inline Vec3 contactAngleToPoint(const Real radius, const Real angle)
+inline Tangent contactAngleToTangent(const Real radius, const Real angle)
 {
-  Vec3 pt;
-  pt << -sin(angle)*radius, 0.0, -cos(angle)*radius;
-  return pt;
+  Tangent out;
+  out.point << -sin(angle)*radius, 0.0, -cos(angle)*radius;
+  out.direction << -cos(angle), 0.0, sin(angle);
+  return out;
 }
 
-void setWheelGeomPoints(
+inline void discretizeWheelGeom(
     const double min_angle,
     const double max_angle,
     const int num_points,
     WheelGeom& wheel_geom) //angle must be set
 {
   Real angle_step = (max_angle - min_angle)/(num_points-1);
-  wheel_geom.points.resize(num_points);
+  wheel_geom.tangents.resize(num_points);
   for (int i = 0; i < num_points; i++)
   {
     Real angle = min_angle + i*angle_step;
-    wheel_geom.points[i] = contactAngleToPoint(wheel_geom.radius, angle);
+    wheel_geom.tangents[i] = contactAngleToTangent(wheel_geom.radius, angle);
   }
 }
 
@@ -45,11 +47,11 @@ void setWheelGeomPoints(
  * \param contact The contact geometry output.
  * \return index of wheel_geom point that was selected as contact point
 */
-int calcContactGeomDiscretization(
+void calcContactFrameDiscretize(
     const Surfaces& surfs,
     const WheelGeom& wheel_geom,
     const HTransform& HT_wheel_to_world,
-    ContactGeom& contact);
+    ContactFrame& contact);
 
 /*!
  * Determine the contact point between wheel and surface geometries
@@ -59,11 +61,11 @@ int calcContactGeomDiscretization(
  * \param HT_wheel_to_world The transform from wheel to world coords
  * \param contact The contact geometry output.
 */
-void calcContactGeomRootfinding(
+void calcContactFrameRootfind(
     const Surfaces& surfs,
     const WheelGeom& wheel_geom,
     const HTransform& HT_wheel_to_world,
-    ContactGeom& contact);
+    ContactFrame& contact);
 
 } //namespace
 

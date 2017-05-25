@@ -1,5 +1,5 @@
 #include <wmrde/wmrmodel.h>
-#include <wmrde/rosout.h>
+#include <wmrde/util/rosout.h>
 
 namespace wmrde
 {

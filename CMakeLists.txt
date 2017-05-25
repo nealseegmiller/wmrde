@@ -57,12 +57,12 @@ add_library(${PROJECT_NAME}
   src/surface/grid_surface.cpp
   src/surface/plane_surface.cpp
   src/surface/surface.cpp
-#  src/surface/TriMeshSurf.cpp
 #  src/actuator.cpp
   src/collision.cpp
 #  src/dynamics.cpp
 #  src/eigensolve.cpp
-#  src/kinematics.cpp
+  src/init_contact.cpp
+  src/kinematics.cpp
 #  src/main.cpp
 #  src/wheelgroundcontact.cpp
   src/wmrde_ros_interface.cpp
@@ -89,14 +89,17 @@ add_executable(algebra_benchmark src/test/algebra_benchmark.cpp)
 target_link_libraries(algebra_benchmark ${PROJECT_NAME} benchmark)
 
 ### Build Nodes ###
-add_executable(joy_teleop src/nodes/joy_teleop.cpp)
-target_link_libraries(joy_teleop ${PROJECT_NAME})
+add_executable(joy_to_twist src/nodes/joy_to_twist.cpp)
+target_link_libraries(joy_to_twist ${PROJECT_NAME})
 
-add_executable(collision_joy_demo src/nodes/collision_joy_demo.cpp)
-target_link_libraries(collision_joy_demo ${PROJECT_NAME})
+add_executable(collision_demo src/nodes/collision_demo.cpp)
+target_link_libraries(collision_demo ${PROJECT_NAME})
 
-add_executable(wmrmodel_joy_demo src/nodes/wmrmodel_joy_demo.cpp)
-target_link_libraries(wmrmodel_joy_demo ${PROJECT_NAME})
+add_executable(simulation_demo src/nodes/simulation_demo.cpp)
+target_link_libraries(simulation_demo ${PROJECT_NAME})
+
+add_executable(wmrmodel_demo src/nodes/wmrmodel_demo.cpp)
+target_link_libraries(wmrmodel_demo ${PROJECT_NAME})
 
 ### Install Libraries and Executables ###
 install(TARGETS ${PROJECT_NAME}

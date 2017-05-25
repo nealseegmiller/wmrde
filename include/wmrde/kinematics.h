@@ -1,27 +1,47 @@
-//kinematics.h
-//functions for kinematic motion prediction for WMRs
-//and to initialize terrain contact
-
 #ifndef _WMRDE_KINEMATICS_H_
 #define _WMRDE_KINEMATICS_H_
 
-#include <wmrde/state.h>
-#include <wmrde/collision.h> //necessary for initTerrainContact only
-#include <wmrde/eigensolve.h>
+#include <wmrde/wmrstate.h>
+#include <wmrde/surface/surface.h>
+#include <wmrde/contactframe.h>
 
+namespace wmrde
+{
 
-int wheelJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], const WheelContactGeom contacts[], Real A[]);
-int trackJacobians(const WmrModel& mdl, const HomogeneousTransform HT_world[], const TrackContactGeom contacts[], Real A[]);
+/*!
+ * calculate Jacobian of contact point velocity (i.e. velocity of point on wheel in world coords)
+ * with respect to joint space velocity.
+ * \param[in] mdl the WmrModel
+ * \param[in] HT_world vector of transforms from each frame in model to world frame
+ * \param[in] contacts vector of contact geometry for each wheel.
+ * \param[out] wheel_jacobians Jacobian matrix of for all wheels in contact
+ *             matrix size is 3*(num wheels in contact) x joint space size
+ */
+void calcWheelJacobians(
+    const WmrModel& mdl,
+    const std::vector<HTransform>& HT_world,
+    const std::vector<ContactFrame>& contacts,
+    Matd& wheel_jacobians);
 
-void forwardVelKin(const WmrModel& mdl, const Real state[], const Real u[], const HomogeneousTransform HT_world[], const ContactGeom* contacts, //inputs
-				   Real qvel[], Vec3 vc[]); //outputs
+/*!
+ * Compute forward velocity kinematics for a WmrModel. i.e. given actuated joint rates,
+ * compute the velocity of the vehicle body frame and passive joints.
+ * \param[in] mdl
+ * \param[in] state
+ * \param[in] u the actuated joint rates. The size must equal mdl.numActuatedFrames()
+ * \param[in] contacts contact frames for all wheels in contact with ground
+ * \param[in] HT_world transforms for each WmrModel frame that convert to world coordinates.
+ *            This is redundant with state but is required to be precomputed. //TODO, make this optional?
+ * \param[out] joint_space_vel the joint space velocity
+ */
+void forwardVelocityKinematics(
+    const WmrModel& mdl,
+    const WmrState& state,
+    const Vecd& u,
+    const std::vector<ContactFrame>& contacts,
+    const std::vector<HTransform>& HT_world,
+    JointSpaceVel& joint_space_vel);
 
-void updateModelContactGeom(const WmrModel& mdl, const SurfaceVector& surfaces, const HomogeneousTransform HT_world[], const int min_npic, //inputs
-	ContactGeom* contacts); //outputs
+} //namespace
 
-void odeKin(const Real time, const Real y[], const WmrModel& mdl, const SurfaceVector& surfaces, ContactGeom* contacts, //inputs
-	Real ydot[], HomogeneousTransform HT_parent[]); //outputs
-
-void initTerrainContact( const WmrModel mdl, const SurfaceVector& surfaces, ContactGeom* contacts, Real state[] ); 
-
-#endif //_WMRDE_KINEMATICS_H_
+#endif

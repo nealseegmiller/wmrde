@@ -13,10 +13,10 @@ namespace vm = visualization_msgs;
 
 using namespace wmrde;
 
-class WmrModelJoyDemo
+class WmrModelDemo
 {
  public:
-    WmrModelJoyDemo();
+  WmrModelDemo();
 
  private:
 
@@ -48,7 +48,7 @@ class WmrModelJoyDemo
 };
 
 
-WmrModelJoyDemo::WmrModelJoyDemo()
+WmrModelDemo::WmrModelDemo()
 :
   joint_idx_(0),
   joint_vel_(0.0),
@@ -63,7 +63,7 @@ WmrModelJoyDemo::WmrModelJoyDemo()
   pnh_.param("scale_joint_vel", scale_joint_vel_, 1.0);
 
   //init publisher/subscriber
-  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 2, &WmrModelJoyDemo::joyCallback, this);
+  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 2, &WmrModelDemo::joyCallback, this);
   mesh_pub_ = pnh_.advertise<vm::MarkerArray>("wmrmodel_mesh", 2, true); //latched
 
   //init the model and marker array
@@ -71,37 +71,36 @@ WmrModelJoyDemo::WmrModelJoyDemo()
   makeZoeModelMarkers(mdl_, mdl_markers_);
 
   //init the state
-  state_.position = Vec3::Zero();
-  state_.orientation = Quaternion(Mat3::Identity());
-  state_.joint_disp.resize(mdl_.numFrames()-1);
-  state_.joint_disp.setZero();
+  state_.joint_disp.resize(mdl_.numJoints());
+  state_.setIdentity();
+
   ROS_INFO_STREAM("initial state = \n" << state_);
 
   pnh_.param("update_rate_hz", update_rate_hz_, 10.0);
-  update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_hz_), &WmrModelJoyDemo::timerCallback, this);
+  update_timer_ = nh_.createTimer(ros::Duration(1.0/update_rate_hz_), &WmrModelDemo::timerCallback, this);
 }
 
-void WmrModelJoyDemo::joyCallback(const sensor_msgs::JoyConstPtr& joy)
+void WmrModelDemo::joyCallback(const sensor_msgs::JoyConstPtr& joy)
 {
   if (!button_pressed_ && joy->buttons[joy_button_idx_])
   {
     //button changed from not pressed to pressed
     joint_idx_++;
-    joint_idx_ = joint_idx_ % (6+mdl_.numJoints()); //wrap around back to zero if exceed size of joint space
+    joint_idx_ = joint_idx_ % (mdl_.numDof()); //wrap around back to zero if exceed size of joint space
   }
   button_pressed_ = joy->buttons[joy_button_idx_];
 
   joint_vel_ = scale_joint_vel_*joy->axes[joy_axis_idx_];
 }
 
-void WmrModelJoyDemo::timerCallback(const ros::TimerEvent& ev)
+void WmrModelDemo::timerCallback(const ros::TimerEvent& ev)
 {
   //TODO, set joint space velocity according to joint_idx_, joint_vel_ and update state
   ROS_INFO("joint_idx = %d, joint_vel = %f", joint_idx_, joint_vel_);
   if (std::abs(joint_vel_) > 0)
   {
     Vecd qvel;
-    qvel.resize(6+mdl_.numJoints());
+    qvel.resize(mdl_.numDof());
     qvel.setZero();
     qvel[joint_idx_] = joint_vel_;
     state_ = stepWmrState(state_, qvel, 1.0/update_rate_hz_);
@@ -131,9 +130,9 @@ void WmrModelJoyDemo::timerCallback(const ros::TimerEvent& ev)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "wmrmodel_joy_demo");
+  ros::init(argc, argv, "wmrmodel_demo");
 
-  WmrModelJoyDemo demo;
+  WmrModelDemo demo;
   ros::spin();
 }
 

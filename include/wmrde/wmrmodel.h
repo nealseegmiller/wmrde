@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <wmrde/algebra/spatial.h>
-#include <wmrde/contactgeom.h>
+#include <wmrde/wheelgeom.h>
 
 namespace wmrde
 {
@@ -121,7 +121,7 @@ class Frame
   int parent_idx; //index of parent frame
   HTransform HT_parent_jd0; //Homogeneous Transform of frame wrt parent if joint displacement=0
   bool is_actuated;
-  bool is_fixed; //if true, keep fixed when initializing terrain contact
+  bool is_fixed; //if true, keep fixed when initializing terrain contact //TODO, eliminate this?
   std::unique_ptr<WheelGeom> wheel_geom; //nullptr for non-wheel frames
   MassProperties mass; //Only necessary for dynamic sim.
 };
@@ -173,12 +173,19 @@ class WmrModel
 	const Frame& getFrame(int idx) const { return frames_[idx]; }
 	
 	int numFrames() const { return frames_.size(); }
-	int numJoints() const { return std::max(0, numFrames()-1); } //body frame has no joint
+	int numJoints() const { return frames_.empty() ? 0 : (numFrames()-1); } //body frame has no joint
 	int numWheelFrames() const { return num_wheel_frames_; }
 	int numActuatedFrames() const { return num_actuated_frames_; }
-	const std::vector<int>& getWheelFrameIndices() const { return wheel_frame_inds_; }
-	const std::vector<int>& getActuatedFrameIndices() const { return actuated_frame_inds_; }
+	int numDof() const { return frames_.empty() ? 0 : (numFrames()+5); }
+	const std::vector<int>& wheelFrameIndices() const { return wheel_frame_inds_; }
+	const std::vector<int>& actuatedFrameIndices() const { return actuated_frame_inds_; }
 	
+	//variables required for forwardVelocityKinematics()
+	//TODO, move these?
+	Real dz_target;
+	Real dz_time_constant;
+	Real hjc_time_constant;
+
  private:
 	std::vector<Frame> frames_;
 	

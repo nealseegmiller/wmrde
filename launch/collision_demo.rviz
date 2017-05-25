@@ -59,7 +59,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /collision_joy_demo/surface_marker
+      Marker Topic: /collision_demo/surface_marker
       Name: MarkerArray
       Namespaces:
         "": true
@@ -67,7 +67,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /collision_joy_demo/distance_to_surface
+      Marker Topic: /collision_demo/distance_to_surface
       Name: MarkerArray
       Namespaces:
         "": true
@@ -75,7 +75,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /collision_joy_demo/wheel_marker
+      Marker Topic: /collision_demo/wheel_marker
       Name: Marker
       Namespaces:
         "": true

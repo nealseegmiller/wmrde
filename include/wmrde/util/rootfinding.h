@@ -1,8 +1,8 @@
 #ifndef _WMRDE_ROOTFINDING_H_
 #define _WMRDE_ROOTFINDING_H_
 
-#include <wmrde/common.h>
-#include <wmrde/rosout.h>
+#include <wmrde/util/real.h>
+#include <wmrde/util/rosout.h>
 
 namespace wmrde
 {
@@ -35,7 +35,7 @@ Real findRootBisection(Real a, Real b, Func fx, const Real tolx, const Real tolf
     c = (a+b)/2;
     fc = fx(c);
 
-    ROS_INFO("  findRootBisection() iter = %d: x = %f, f(x) = %f\n", iter, c, fc);
+    ROS_DEBUG("  findRootBisection() iter = %d: x = %f, f(x) = %f", iter, c, fc);
 
     if (fabs(fc) <= tolfx ||
         fabs(b-a)/2 <= tolx)
@@ -127,7 +127,7 @@ Real findRootBrents( Real a, Real b, Func fx, const Real tolx, const Real tolfx)
       std::swap(fa,fb);
     }
 
-    ROS_INFO("  findRootBrents() iter = %d: x = %f, f(x) = %f\n", iter, b, fb);
+    ROS_DEBUG("  findRootBrents() iter = %d: x = %f, f(x) = %f", iter, b, fb);
 
     if (fabs(fb) <= tolfx ||
         fabs(a-b) <= 2*tolx)
